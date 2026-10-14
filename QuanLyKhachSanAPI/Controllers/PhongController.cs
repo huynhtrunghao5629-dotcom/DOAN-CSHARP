@@ -35,6 +35,37 @@ public class PhongController : ControllerBase
         return Ok(phong);
     }
 
+    // GET: api/Phong/phan-trang (TÍNH NĂNG MỚI THÊM VÀO)
+    [HttpGet("phan-trang")]
+    public async Task<IActionResult> GetPhongsPhanTrang([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var query = _context.Phongs.Include(p => p.LoaiPhong);
+        var totalRecords = await query.CountAsync();
+        
+        var phongs = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new
+            {
+                p.PhongId,
+                p.SoPhong,
+                p.TrangThai,
+                p.LoaiPhongId,
+                LoaiPhong = p.LoaiPhong.TenLoai,
+                GiaPhong = p.LoaiPhong.GiaPhong
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            TongSoPhong = totalRecords,
+            TrangHienTai = page,
+            KichThuocTrang = pageSize,
+            TongSoTrang = (int)Math.Ceiling((double)totalRecords / pageSize),
+            DuLieu = phongs
+        });
+    }
+
     // GET: api/Phong/5
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)

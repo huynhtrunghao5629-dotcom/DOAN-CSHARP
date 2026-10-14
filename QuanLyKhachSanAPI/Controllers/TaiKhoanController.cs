@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens; // Thư viện JWT
+using System.IdentityModel.Tokens.Jwt; // Thư viện JWT
+using System.Security.Claims; // Thư viện JWT
+using System.Text; // Thư viện JWT
 using QuanLyKhachSanAPI.Models;
 
 namespace QuanLyKhachSanAPI.Controllers;
@@ -35,8 +39,32 @@ public class TaiKhoanController : ControllerBase
         if (taiKhoan == null)
             return Unauthorized("Tên đăng nhập hoặc mật khẩu không chính xác.");
 
+        // --- BẮT ĐẦU TẠO TOKEN JWT ---
+        // Khóa bí mật (Phải giống hệt khóa lúc cấu hình trong Program.cs nếu có)
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("ChuoiBiMatCuaDoAnQuanLyKhachSanDai1234567890"));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        // Gắn thông tin quyền (VaiTro) vào Token
+        var claims = new[] {
+            new Claim(JwtRegisteredClaimNames.Sub, taiKhoan.TenDangNhap),
+            new Claim("VaiTro", taiKhoan.VaiTro ?? "NhanVien"), 
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: "QuanLyKhachSan",
+            audience: "QuanLyKhachSanUser",
+            claims: claims,
+            expires: DateTime.Now.AddHours(2), // Token sống được 2 tiếng
+            signingCredentials: credentials);
+        
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        // --- KẾT THÚC TẠO TOKEN ---
+
         return Ok(new
         {
+            ThongBao = "Đăng nhập thành công!",
+            Token = tokenString, // Gửi mã bảo mật về cho Frontend
             taiKhoan.TaiKhoanId,
             taiKhoan.TenDangNhap,
             taiKhoan.VaiTro,
