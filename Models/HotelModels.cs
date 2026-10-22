@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Text.Json.Serialization;
 namespace HotelManagement.Desktop.Models
 {
     public enum RoomStatus
@@ -11,12 +11,23 @@ namespace HotelManagement.Desktop.Models
 
     public class RoomDto
     {
+        [JsonPropertyName("phongId")]
         public int RoomId { get; set; }
-        public string? RoomNumber { get; set; }
-        public int RoomTypeId { get; set; }
-        public string? RoomTypeName { get; set; }
+
+        [JsonPropertyName("soPhong")]
+        public string RoomNumber { get; set; }
+
+        [JsonPropertyName("giaPhong")]
         public decimal PricePerNight { get; set; }
-        public RoomStatus Status { get; set; }
+
+        [JsonPropertyName("trangThai")]
+        public string Status { get; set; }
+
+        [JsonPropertyName("TenLoaiPhong")]
+        public string RoomTypeName { get; set; }
+
+        [JsonPropertyName("loaiPhongId")]
+        public int RoomTypeId { get; set; }
     }
 
     public class LoginRequest
@@ -30,5 +41,17 @@ namespace HotelManagement.Desktop.Models
         public string? Token { get; set; }
         public string? Username { get; set; }
         public string? Role { get; set; } // Admin, Staff
+    }
+    public class RoomTypeDto
+    {
+        [JsonPropertyName("loaiPhongId")]
+        public int RoomTypeId { get; set; }
+
+        [JsonPropertyName("tenLoai")]
+        public string RoomTypeName { get; set; }
+
+        // Giá được lấy từ loại phòng; API Phong không lưu giá riêng từng phòng.
+        [JsonPropertyName("giaPhong")]
+        public decimal PricePerNight { get; set; }
     }
 }

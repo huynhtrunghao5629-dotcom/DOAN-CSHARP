@@ -35,12 +35,15 @@
             txtStatus = new ComboBox();
             label3 = new Label();
             btnAdd = new Button();
-            btnSave = new Button();
+            btnAddRoom = new Button();
             btnDelete = new Button();
             txtSearch = new TextBox();
             label4 = new Label();
             groupBox1 = new GroupBox();
+            btnUpdateRoom = new Button();
+            cboRoomType = new ComboBox();
             dgvRooms = new DataGridView();
+            button1 = new Button();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvRooms).BeginInit();
             SuspendLayout();
@@ -78,7 +81,6 @@
             txtPrice.Name = "txtPrice";
             txtPrice.Size = new Size(290, 27);
             txtPrice.TabIndex = 4;
-
             // 
             // txtStatus
             // 
@@ -100,29 +102,29 @@
             // 
             // btnAdd
             // 
-            btnAdd.Location = new Point(898, 87);
+            btnAdd.Location = new Point(1011, 33);
             btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(166, 38);
+            btnAdd.Size = new Size(166, 41);
             btnAdd.TabIndex = 7;
-            btnAdd.Text = "Reset";
+            btnAdd.Text = "Làm mới";
             btnAdd.UseVisualStyleBackColor = true;
             btnAdd.Click += btnAdd_Click;
             // 
-            // btnSave
+            // btnAddRoom
             // 
-            btnSave.Location = new Point(898, 26);
-            btnSave.Name = "btnSave";
-            btnSave.Size = new Size(166, 41);
-            btnSave.TabIndex = 8;
-            btnSave.Text = "Lưu";
-            btnSave.UseVisualStyleBackColor = true;
-            btnSave.Click += btnSave_Click;
+            btnAddRoom.Location = new Point(818, 33);
+            btnAddRoom.Name = "btnAddRoom";
+            btnAddRoom.Size = new Size(166, 41);
+            btnAddRoom.TabIndex = 8;
+            btnAddRoom.Text = "Thêm mới";
+            btnAddRoom.UseVisualStyleBackColor = true;
+            btnAddRoom.Click += btnAddRoom_Click;
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(898, 139);
+            btnDelete.Location = new Point(818, 146);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(166, 47);
+            btnDelete.Size = new Size(166, 40);
             btnDelete.TabIndex = 9;
             btnDelete.Text = "Xóa";
             btnDelete.UseVisualStyleBackColor = true;
@@ -149,13 +151,16 @@
             // groupBox1
             // 
             groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            groupBox1.Controls.Add(button1);
+            groupBox1.Controls.Add(btnUpdateRoom);
+            groupBox1.Controls.Add(cboRoomType);
             groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(txtSearch);
             groupBox1.Controls.Add(label4);
             groupBox1.Controls.Add(txtStatus);
             groupBox1.Controls.Add(btnAdd);
             groupBox1.Controls.Add(txtPrice);
-            groupBox1.Controls.Add(btnSave);
+            groupBox1.Controls.Add(btnAddRoom);
             groupBox1.Controls.Add(txtRoomNumber);
             groupBox1.Controls.Add(btnDelete);
             groupBox1.Controls.Add(label2);
@@ -165,8 +170,28 @@
             groupBox1.Size = new Size(1812, 508);
             groupBox1.TabIndex = 12;
             groupBox1.TabStop = false;
-            groupBox1.Text = "Thông tin - Công cụ Phòng";
             groupBox1.Enter += groupBox1_Enter;
+            // 
+            // btnUpdateRoom
+            // 
+            btnUpdateRoom.Location = new Point(818, 94);
+            btnUpdateRoom.Name = "btnUpdateRoom";
+            btnUpdateRoom.Size = new Size(166, 41);
+            btnUpdateRoom.TabIndex = 14;
+            btnUpdateRoom.Text = "Cập nhật";
+            btnUpdateRoom.UseVisualStyleBackColor = true;
+            btnUpdateRoom.Click += btnUpdateRoom_Click;
+            // 
+            // cboRoomType
+            // 
+            cboRoomType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboRoomType.FormattingEnabled = true;
+            cboRoomType.Location = new Point(1011, 101);
+            cboRoomType.Margin = new Padding(4);
+            cboRoomType.Name = "cboRoomType";
+            cboRoomType.Size = new Size(166, 28);
+            cboRoomType.TabIndex = 13;
+            cboRoomType.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
             // dgvRooms
             // 
@@ -180,6 +205,16 @@
             dgvRooms.CellClick += dgvRooms_CellClick;
             dgvRooms.CellContentClick += dataGridView1_CellContentClick;
             dgvRooms.DataError += dgvRooms_DataError;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(1011, 145);
+            button1.Name = "button1";
+            button1.Size = new Size(166, 41);
+            button1.TabIndex = 15;
+            button1.Text = "Quản lý loại phòng";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += btnManageRoomTypes_Click;
             // 
             // FrmManageRooms
             // 
@@ -205,11 +240,14 @@
         private ComboBox txtStatus;
         private Label label3;
         private Button btnAdd;
-        private Button btnSave;
+        private Button btnAddRoom;
         private Button btnDelete;
         private TextBox txtSearch;
         private Label label4;
         private GroupBox groupBox1;
         private DataGridView dgvRooms;
+        private ComboBox cboRoomType;
+        private Button btnUpdateRoom;
+        private Button button1;
     }
 }

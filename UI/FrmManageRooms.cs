@@ -5,48 +5,88 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using HotelManagement.Desktop.Models;
 using HotelManagement.Desktop.Services;
+using System.Net.Http;
+using System.Net.Http.Json;
 
 namespace HotelManager.UI
 {
     public partial class FrmManageRooms : Form
     {
         private readonly RoomService _roomService;
-        private int _selectedRoomId = 0; // Lưu ID phòng đang chọn
-        private readonly UserSession _currentUser; // Lưu thông tin người dùng đăng nhập
+        private readonly HttpClient _client;
+        private int _selectedRoomId = 0;
+        private readonly UserSession _currentUser;
 
-        // Constructor mặc định dành cho Designer
+        // Danh sách lưu Loại phòng thật từ API
+        private List<RoomTypeDto> _roomTypesList = new List<RoomTypeDto>();
+
         public FrmManageRooms()
         {
             InitializeComponent();
             _roomService = new RoomService();
+
+            // Bỏ qua xác thực chứng chỉ SSL cho môi trường localhost
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+            };
+
+            _client = new HttpClient(handler);
+            _client.BaseAddress = new Uri("https://localhost:7203/");
         }
 
-        // Constructor chính nhận UserSession từ FrmMain
         public FrmManageRooms(UserSession userSession) : this()
         {
             _currentUser = userSession;
         }
 
-        // Sự kiện khi Form tải lên
         private async void FrmManageRooms_Load(object sender, EventArgs e)
         {
-            // 1. Cấu hình bố cục vị trí và khoảng cách chuẩn xác
             SetupCustomLayout();
-            this.Resize += (s, ev) => SetupCustomLayout(); // Tự động canh lại khi phóng to/thu nhỏ form
+            this.Resize += (s, ev) => SetupCustomLayout();
 
-            // 2. Nạp danh sách lựa chọn Trạng thái vào ComboBox
             txtStatus.Items.Clear();
-            txtStatus.Items.Add("Available");
-            txtStatus.Items.Add("Occupied");
-            txtStatus.Items.Add("Maintenance");
+            txtStatus.Items.Add("Trống");
+            txtStatus.Items.Add("Đang có khách");
+            txtStatus.Items.Add("Bảo trì");
             txtStatus.DropDownStyle = ComboBoxStyle.DropDownList;
 
-            // 3. Áp dụng phân quyền và nạp dữ liệu
+            // Load Loại Phòng từ API thật
+            await LoadRoomTypesAsync();
+
             ApplyPermissions();
             await LoadRoomDataAsync();
         }
 
-        // Hàm canh khoảng cách và vị trí cho bảng dữ liệu
+        private async Task LoadRoomTypesAsync()
+        {
+            try
+            {
+                // ĐÃ SỬA: Đường dẫn đúng là "api/LoaiPhong" (không có chữ Controller)
+                var response = await _client.GetFromJsonAsync<List<RoomTypeDto>>("api/LoaiPhong");
+
+                if (response != null && response.Count > 0)
+                {
+                    _roomTypesList = response;
+
+                    // Gán vào ComboBox
+                    cboRoomType.DataSource = null;
+                    cboRoomType.DataSource = _roomTypesList;
+                    cboRoomType.DisplayMember = "RoomTypeName"; // Hiển thị tên (TenLoai)
+                    cboRoomType.ValueMember = "RoomTypeId";     // Lấy giá trị ID (LoaiPhongId)
+                    cboRoomType.DropDownStyle = ComboBoxStyle.DropDownList;
+                }
+                else
+                {
+                    MessageBox.Show("Không tìm thấy loại phòng nào trong CSDL!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi tải danh sách Loại Phòng: {ex.Message}", "Lỗi kết nối API", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void SetupCustomLayout()
         {
             if (groupBox1 != null && dgvRooms != null)
@@ -57,7 +97,7 @@ namespace HotelManager.UI
                 dgvRooms.Dock = DockStyle.None;
                 dgvRooms.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
-                int spacing = 12; // Khoảng cách hở giữa GroupBox và DataGridView
+                int spacing = 12;
                 dgvRooms.Top = groupBox1.Bottom + spacing;
                 dgvRooms.Left = 12;
                 dgvRooms.Width = this.ClientSize.Width - 24;
@@ -66,8 +106,13 @@ namespace HotelManager.UI
                 dgvRooms.BringToFront();
             }
         }
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            ClearForm();
 
-        // Kiểm tra và áp dụng phân quyền
+            // Đưa con trỏ về ô nhập số phòng để sẵn sàng nhập liệu mới
+            txtRoomNumber.Focus();
+        }
         private void ApplyPermissions()
         {
             if (_currentUser != null)
@@ -77,9 +122,10 @@ namespace HotelManager.UI
                 txtRoomNumber.Enabled = isAdmin;
                 txtPrice.Enabled = isAdmin;
                 txtStatus.Enabled = isAdmin;
+                if (cboRoomType != null) cboRoomType.Enabled = isAdmin;
 
                 btnAdd.Enabled = isAdmin;
-                btnSave.Enabled = isAdmin;
+                btnAddRoom.Enabled = isAdmin;
                 btnDelete.Enabled = isAdmin;
             }
             else
@@ -87,15 +133,16 @@ namespace HotelManager.UI
                 txtRoomNumber.Enabled = false;
                 txtPrice.Enabled = false;
                 txtStatus.Enabled = false;
+                if (cboRoomType != null) cboRoomType.Enabled = false;
+
                 btnAdd.Enabled = false;
-                btnSave.Enabled = false;
+                btnAddRoom.Enabled = false;
                 btnDelete.Enabled = false;
             }
 
             txtSearch.Enabled = true;
         }
 
-        // Hàm lấy danh sách phòng từ Service và đổ vào DataGridView
         private async Task LoadRoomDataAsync()
         {
             try
@@ -111,8 +158,10 @@ namespace HotelManager.UI
                 dgvRooms.DataSource = null;
                 dgvRooms.DataSource = rooms;
 
-                // Gọi hàm định dạng tiêu đề, ẩn cột thừa và định dạng hiển thị
                 FormatDataGridView();
+
+                dgvRooms.Refresh();
+                dgvRooms.Update();
             }
             catch (Exception ex)
             {
@@ -120,42 +169,50 @@ namespace HotelManager.UI
             }
         }
 
-        // Hàm định dạng hiển thị cho DataGridView (Tiếng Việt & UX)
         private void FormatDataGridView()
         {
             if (dgvRooms == null || dgvRooms.Columns.Count == 0) return;
 
-            // Tự động giãn cột lấp đầy chiều rộng bảng
             dgvRooms.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvRooms.ColumnHeadersVisible = true;
 
-            // Đổi tên tiêu đề các cột sang Tiếng Việt
             if (dgvRooms.Columns["RoomId"] != null)
             {
                 dgvRooms.Columns["RoomId"].HeaderText = "Mã Phòng";
+                dgvRooms.Columns["RoomId"].DataPropertyName = "RoomId";
                 dgvRooms.Columns["RoomId"].ReadOnly = true;
                 dgvRooms.Columns["RoomId"].DefaultCellStyle.BackColor = System.Drawing.Color.LightGray;
             }
-            if (dgvRooms.Columns["RoomNumber"] != null) dgvRooms.Columns["RoomNumber"].HeaderText = "Số Phòng";
-            if (dgvRooms.Columns["RoomTypeName"] != null) dgvRooms.Columns["RoomTypeName"].HeaderText = "Loại Phòng";
+            if (dgvRooms.Columns["RoomNumber"] != null)
+            {
+                dgvRooms.Columns["RoomNumber"].HeaderText = "Số Phòng";
+                dgvRooms.Columns["RoomNumber"].DataPropertyName = "RoomNumber";
+            }
+            if (dgvRooms.Columns["RoomTypeName"] != null)
+            {
+                dgvRooms.Columns["RoomTypeName"].HeaderText = "Loại Phòng";
+                dgvRooms.Columns["RoomTypeName"].DataPropertyName = "RoomTypeName"; // Khớp với RoomTypeName trong RoomDto
+            }
             if (dgvRooms.Columns["PricePerNight"] != null)
             {
                 dgvRooms.Columns["PricePerNight"].HeaderText = "Giá / Đêm (VNĐ)";
-                dgvRooms.Columns["PricePerNight"].DefaultCellStyle.Format = "N0"; // Định dạng phân cách nghìn
+                dgvRooms.Columns["PricePerNight"].DataPropertyName = "PricePerNight";
+                dgvRooms.Columns["PricePerNight"].DefaultCellStyle.Format = "N0";
             }
-            if (dgvRooms.Columns["Status"] != null) dgvRooms.Columns["Status"].HeaderText = "Trạng Thái";
+            if (dgvRooms.Columns["Status"] != null)
+            {
+                dgvRooms.Columns["Status"].HeaderText = "Trạng Thái";
+                dgvRooms.Columns["Status"].DataPropertyName = "Status";
+            }
 
-            // Ẩn các cột ID không cần thiết cho người dùng thấy
             if (dgvRooms.Columns["RoomTypeId"] != null) dgvRooms.Columns["RoomTypeId"].Visible = false;
 
-            // Cấu hình hành vi bảng
-            dgvRooms.SelectionMode = DataGridViewSelectionMode.FullRowSelect; // Click chọn nguyên dòng
-            dgvRooms.MultiSelect = false; // Chỉ cho chọn 1 dòng
-            dgvRooms.AllowUserToAddRows = false; // Bỏ dòng trống dưới cùng
-            dgvRooms.ReadOnly = true; // Không cho chỉnh sửa trực tiếp trên ô
+            dgvRooms.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvRooms.MultiSelect = false;
+            dgvRooms.AllowUserToAddRows = false;
+            dgvRooms.ReadOnly = true;
         }
 
-        // Đổ dữ liệu từ dòng được chọn lên các control
         private void dgvRooms_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0)
@@ -166,45 +223,135 @@ namespace HotelManager.UI
                 txtPrice.Text = row.Cells["PricePerNight"].Value?.ToString();
 
                 string rawStatus = row.Cells["Status"].Value?.ToString();
+
                 switch (rawStatus)
                 {
                     case "Available":
                     case "Trống":
+                    case "Trong":
                         txtStatus.SelectedItem = "Trống";
                         break;
                     case "Occupied":
                     case "Đang có khách":
+                    case "Dang co khach":
                         txtStatus.SelectedItem = "Đang có khách";
                         break;
                     case "Maintenance":
-                    case "Đang bảo trì":
-                        txtStatus.SelectedItem = "Đang bảo trì";
-                        break;
-                    case "Cleaning":
-                    case "Đang dọn dẹp":
-                        txtStatus.SelectedItem = "Đang dọn dẹp";
+                    case "Bao tri":
+                    case "Bảo trì":
+                        txtStatus.SelectedItem = "Bảo trì";
                         break;
                     default:
                         txtStatus.SelectedIndex = -1;
                         break;
                 }
+
+                // Cập nhật giá trị cho ComboBox Loại Phòng
+                if (row.Cells["RoomTypeId"].Value != null)
+                {
+                    int typeId = Convert.ToInt32(row.Cells["RoomTypeId"].Value);
+                    cboRoomType.SelectedValue = typeId;
+                }
             }
         }
-
-        // Nút Thêm mới (Reset form)
-        private void btnAdd_Click(object sender, EventArgs e)
+        // Hàm tải lại danh sách phòng (bạn thay thế tên hàm nạp dữ liệu chính của bạn vào đây nếu khác)
+        private async Task LoadRoomsAsync()
         {
-            _selectedRoomId = 0;
+            var rooms = await _roomService.GetAllRoomsAsync();
+            dgvRooms.DataSource = rooms;
+            FormatDataGridView();
+        }
+
+        private void ClearForm()
+        {
+            _selectedRoomId = 0; // QUAN TRỌNG: Bắt buộc đưa về 0 để form hiểu đây là trạng thái Thêm mới, không bị lỗi trùng số phòng
             txtRoomNumber.Clear();
             txtPrice.Clear();
 
-            txtStatus.SelectedIndex = -1;
-            txtStatus.Text = string.Empty;
+            if (txtStatus.Items.Count > 0)
+                txtStatus.SelectedIndex = -1;
 
-            txtRoomNumber.Focus();
+            if (cboRoomType.Items.Count > 0)
+                cboRoomType.SelectedIndex = -1;
+
+            // Bỏ chọn dòng trên DataGridView nếu có
+            if (dgvRooms.SelectedRows.Count > 0)
+                dgvRooms.ClearSelection();
+        }
+        // 1. NÚT THÊM MỚI PHÒNG (Gắn sự kiện cho nút Thêm mới của bạn)
+        private async void btnAddRoom_Click(object sender, EventArgs e)
+        {
+            var newRoom = new RoomDto
+            {
+                RoomId = 0,
+                RoomNumber = txtRoomNumber.Text.Trim(),
+                PricePerNight = decimal.TryParse(txtPrice.Text, out var price) ? price : 0,
+                Status = txtStatus.SelectedItem?.ToString() ?? "Trống",
+                RoomTypeId = cboRoomType.SelectedValue is int typeId ? typeId : 1
+            };
+
+            var validation = ValidationHelper.ValidateRoom(newRoom);
+            if (!validation.IsValid)
+            {
+                MessageBox.Show(validation.Message, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Gọi hàm Thêm mới (POST) riêng biệt
+            bool success = await _roomService.CreateRoomAsync(newRoom);
+            if (success)
+            {
+                MessageBox.Show("Thêm phòng thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await LoadRoomDataAsync();
+                ClearForm();
+            }
+            else
+            {
+                MessageBox.Show("Thêm phòng thất bại! Số phòng có thể đã tồn tại.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        // Nút Lưu (Thêm hoặc Cập nhật)
+        // 2. NÚT CẬP NHẬT / SỬA PHÒNG (Gắn sự kiện cho nút Cập nhật/Sửa của bạn)
+        private async void btnUpdateRoom_Click(object sender, EventArgs e)
+        {
+            if (_selectedRoomId <= 0)
+            {
+                MessageBox.Show("Vui lòng chọn phòng cần sửa từ bảng bên dưới!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var updatedRoom = new RoomDto
+            {
+                RoomId = _selectedRoomId,
+                RoomNumber = txtRoomNumber.Text.Trim(),
+                PricePerNight = decimal.TryParse(txtPrice.Text, out var price) ? price : 0,
+                Status = txtStatus.SelectedItem?.ToString() ?? "Trống",
+                RoomTypeId = cboRoomType.SelectedValue is int typeId ? typeId : 1
+            };
+
+            var validation = ValidationHelper.ValidateRoom(updatedRoom);
+            if (!validation.IsValid)
+            {
+                MessageBox.Show(validation.Message, "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            bool success = await _roomService.UpdateRoomAsync(updatedRoom);
+            if (success)
+            {
+                MessageBox.Show("Cập nhật phòng thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                await LoadRoomDataAsync();
+                dgvRooms.Update();
+                dgvRooms.Refresh();
+                ClearForm(); // Đưa _selectedRoomId về 0 và làm sạch ô nhập
+            }
+            else
+            {
+                MessageBox.Show("Cập nhật thất bại! Số phòng có thể bị trùng với phòng khác.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private async void btnSave_Click(object sender, EventArgs e)
         {
             try
@@ -221,36 +368,57 @@ namespace HotelManager.UI
                     return;
                 }
 
-                string selectedText = txtStatus.SelectedItem?.ToString() ?? txtStatus.Text.Trim();
-
-                RoomStatus statusEnum = RoomStatus.Available;
-                if (!string.IsNullOrEmpty(selectedText) && Enum.TryParse(selectedText, true, out RoomStatus parsedStatus))
+                if (cboRoomType.SelectedValue == null)
                 {
-                    statusEnum = parsedStatus;
+                    MessageBox.Show("Vui lòng chọn loại phòng!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
 
                 var room = new RoomDto
                 {
                     RoomId = _selectedRoomId,
                     RoomNumber = txtRoomNumber.Text.Trim(),
-                    RoomTypeName = "Standard",
                     PricePerNight = price,
-                    Status = statusEnum
+                    Status = txtStatus.SelectedItem?.ToString() ?? "Trống",
+                    RoomTypeId = (int)cboRoomType.SelectedValue
                 };
 
-                await _roomService.SaveRoomAsync(room);
-                MessageBox.Show("Lưu thông tin phòng thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                bool isSuccess = _selectedRoomId > 0
+                    ? await _roomService.UpdateRoomAsync(room)
+                    : await _roomService.CreateRoomAsync(room);
 
-                btnAdd_Click(sender, e);
-                await LoadRoomDataAsync();
+                if (isSuccess)
+                {
+                    MessageBox.Show(
+                        _selectedRoomId > 0
+                            ? "Cập nhật phòng thành công!"
+                            : "Thêm phòng thành công!",
+                        "Thông báo",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+
+                    await LoadRoomDataAsync(); // Tải lại danh sách mới nhất cho bảng
+                    ClearForm(); // Reset form và đưa _selectedRoomId về 0
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Thực hiện thất bại! Kiểm tra lại thông tin hoặc số phòng bị trùng.",
+                        "Lỗi API",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi khi lưu phòng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Đã xảy ra lỗi: " + ex.Message, "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        // Nút Xóa phòng
+
+
+
+
         private async void btnDelete_Click(object sender, EventArgs e)
         {
             if (_selectedRoomId == 0)
@@ -264,11 +432,17 @@ namespace HotelManager.UI
             {
                 try
                 {
-                    await _roomService.DeleteRoomAsync(_selectedRoomId);
-                    MessageBox.Show("Đã xóa phòng thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    btnAdd_Click(sender, e);
-                    await LoadRoomDataAsync();
+                    bool isSuccess = await _roomService.DeleteRoomAsync(_selectedRoomId);
+                    if (isSuccess)
+                    {
+                        MessageBox.Show("Đã xóa phòng thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        btnAddRoom_Click(sender, e);
+                        ClearForm();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Xóa phòng thất bại! Phòng này có thể đang có người đặt.", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -277,7 +451,6 @@ namespace HotelManager.UI
             }
         }
 
-        // Sự kiện tìm kiếm tự động
         private async void txtSearch_TextChanged(object sender, EventArgs e)
         {
             try
@@ -303,7 +476,6 @@ namespace HotelManager.UI
             }
         }
 
-        // Xử lý lỗi định dạng dữ liệu trên DataGridView
         private void dgvRooms_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
             e.ThrowException = false;
@@ -317,5 +489,15 @@ namespace HotelManager.UI
         private void label3_Click(object sender, EventArgs e) { }
         private void label4_Click(object sender, EventArgs e) { }
         private void txtPrice_TextChanged(object sender, EventArgs e) { }
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e) { }
+        private void label5_Click(object sender, EventArgs e) { }
+
+        private void btnManageRoomTypes_Click(object sender, EventArgs e)
+        {
+            FrmManageRoomTypes frm = new FrmManageRoomTypes();
+            frm.ShowDialog();
+
+            _ = LoadRoomTypesAsync();
+        }
     }
 }
