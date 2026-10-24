@@ -1,0 +1,70 @@
+﻿@model QuanLyKhachSan.Web.Models.DangKyViewModel
+@{
+    ViewData["Title"] = "Đăng ký thành viên";
+    ViewData["NavbarOverlay"] = false;
+}
+
+<div class="container py-5 mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold" style="color: #24392f; font-family: Georgia, serif;">Đăng ký tài khoản</h2>
+                    <p class="text-muted small">Trở thành thành viên của Sawade để nhận ưu đãi và quản lý phòng dễ dàng.</p>
+                </div>
+
+                @if (TempData["Loi"] != null)
+                {
+                    <div class="alert alert-danger rounded-3 small">@TempData["Loi"]</div>
+                }
+
+                <form asp-controller="TaiKhoan" asp-action="DangKy" method="post" class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-muted">Họ và tên *</label>
+                        <input type="text" asp-for="HoTen" class="form-control py-2 rounded-3" placeholder="Nhập họ tên đầy đủ..." required>
+                        <span asp-validation-for="HoTen" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Số điện thoại *</label>
+                        <input type="tel" asp-for="SoDienThoai" class="form-control py-2 rounded-3" placeholder="10-11 chữ số..." required>
+                        <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">CCCD / CMND *</label>
+                        <input type="text" asp-for="CCCD" class="form-control py-2 rounded-3" placeholder="Số giấy tờ..." required>
+                        <span asp-validation-for="CCCD" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-muted">Email (Tùy chọn)</label>
+                        <input type="email" asp-for="Email" class="form-control py-2 rounded-3" placeholder="example@gmail.com...">
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Mật khẩu *</label>
+                        <input type="password" asp-for="MatKhau" class="form-control py-2 rounded-3" placeholder="Tạo mật khẩu..." required>
+                        <span asp-validation-for="MatKhau" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Xác nhận mật khẩu *</label>
+                        <input type="password" asp-for="XacNhanMatKhau" class="form-control py-2 rounded-3" placeholder="Nhập lại mật khẩu..." required>
+                        <span asp-validation-for="XacNhanMatKhau" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-dark w-100 rounded-pill py-3 fw-bold mb-3" style="background-color: #24392f; border-color: #24392f;">
+                            Hoàn tất đăng ký
+                        </button>
+                        <div class="text-center small">
+                            Đã có tài khoản? <a href="/TaiKhoan/DangNhap" class="fw-bold text-decoration-none" style="color: #987447;">Đăng nhập ngay</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

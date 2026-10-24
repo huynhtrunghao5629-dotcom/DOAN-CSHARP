@@ -1,0 +1,136 @@
+﻿@model List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    ViewData["NavbarOverlay"] = false;
+}
+
+<div class="container py-5 mt-4">
+    <div class="row g-4">
+        <!-- Cột thông tin người dùng -->
+        <div class="col-lg-4">
+            <!-- Hiển thị thông báo khi cập nhật xong -->
+            @if (TempData["ThongBao"] != null)
+            {
+                <div class="alert alert-success rounded-3 small shadow-sm"><i class="bi bi-check-circle me-1"></i>@TempData["ThongBao"]</div>
+            }
+            @if (TempData["Loi"] != null)
+            {
+                <div class="alert alert-danger rounded-3 small shadow-sm"><i class="bi bi-exclamation-circle me-1"></i>@TempData["Loi"]</div>
+            }
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-person-fill fs-1 text-secondary"></i>
+                </div>
+                <h4 class="fw-bold mb-1">@ViewBag.HoTen</h4>
+                <p class="text-muted mb-4"><i class="bi bi-telephone me-2"></i>@ViewBag.SoDienThoai</p>
+
+                <!-- NÚT MỚI THÊM VÀO -->
+                <button class="btn btn-dark rounded-pill w-100 fw-bold mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal" style="background-color: #24392f;">
+                    <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa thông tin
+                </button>
+                <a asp-controller="TaiKhoan" asp-action="DangXuat" class="btn btn-outline-danger rounded-pill w-100 fw-bold">Đăng xuất</a>
+            </div>
+        </div>
+
+        <!-- Cột lịch sử đặt phòng -->
+        <div class="col-lg-8">
+            <h4 class="fw-bold mb-4" style="color: #24392f; font-family: Georgia, serif;">Lịch sử đặt phòng của bạn</h4>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var don in Model)
+                    {
+                        // Chuẩn hóa trạng thái
+                        var rawStatus = (don.TrangThai ?? string.Empty).Trim();
+                        var normalizedStatus = rawStatus.ToLowerInvariant();
+
+                        var statusText = normalizedStatus switch
+                        {
+                            "dadat" or "da dat" or "đã đặt" or "booked" => "Đã đặt",
+                            "choxacnhan" or "chờ xác nhận" => "Chờ xác nhận",
+                            "dahuy" or "đã hủy" => "Đã hủy",
+                            "datra" or "đã trả" => "Đã trả",
+                            "dango" or "đang ở" => "Đang ở",
+                            _ => string.IsNullOrWhiteSpace(rawStatus) ? "Chờ xác nhận" : rawStatus
+                        };
+
+                        // Gán màu sắc cho huy hiệu
+                        var badgeClass = statusText == "Đã đặt" || statusText == "Đang ở" ? "bg-success" :
+                        statusText == "Chờ xác nhận" ? "bg-warning text-dark" :
+                        statusText == "Đã hủy" ? "bg-danger" : "bg-secondary";
+
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                                <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+                                    <!-- In trạng thái đã chuẩn hóa -->
+                                    <span class="badge @badgeClass"><i class="bi bi-bookmark-check-fill me-1"></i>@statusText</span>
+                                    <strong class="text-danger">@don.TongTien.ToString("#,##0") đ</strong>
+                                </div>
+                                    @if (statusText == "Chờ xác nhận")
+                                    {
+                                        <form asp-controller="TaiKhoan" asp-action="HuyDonHang" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn đặt phòng này không?');">
+                                            <input type="hidden" name="datPhongId" value="@don.DatPhongId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill fw-semibold">
+                                                <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                                            </button>
+                                        </form>
+                                    }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center p-5 bg-light rounded-4">
+                    <i class="bi bi-journal-x fs-1 text-muted"></i>
+                    <p class="mt-3 mb-0 text-muted">Bạn chưa có đơn đặt phòng nào.</p>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+@section Modals{
+<!-- Modal Chỉnh Sửa Thông Tin -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="editProfileModalLabel" style="color: #24392f;">Cập nhật hồ sơ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form asp-controller="TaiKhoan" asp-action="CapNhatTaiKhoan" method="post">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Số điện thoại (Tài khoản)</label>
+                        <input type="text" class="form-control bg-light" value="@ViewBag.SoDienThoai" disabled>
+                        <small class="text-danger" style="font-size: 0.75rem;">*Không thể thay đổi SĐT đăng nhập.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Họ và tên</label>
+                        <input type="text" name="hoTen" class="form-control" value="@ViewBag.HoTen" required>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">CCCD / CMND</label>
+                            <input type="text" name="cccd" class="form-control" value="@ViewBag.Cccd" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Email</label>
+                            <input type="email" name="email" class="form-control" value="@ViewBag.Email">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold">Mật khẩu mới <span class="text-muted fw-normal">(Bỏ trống nếu không đổi)</span></label>
+                        <input type="password" name="matKhauMoi" class="form-control" placeholder="Nhập mật khẩu mới...">
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill py-2 fw-bold" style="background-color: #24392f;">Lưu thay đổi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+}
