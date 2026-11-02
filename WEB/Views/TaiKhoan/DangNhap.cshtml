@@ -1,0 +1,55 @@
+﻿@model QuanLyKhachSan.Web.Models.DangNhapViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    ViewData["NavbarOverlay"] = false;
+}
+
+<div class="container py-5 mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold" style="color: #24392f; font-family: Georgia, serif;">Chào mừng trở lại</h2>
+                    <p class="text-muted small">Đăng nhập để quản lý đặt phòng và nhận ưu đãi riêng.</p>
+                </div>
+
+                @if (TempData["Loi"] != null)
+                {
+                    <div class="alert alert-danger rounded-3 small">@TempData["Loi"]</div>
+                }
+                @if (TempData["ThongBao"] != null)
+                {
+                    <div class="alert alert-success rounded-3 small">@TempData["ThongBao"]</div>
+                }
+
+                <form asp-controller="TaiKhoan" asp-action="DangNhap" method="post">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Số điện thoại hoặc Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-person text-muted"></i></span>
+                            <input type="text" asp-for="TaiKhoan" class="form-control border-start-0 py-2" placeholder="Nhập số điện thoại..." required>
+                        </div>
+                        <span asp-validation-for="TaiKhoan" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">Mật khẩu</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                            <input type="password" asp-for="MatKhau" class="form-control border-start-0 py-2" placeholder="Nhập mật khẩu..." required>
+                        </div>
+                        <span asp-validation-for="MatKhau" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill py-3 fw-bold mb-3" style="background-color: #24392f; border-color: #24392f;">
+                        Đăng nhập
+                    </button>
+
+                    <div class="text-center small">
+                        Chưa có tài khoản? <a href="/TaiKhoan/DangKy" class="fw-bold text-decoration-none" style="color: #987447;">Đăng ký ngay</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
