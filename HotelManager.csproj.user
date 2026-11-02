@@ -1,16 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup />
   <ItemGroup>
-    <Compile Update="HotelManager\UI\FrmLogin.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="HotelManager\UI\FrmMain.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="HotelManager\UI\FrmManageCustomers.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="HotelManager\UI\FrmManageRooms.cs">
+    <Compile Update="UI\FrmCreateBooking.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="UI\FrmLogin.cs">
@@ -19,7 +11,28 @@
     <Compile Update="UI\FrmMain.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="UI\FrmManageBookings.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="UI\FrmManageCustomers.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="UI\FrmManageInvoices.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="UI\FrmManageRooms.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="UI\FrmManageServices.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="UI\FrmManageUsers.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="UI\FrmReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="UI\FrmRoomGrid.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

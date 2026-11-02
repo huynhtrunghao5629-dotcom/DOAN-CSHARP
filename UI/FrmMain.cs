@@ -6,52 +6,79 @@ namespace HotelManager.UI
 {
     public partial class FrmMain : Form
     {
-        private readonly UserSession _currentUser;
+        public static UserSession? CurrentSession { get; private set; }
 
         public FrmMain(UserSession userSession)
         {
             InitializeComponent();
-            _currentUser = userSession;
+            CurrentSession = userSession;
+        }
+
+        public FrmMain()
+        {
+            InitializeComponent();
         }
 
         private void FrmMain_Load(object sender, EventArgs e)
         {
-            // Hiển thị thông tin người dùng lên tiêu đề form
-            this.Text = $"Hệ thống Quản lý Khách sạn - [Xin chào: {_currentUser.Username} | Quyền: {_currentUser.Role}]";
+            if (CurrentSession != null)
+            {
+                this.Text = $"Hệ thống Quản lý Khách sạn - [Xin chào: {CurrentSession.Username} | Quyền: {CurrentSession.Role}]";
+            }
         }
 
-        // Sự kiện bấm vào menu Quản lý phòng
-        // Sự kiện bấm vào menu Quản lý phòng
-        private void mnuManageRooms_Click(object sender, EventArgs e)
+        private void OpenChildForm<T>() where T : Form, new()
         {
-            // Kiểm tra nếu form đã mở thì active lên, tránh mở trùng lặp
             foreach (Form child in this.MdiChildren)
             {
-                if (child is FrmManageRooms)
+                if (child is T)
                 {
                     child.Activate();
                     return;
                 }
             }
 
-            // Tạo mới form con
-            FrmManageRooms frm = new FrmManageRooms();
-            frm.MdiParent = this;
-            frm.WindowState = FormWindowState.Maximized; // Phóng to toàn bộ vùng làm việc
+            T frm = new T
+            {
+                MdiParent = this,
+                WindowState = FormWindowState.Maximized
+            };
             frm.Show();
         }
 
-        // Sự kiện Đăng xuất hệ thống
+        // Quản lý Phòng (Đã có Form)
+        private void mnuManageRooms_Click(object sender, EventArgs e)
+        {
+            OpenChildForm<FrmManageRooms>();
+        }
+
+        // Quản lý Khách hàng (Đã có Form)
+        private void mnuManageCustomers_Click(object sender, EventArgs e)
+        {
+            OpenChildForm<FrmManageCustomers>();
+        }
+
+        // Các chức năng đang phát triển (Tạm thời hiện thông báo để không bị lỗi Build)
+        private void mnuManageBookings_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Chức năng Quản lý Đặt phòng đang được tích hợp!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void mnuManageRoomTypes_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Chức năng đang được phát triển!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
         private void mnuLogout_Click(object sender, EventArgs e)
         {
-            var confirm = MessageBox.Show("Bạn có muốn đăng xuất tài khoản không?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var confirm = MessageBox.Show("Bạn có muốn đăng xuất không?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm == DialogResult.Yes)
             {
+                CurrentSession = null;
                 this.Hide();
                 FrmLogin login = new FrmLogin();
                 if (login.ShowDialog() == DialogResult.OK)
                 {
-                    // Nếu đăng nhập lại thành công thì mở lại form chính
                     this.Close();
                 }
                 else
@@ -61,14 +88,48 @@ namespace HotelManager.UI
             }
         }
 
-        // Sự kiện Thoát ứng dụng
         private void mnuExit_Click(object sender, EventArgs e)
         {
-            DialogResult dr = MessageBox.Show("Bạn có chắc chắn muốn thoát chương trình không?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (dr == DialogResult.Yes)
+            if (MessageBox.Show("Thoát chương trình?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 Application.Exit();
             }
+        }
+
+        // Sự kiện Click menu Sơ đồ phòng
+        private void mnuRoomGrid_Click(object sender, EventArgs e)
+        {
+            OpenChildForm<FrmRoomGrid>();
+        }
+
+        // Sự kiện Click menu Quản lý / Ghi nhận Dịch vụ
+        private void mnuManageServices_Click(object sender, EventArgs e)
+        {
+            OpenChildForm<FrmManageServices>();
+        }
+
+        // Sự kiện Click menu Quản lý Hóa đơn & Thanh toán
+        private void mnuManageInvoices_Click(object sender, EventArgs e)
+        {
+            OpenChildForm<FrmManageInvoices>();
+        }
+
+        // Sự kiện Click menu Quản lý Tài khoản Nhân viên
+        private void mnuManageUsers_Click(object sender, EventArgs e)
+        {
+            // Chỉ tài khoản Role Admin mới được phép mở màn hình quản lý nhân viên
+            if (CurrentSession != null && CurrentSession.Role != "Admin")
+            {
+                MessageBox.Show("Chức năng này chỉ dành riêng cho Quản trị viên (Admin)!", "Truy cập bị từ chối", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            OpenChildForm<FrmManageUsers>();
+        }
+
+        private void mnuReport_Click(object sender, EventArgs e)
+        {
+            OpenChildForm<FrmReport>();
         }
     }
 }
