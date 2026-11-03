@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace HotelManagement.Desktop.Models
 {
@@ -19,13 +20,27 @@ namespace HotelManagement.Desktop.Models
         public RoomStatus Status { get; set; }
     }
 
+    // API JSON: khachHangId, hoTen, cccd, soDienThoai, email.
+    // Keep the public properties used by existing WinForms code.
     public class CustomerDto
     {
+        [JsonPropertyName("khachHangId")]
         public int CustomerId { get; set; }
+
+        [JsonPropertyName("hoTen")]
         public string? FullName { get; set; }
-        public string? IdentityCard { get; set; } // CCCD/CMND
+
+        [JsonPropertyName("cccd")]
+        public string? IdentityCard { get; set; }
+
+        [JsonPropertyName("soDienThoai")]
         public string? PhoneNumber { get; set; }
+
+        [JsonPropertyName("email")]
         public string? Email { get; set; }
+
+        [JsonPropertyName("diaChi")]
+        public string? Address { get; set; }
     }
 
     public class LoginRequest

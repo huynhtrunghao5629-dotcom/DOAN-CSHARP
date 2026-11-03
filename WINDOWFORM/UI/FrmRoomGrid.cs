@@ -1,4 +1,5 @@
-﻿using HotelManagement.Desktop.Models;
+﻿using HotelManager.Services;
+using HotelManagement.Desktop.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -27,9 +28,9 @@ namespace HotelManager.UI
 
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
                 {
-                    HttpResponseMessage response = await client.GetAsync("api/Phong");
+                HttpClient client = BaseApiClient.GetClient();
+                    HttpResponseMessage response = await client.GetAsync("Phong");
                     if (response.IsSuccessStatusCode)
                     {
                         var rooms = await response.Content.ReadFromJsonAsync<List<PhongViewModel>>();
@@ -69,24 +70,28 @@ namespace HotelManager.UI
             btn.FlatAppearance.BorderSize = 1;
             btn.FlatAppearance.BorderColor = Color.DarkGray;
 
-            // Thiết lập màu sắc và Text theo Trạng thái
-            string statusText = "";
-            switch (room.TrangThai)
+            // Tách mã lưu trong API và nhãn tiếng Việt trên giao diện.
+            string statusText = TrangThaiTiengViet.Phong(room.TrangThai);
+            switch (statusText)
             {
-                case "DangSuDung":
-                    btn.BackColor = Color.FromArgb(220, 53, 69); // Đỏ
+                case "Đang có khách":
+                    btn.BackColor = Color.FromArgb(220, 53, 69);
                     btn.ForeColor = Color.White;
-                    statusText = "Đang ở";
                     break;
-                case "DangBaoTri":
-                    btn.BackColor = Color.FromArgb(255, 193, 7); // Vàng
+                case "Đang bảo trì":
+                case "Đang dọn phòng":
+                case "Đã đặt":
+                    btn.BackColor = Color.FromArgb(255, 193, 7);
                     btn.ForeColor = Color.Black;
-                    statusText = "Bảo trì";
                     break;
-                default: // "Trong"
-                    btn.BackColor = Color.FromArgb(40, 167, 69); // Xanh lá
+                case "Trống":
+                    btn.BackColor = Color.FromArgb(40, 167, 69);
                     btn.ForeColor = Color.White;
-                    statusText = "Trống";
+                    break;
+                default:
+                    // Không hiểu trạng thái thì không đánh dấu nhầm là phòng trống.
+                    btn.BackColor = Color.LightGray;
+                    btn.ForeColor = Color.Black;
                     break;
             }
 
@@ -100,7 +105,7 @@ namespace HotelManager.UI
         {
             if (sender is Button btn && btn.Tag is PhongViewModel room)
             {
-                if (room.TrangThai == "Trong")
+                if (TrangThaiTiengViet.Phong(room.TrangThai) == "Trống")
                 {
                     var result = MessageBox.Show($"Phòng {room.SoPhong} đang TRỐNG.\nBạn có muốn mở màn hình Đặt phòng tại quầy không?",
                                                  "Thao tác nhanh", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -115,7 +120,7 @@ namespace HotelManager.UI
                 }
                 else
                 {
-                    MessageBox.Show($"Phòng: {room.SoPhong}\nLoại: {room.TenLoaiPhong}\nGiá: {room.GiaPhong:N0} VNĐ\nTrạng thái: {room.TrangThai}",
+                    MessageBox.Show($"Phòng: {room.SoPhong}\nLoại: {room.TenLoaiPhong}\nGiá: {room.GiaPhong:N0} VNĐ\nTrạng thái: {TrangThaiTiengViet.Phong(room.TrangThai)}",
                                     "Thông tin chi tiết phòng", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }

@@ -1,8 +1,7 @@
-﻿using HotelManagement.Desktop.Models;
+﻿using HotelManager.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -11,77 +10,75 @@ namespace HotelManager.UI
 {
     public partial class FrmReport : Form
     {
-        public FrmReport()
+        private sealed class MonthlyRevenue
         {
-            InitializeComponent();
+            public int Thang { get; set; }
+            public decimal DoanhThu { get; set; }
+            public int SoDon { get; set; }
         }
+
+        public FrmReport() => InitializeComponent();
 
         private async void FrmReport_Load(object sender, EventArgs e)
         {
-            InitFilterControls();
-            SetupDataGridView();
-            await LoadReportDataAsync();
-        }
-
-        private void InitFilterControls()
-        {
             cboMonth.Items.Clear();
-            for (int i = 1; i <= 12; i++)
-            {
-                cboMonth.Items.Add($"Tháng {i}");
-            }
+            for (int m = 1; m <= 12; m++) cboMonth.Items.Add($"Tháng {m}");
             cboMonth.SelectedIndex = DateTime.Now.Month - 1;
-            nudYear.Value = DateTime.Now.Year;
-        }
-
-        private void SetupDataGridView()
-        {
+            nudYear.Value = Math.Min(nudYear.Maximum, Math.Max(nudYear.Minimum, DateTime.Now.Year));
             dgvReport.AutoGenerateColumns = true;
-            dgvReport.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvReport.BackgroundColor = System.Drawing.Color.White;
+            lblTotalBookingsTitle.Text = "SỐ ĐƠN ĐẶT PHÁT SINH:";
+            dgvReport.DataBindingComplete += (_, _) =>
+            {
+                foreach (DataGridViewColumn column in dgvReport.Columns)
+                {
+                    column.HeaderText = column.DataPropertyName switch
+                    {
+                        "Thang" => "Tháng",
+                        "DoanhThu" => "Doanh thu đã ghi nhận",
+                        "SoDon" => "Số đơn đặt",
+                        _ => column.HeaderText
+                    };
+                    if (column.DataPropertyName == "DoanhThu") column.DefaultCellStyle.Format = "N0";
+                }
+            };
             dgvReport.ReadOnly = true;
+            lblOccupancyRate.Text = "Chưa có dữ liệu";
+            await LoadReportDataAsync();
         }
 
         private async Task LoadReportDataAsync()
         {
-            int month = cboMonth.SelectedIndex + 1;
-            int year = (int)nudYear.Value;
-
+            var month = cboMonth.SelectedIndex + 1;
+            var year = (int)nudYear.Value;
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
+                btnViewReport.Enabled = false;
+                using var response = await BaseApiClient.GetClient()
+                    .GetAsync($"ThongKe/doanh-thu-theo-thang?nam={year}");
+                if (!response.IsSuccessStatusCode)
                 {
-                    HttpResponseMessage response = await client.GetAsync($"api/BaoCao/doanh-thu?thang={month}&nam={year}");
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var dailyReport = await response.Content.ReadFromJsonAsync<List<BaoCaoDoanhThuViewModel>>() ?? new List<BaoCaoDoanhThuViewModel>();
-                        dgvReport.DataSource = dailyReport;
-
-                        decimal grandTotalRevenue = dailyReport.Sum(r => r.TongDoanhThu);
-                        int grandTotalBookings = dailyReport.Sum(r => r.SoLuotDatPhong);
-
-                        int daysInMonth = DateTime.DaysInMonth(year, month);
-                        double occupancyRate = Math.Min(100.0, Math.Round((double)grandTotalBookings / (daysInMonth * 10) * 100, 1));
-
-                        lblTotalRevenue.Text = $"{grandTotalRevenue:N0} VNĐ";
-                        lblTotalBookings.Text = $"{grandTotalBookings} lượt đặt";
-                        lblOccupancyRate.Text = $"{occupancyRate}%";
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Không thể tải báo cáo. Mã lỗi API: {response.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    MessageBox.Show($"Không lấy được báo cáo: HTTP {(int)response.StatusCode}", "Lỗi API");
+                    return;
                 }
+                var yearly = await response.Content.ReadFromJsonAsync<List<MonthlyRevenue>>() ?? new();
+                var current = yearly.Where(x => x.Thang == month).ToList();
+                dgvReport.DataSource = current;
+                lblTotalRevenue.Text = $"{current.Sum(x => x.DoanhThu):N0} VNĐ";
+                lblTotalBookings.Text = $"{current.Sum(x => x.SoDon)} đơn";
+                // No reliable sold-room-nights / available-room-nights data yet.
+                lblOccupancyRate.Text = "Chưa có dữ liệu";
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi kết nối khi lấy báo cáo: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Không thể tải báo cáo: {ex.Message}", "Lỗi kết nối");
+            }
+            finally
+            {
+                btnViewReport.Enabled = true;
             }
         }
 
-        private async void btnViewReport_Click(object sender, EventArgs e)
-        {
-            await LoadReportDataAsync();
-        }
+        private async void btnViewReport_Click(object sender, EventArgs e) => await LoadReportDataAsync();
     }
 }

@@ -1,4 +1,5 @@
-﻿using HotelManagement.Desktop.Models;
+﻿using HotelManager.Services;
+using HotelManagement.Desktop.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -27,17 +28,34 @@ namespace HotelManager.UI
         private void InitRolesComboBox()
         {
             cboRole.Items.Clear();
-            cboRole.Items.Add("Staff");
-            cboRole.Items.Add("Admin");
+            cboRole.Items.Add("Nhân viên / Lễ tân");
+            cboRole.Items.Add("Quản lý");
             cboRole.SelectedIndex = 0;
         }
 
         private void SetupDataGridView()
         {
             dgvUsers.AutoGenerateColumns = true;
+            dgvUsers.DataBindingComplete += (sender, args) => TieuDeTiengViet.GanCho(dgvUsers);
             dgvUsers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvUsers.MultiSelect = false;
             dgvUsers.ReadOnly = true;
+            dgvUsers.CellFormatting += (sender, args) =>
+            {
+                if (args.RowIndex < 0 || args.ColumnIndex < 0) return;
+                string column = dgvUsers.Columns[args.ColumnIndex].DataPropertyName;
+                if (column == "Role")
+                {
+                    args.Value = TrangThaiTiengViet.VaiTro(args.Value?.ToString());
+                    args.FormattingApplied = true;
+                }
+                else if (column == "IsActive" && args.Value is bool active &&
+                         dgvUsers.Columns[args.ColumnIndex] is DataGridViewTextBoxColumn)
+                {
+                    args.Value = active ? "Đang hoạt động" : "Đã khóa";
+                    args.FormattingApplied = true;
+                }
+            };
         }
 
         // 1. TẢI DANH SÁCH TÀI KHOẢN TỪ API (GET)
@@ -45,9 +63,9 @@ namespace HotelManager.UI
         {
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
                 {
-                    HttpResponseMessage response = await client.GetAsync("api/TaiKhoan");
+                HttpClient client = BaseApiClient.GetClient();
+                    HttpResponseMessage response = await client.GetAsync("TaiKhoan");
                     if (response.IsSuccessStatusCode)
                     {
                         var users = await response.Content.ReadFromJsonAsync<List<UserAccountViewModel>>();
@@ -80,15 +98,15 @@ namespace HotelManager.UI
                 Username = txtUsername.Text.Trim(),
                 Password = txtPassword.Text.Trim(),
                 FullName = txtFullName.Text.Trim(),
-                Role = cboRole.SelectedItem?.ToString() ?? "Staff",
+                Role = cboRole.SelectedIndex == 1 ? "Admin" : "Staff",
                 IsActive = chkIsActive.Checked
             };
 
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
                 {
-                    HttpResponseMessage response = await client.PostAsJsonAsync("api/TaiKhoan", userDto);
+                HttpClient client = BaseApiClient.GetClient();
+                    HttpResponseMessage response = await client.PostAsJsonAsync("TaiKhoan", userDto);
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Thêm tài khoản nhân viên mới thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -121,15 +139,15 @@ namespace HotelManager.UI
                 Username = txtUsername.Text.Trim(),
                 Password = txtPassword.Text.Trim(), // Có thể để trống nếu không đổi password
                 FullName = txtFullName.Text.Trim(),
-                Role = cboRole.SelectedItem?.ToString() ?? "Staff",
+                Role = cboRole.SelectedIndex == 1 ? "Admin" : "Staff",
                 IsActive = chkIsActive.Checked
             };
 
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
                 {
-                    HttpResponseMessage response = await client.PutAsJsonAsync($"api/TaiKhoan/{_selectedUserId}", userDto);
+                HttpClient client = BaseApiClient.GetClient();
+                    HttpResponseMessage response = await client.PutAsJsonAsync($"TaiKhoan/{_selectedUserId}", userDto);
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Cập nhật thông tin tài khoản thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -161,9 +179,9 @@ namespace HotelManager.UI
 
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
                 {
-                    HttpResponseMessage response = await client.DeleteAsync($"api/TaiKhoan/{_selectedUserId}");
+                HttpClient client = BaseApiClient.GetClient();
+                    HttpResponseMessage response = await client.DeleteAsync($"TaiKhoan/{_selectedUserId}");
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Xóa tài khoản thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -193,7 +211,7 @@ namespace HotelManager.UI
                     txtUsername.Text = user.Username;
                     txtPassword.Text = user.Password;
                     txtFullName.Text = user.FullName;
-                    cboRole.SelectedItem = user.Role;
+                    cboRole.SelectedIndex = TrangThaiTiengViet.VaiTro(user.Role) == "Quản lý" ? 1 : 0;
                     chkIsActive.Checked = user.IsActive;
                 }
             }

@@ -1,7 +1,7 @@
-using HotelManagement.Desktop.Models;
-using HotelManager.UI;
 using System;
 using System.Windows.Forms;
+using HotelManagement.Desktop.Models;
+using HotelManager.UI;
 
 namespace HotelManager
 {
@@ -13,17 +13,13 @@ namespace HotelManager
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Bước 1: Mở màn hình đăng nhập trước
+            // 1. Mở màn hình đăng nhập FrmLogin trước
             FrmLogin loginForm = new FrmLogin();
 
-            // Nếu người dùng đăng nhập thành công (trả về DialogResult.OK)
-            if (loginForm.ShowDialog() == DialogResult.OK)
+            // 2. Nếu đăng nhập thành công, lấy thông tin UserSession chuyển sang FrmMain
+            if (loginForm.ShowDialog() == DialogResult.OK && loginForm.CurrentUser != null)
             {
-                // Bước 2: Lấy thông tin UserSession truyền sang Form chính (FrmMain)
-                UserSession? session = loginForm.CurrentUser;
-
-                // Bước 3: Khởi chạy giao diện chính của hệ thống
-                Application.Run(new FrmMain(session));
+                Application.Run(new FrmMain(loginForm.CurrentUser));
             }
         }
     }

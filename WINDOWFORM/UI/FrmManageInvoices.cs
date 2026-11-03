@@ -1,8 +1,8 @@
-﻿using HotelManagement.Desktop.Models;
+﻿using HotelManager.Services;
+using HotelManagement.Desktop.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,9 +12,11 @@ namespace HotelManager.UI
 {
     public partial class FrmManageInvoices : Form
     {
-        private List<BookingViewModel> _occupiedBookings = new List<BookingViewModel>();
+        private List<BookingViewModel> _occupiedBookings = new();
         private BookingViewModel? _selectedBooking;
-        private List<ChiTietDichVuViewModel> _serviceDetails = new List<ChiTietDichVuViewModel>();
+        private List<ChiTietDichVuViewModel> _serviceDetails = new();
+        private bool _servicesLoaded;
+        private bool _loadingBookings;
 
         public FrmManageInvoices()
         {
@@ -23,200 +25,172 @@ namespace HotelManager.UI
 
         private async void FrmManageInvoices_Load(object sender, EventArgs e)
         {
-            SetupDataGridView();
+            dgvServices.AutoGenerateColumns = true;
+            dgvServices.DataBindingComplete += (sender, args) => TieuDeTiengViet.GanCho(dgvServices);
+            dgvServices.BackgroundColor = System.Drawing.Color.White;
+            dgvServices.ReadOnly = true;
+            dgvServices.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            // Không thể ghi thanh toán + check-out an toàn bằng hai request độc lập.
+            btnPay.Enabled = false;
+            btnPay.Text = "Thanh toán (chờ API)";
+            btnPrintInvoice.Text = "Xem bảng tính tạm";
             dtpCheckOut.Value = DateTime.Now;
             await LoadOccupiedBookingsAsync();
         }
 
-        private void SetupDataGridView()
-        {
-            dgvServices.AutoGenerateColumns = true;
-            dgvServices.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvServices.ReadOnly = true;
-        }
-
-        // 1. TẢI CÁC ĐƠN ĐẶT PHÒNG ĐANG Ở (DaNhanPhong)
         private async Task LoadOccupiedBookingsAsync()
         {
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.GetAsync("api/DonDatPhong");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var allBookings = await response.Content.ReadFromJsonAsync<List<BookingViewModel>>();
-                        _occupiedBookings = allBookings?.Where(b => b.TrangThai == "DaNhanPhong").ToList() ?? new List<BookingViewModel>();
+                btnRefresh.Enabled = false;
+                _loadingBookings = true;
+                var client = BaseApiClient.GetClient();
+                using var response = await client.GetAsync("DatPhong");
+                if (!response.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"API DatPhong trả về {(int)response.StatusCode}.");
 
-                        cboOccupiedBookings.DataSource = _occupiedBookings;
-                        cboOccupiedBookings.DisplayMember = "SoPhong";
-                        cboOccupiedBookings.ValueMember = "Id";
+                var all = await response.Content.ReadFromJsonAsync<List<BookingViewModel>>()
+                    ?? new List<BookingViewModel>();
+                _occupiedBookings = all.Where(b => b.TrangThai == "DangO" || b.TrangThai == "DaNhanPhong").ToList();
 
-                        if (_occupiedBookings.Count == 0)
-                        {
-                            ClearInvoiceDetails();
-                        }
-                    }
-                }
+                cboOccupiedBookings.DataSource = null;
+                cboOccupiedBookings.DisplayMember = "SoPhong";
+                cboOccupiedBookings.ValueMember = "Id";
+                cboOccupiedBookings.DataSource = _occupiedBookings;
+                ClearInvoiceDetails();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải danh sách đơn lưu trú: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _occupiedBookings.Clear();
+                cboOccupiedBookings.DataSource = null;
+                ClearInvoiceDetails();
+                MessageBox.Show($"Lỗi tải danh sách đơn đang ở: {ex.Message}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        // 2. TẢI CHI TIẾT DỊCH VỤ PHÒNG ĐÃ DÙNG
-        private async Task LoadServicesForRoomAsync(string phongId)
-        {
-            if (string.IsNullOrEmpty(phongId))
+            finally
             {
-                _serviceDetails = new List<ChiTietDichVuViewModel>();
-                dgvServices.DataSource = null;
-                return;
+                _loadingBookings = false;
+                btnRefresh.Enabled = true;
             }
 
-            try
-            {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.GetAsync($"api/ChiTietDichVu/phong/{phongId}");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        _serviceDetails = await response.Content.ReadFromJsonAsync<List<ChiTietDichVuViewModel>>() ?? new List<ChiTietDichVuViewModel>();
-                        dgvServices.DataSource = _serviceDetails;
-                    }
-                }
-            }
-            catch
-            {
-                _serviceDetails = new List<ChiTietDichVuViewModel>();
-                dgvServices.DataSource = null;
-            }
-        }
-
-        // 3. TÍNH TOÁN VÀ HIỂN THỊ TỔNG TIỀN
-        private void CalculateInvoiceTotals()
-        {
-            if (_selectedBooking == null) return;
-
-            DateTime checkIn = _selectedBooking.NgayNhanPhong;
-            DateTime checkOut = dtpCheckOut.Value;
-
-            int days = Math.Max(1, (checkOut.Date - checkIn.Date).Days);
-            decimal roomRate = _selectedBooking.TongTien > 0 ? _selectedBooking.TongTien : 500000; // Mặc định hoặc lấy theo đơn
-            decimal roomTotal = days * roomRate;
-            decimal serviceTotal = _serviceDetails.Sum(s => s.ThanhTien);
-            decimal grandTotal = roomTotal + serviceTotal;
-
-            txtDays.Text = $"{days} ngày";
-            txtRoomRate.Text = $"{roomRate:N0} VNĐ";
-            txtRoomTotal.Text = $"{roomTotal:N0} VNĐ";
-            txtServiceTotal.Text = $"{serviceTotal:N0} VNĐ";
-            lblGrandTotalAmount.Text = $"{grandTotal:N0} VNĐ";
-        }
-
-        // 4. THỰC HIỆN THANH TOÁN & CHECK-OUT QUA API
-        private async void btnPay_Click(object sender, EventArgs e)
-        {
-            if (_selectedBooking == null)
-            {
-                MessageBox.Show("Vui lòng chọn đơn đặt phòng cần thanh toán!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            var confirm = MessageBox.Show($"Xác nhận thanh toán cho khách hàng '{_selectedBooking.TenKhachHang}' (Phòng {_selectedBooking.SoPhong}) với tổng tiền {lblGrandTotalAmount.Text}?",
-                                         "Xác nhận thanh toán", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
-
-            try
-            {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    // a. Cập nhật trạng thái Đơn đặt phòng -> 'DaThanhToan'
-                    var payloadStatus = new { TrangThai = "DaThanhToan" };
-                    HttpResponseMessage respBooking = await client.PutAsJsonAsync($"api/DonDatPhong/{_selectedBooking.Id}/trang-thai", payloadStatus);
-
-                    // b. Cập nhật trạng thái Phòng -> 'Trong'
-                    if (!string.IsNullOrEmpty(_selectedBooking.SoPhong))
-                    {
-                        var payloadRoom = new { TrangThai = "Trong" };
-                        await client.PutAsJsonAsync($"api/Phong/{_selectedBooking.SoPhong}/trang-thai", payloadRoom);
-                    }
-
-                    if (respBooking.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Thanh toán và làm thủ tục Trả phòng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        await LoadOccupiedBookingsAsync();
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Thanh toán thất bại. Mã lỗi API: {respBooking.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi kết nối khi thanh toán: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        // 5. IN / XEM TRƯỚC HÓA ĐƠN
-        private void btnPrintInvoice_Click(object sender, EventArgs e)
-        {
-            if (_selectedBooking == null)
-            {
-                MessageBox.Show("Vui lòng chọn đơn đặt phòng để xem hóa đơn!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("==========================================");
-            sb.AppendLine("         HÓA ĐƠN THANH TOÁN KHÁCH SẠN");
-            sb.AppendLine("==========================================");
-            sb.AppendLine($"Khách hàng : {_selectedBooking.TenKhachHang}");
-            sb.AppendLine($"Số phòng   : {_selectedBooking.SoPhong}");
-            sb.AppendLine($"Ngày nhận  : {_selectedBooking.NgayNhanPhong:dd/MM/yyyy HH:mm}");
-            sb.AppendLine($"Ngày trả   : {dtpCheckOut.Value:dd/MM/yyyy HH:mm}");
-            sb.AppendLine($"Số ngày ở  : {txtDays.Text}");
-            sb.AppendLine($"Tiền phòng : {txtRoomTotal.Text}");
-            sb.AppendLine("------------------------------------------");
-            sb.AppendLine("DỊCH VỤ SỬ DỤNG:");
-            foreach (var s in _serviceDetails)
-            {
-                sb.AppendLine($" - {s.TenDichVu} (x{s.SoLuong}): {s.ThanhTien:N0} VNĐ");
-            }
-            sb.AppendLine($"Tiền dịch vụ: {txtServiceTotal.Text}");
-            sb.AppendLine("------------------------------------------");
-            sb.AppendLine($"TỔNG CỘNG  : {lblGrandTotalAmount.Text}");
-            sb.AppendLine("==========================================");
-            sb.AppendLine("   Cảm ơn Quý khách & Hẹn gặp lại!");
-
-            MessageBox.Show(sb.ToString(), "Chi tiết Hóa đơn thanh toán", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        // HELPER & SỰ KIỆN GIAO DIỆN
-        private async void cboOccupiedBookings_SelectedIndexChanged(object sender, EventArgs e)
-        {
             if (cboOccupiedBookings.SelectedItem is BookingViewModel booking)
-            {
-                _selectedBooking = booking;
-                txtCustomerName.Text = booking.TenKhachHang;
-                txtRoomNumber.Text = booking.SoPhong;
-                txtCheckIn.Text = booking.NgayNhanPhong.ToString("dd/MM/yyyy HH:mm");
+                await SelectBookingAsync(booking);
+        }
 
-                await LoadServicesForRoomAsync(booking.SoPhong ?? "");
+        private async Task SelectBookingAsync(BookingViewModel booking)
+        {
+            _selectedBooking = booking;
+            _servicesLoaded = false;
+            _serviceDetails.Clear();
+            dgvServices.DataSource = null;
+            btnPrintInvoice.Enabled = false;
+            txtCustomerName.Text = booking.TenKhachHang;
+            txtRoomNumber.Text = booking.SoPhong;
+            txtCheckIn.Text = booking.NgayNhanPhong == DateTime.MinValue ? "Chưa có" : booking.NgayNhanPhong.ToString("dd/MM/yyyy HH:mm");
+            CalculateInvoiceTotals();
+
+            try
+            {
+                var client = BaseApiClient.GetClient();
+                using var response = await client.GetAsync($"SuDungDichVu/dat-phong/{booking.Id}");
+                if (!response.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"API SuDungDichVu trả về {(int)response.StatusCode}.");
+                var items = await response.Content.ReadFromJsonAsync<List<ChiTietDichVuViewModel>>()
+                    ?? new List<ChiTietDichVuViewModel>();
+                if (_selectedBooking?.Id != booking.Id) return;
+                _serviceDetails = items;
+                _servicesLoaded = true;
+                dgvServices.DataSource = _serviceDetails;
                 CalculateInvoiceTotals();
             }
+            catch (Exception ex)
+            {
+                if (_selectedBooking?.Id != booking.Id) return;
+                _servicesLoaded = false;
+                CalculateInvoiceTotals();
+                MessageBox.Show($"Không thể lấy tiền dịch vụ cho đơn #{booking.Id}: {ex.Message}", "Chưa đủ dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void CalculateInvoiceTotals()
+        {
+            if (_selectedBooking == null)
+            {
+                lblGrandTotalAmount.Text = "0 VNĐ";
+                btnPrintInvoice.Enabled = false;
+                return;
+            }
+            // API SuDungDichVu.Create đã cộng phí dịch vụ vào DatPhong.TongTien.
+            // Vì vậy không cộng dịch vụ thêm một lần nữa, và không nhân TongTien với số ngày.
+            // Đây là tổng đã ghi nhận trong đơn, không phải hóa đơn check-out cuối cùng.
+            var booking = _selectedBooking;
+            var start = booking.NgayNhan ?? DateTime.MinValue;
+            var end = booking.NgayTra ?? DateTime.MinValue;
+            var days = start != DateTime.MinValue && end > start
+                ? Math.Max(1, (int)Math.Ceiling((end - start).TotalDays)) : 0;
+            txtDays.Text = days > 0 ? $"{days} đêm theo đơn" : "Chưa đủ ngày";
+
+            if (!_servicesLoaded || days == 0)
+            {
+                txtRoomRate.Text = "—";
+                txtRoomTotal.Text = "—";
+                txtServiceTotal.Text = "—";
+                lblGrandTotalAmount.Text = "Chưa đủ dữ liệu";
+                btnPrintInvoice.Enabled = false;
+                return;
+            }
+            decimal serviceTotal = _serviceDetails.Sum(s => s.ThanhTien);
+            decimal roomTotal = booking.TongTien - serviceTotal;
+            bool valid = roomTotal >= 0;
+            txtRoomRate.Text = valid ? $"{roomTotal / days:N0} VNĐ/đêm (ước tính)" : "—";
+            txtRoomTotal.Text = valid ? $"{roomTotal:N0} VNĐ" : "—";
+            txtServiceTotal.Text = $"{serviceTotal:N0} VNĐ";
+            lblGrandTotalAmount.Text = valid ? $"{booking.TongTien:N0} VNĐ" : "Dữ liệu không nhất quán";
+            btnPrintInvoice.Enabled = valid;
+        }
+
+        private void btnPay_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Chưa hỗ trợ thanh toán/check-out. API phải lưu thanh toán, " +
+                "kiểm tra số tiền và cập nhật trạng thái đơn/phòng trong cùng giao dịch.",
+                "Chờ tích hợp API", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        private void btnPrintInvoice_Click(object sender, EventArgs e)
+        {
+            if (_selectedBooking == null || !_servicesLoaded || !btnPrintInvoice.Enabled) return;
+            var sb = new StringBuilder();
+            sb.AppendLine("BẢNG TÍNH TẠM — KHÔNG PHẢI HÓA ĐƠN THANH TOÁN");
+            sb.AppendLine($"Mã đơn: {_selectedBooking.Id}");
+            sb.AppendLine($"Khách: {_selectedBooking.TenKhachHang}");
+            sb.AppendLine($"Phòng: {_selectedBooking.SoPhong}");
+            sb.AppendLine($"Số đêm theo đơn: {txtDays.Text}");
+            sb.AppendLine($"Tiền phòng: {txtRoomTotal.Text}");
+            sb.AppendLine("Dịch vụ:");
+            foreach (var s in _serviceDetails)
+                sb.AppendLine($" • {s.TenDichVu} x{s.SoLuong}: {s.ThanhTien:N0} VNĐ");
+            sb.AppendLine($"Tiền dịch vụ: {txtServiceTotal.Text}");
+            sb.AppendLine($"Tổng đang ghi nhận: {lblGrandTotalAmount.Text}");
+            sb.AppendLine("Chưa bao gồm điều chỉnh khi trả phòng và chưa xác nhận thanh toán.");
+            MessageBox.Show(sb.ToString(), "Bảng tính tạm", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void cboOccupiedBookings_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_loadingBookings) return;
+            if (cboOccupiedBookings.SelectedItem is BookingViewModel booking)
+                await SelectBookingAsync(booking);
         }
 
         private void dtpCheckOut_ValueChanged(object sender, EventArgs e)
         {
-            CalculateInvoiceTotals();
+            // Ngày thực tế phải xử lý trong quy trình check-out API, không tự chỉnh tiền đã chốt.
         }
 
         private void ClearInvoiceDetails()
         {
             _selectedBooking = null;
+            _servicesLoaded = false;
+            _serviceDetails.Clear();
             txtCustomerName.Clear();
             txtRoomNumber.Clear();
             txtCheckIn.Clear();
@@ -226,11 +200,9 @@ namespace HotelManager.UI
             txtServiceTotal.Clear();
             lblGrandTotalAmount.Text = "0 VNĐ";
             dgvServices.DataSource = null;
+            btnPrintInvoice.Enabled = false;
         }
 
-        private async void btnRefresh_Click(object sender, EventArgs e)
-        {
-            await LoadOccupiedBookingsAsync();
-        }
+        private async void btnRefresh_Click(object sender, EventArgs e) => await LoadOccupiedBookingsAsync();
     }
 }

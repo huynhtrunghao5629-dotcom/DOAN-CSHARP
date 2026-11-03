@@ -1,8 +1,8 @@
-﻿using HotelManagement.Desktop.Models;
+﻿using HotelManager.Services;
+using HotelManagement.Desktop.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -11,7 +11,9 @@ namespace HotelManager.UI
 {
     public partial class FrmManageServices : Form
     {
-        private List<ChiTietDichVuViewModel> _currentServices = new List<ChiTietDichVuViewModel>();
+        private List<ChiTietDichVuViewModel> _currentServices = new();
+        private readonly Dictionary<int, int> _bookingsByRoomId = new();
+        private bool _loadingRooms;
 
         public FrmManageServices()
         {
@@ -20,226 +22,163 @@ namespace HotelManager.UI
 
         private async void FrmManageServices_Load(object sender, EventArgs e)
         {
-            SetupDataGridView();
-            await LoadOccupiedRoomsAsync();
-            await LoadAvailableServicesAsync();
-        }
-
-        private void SetupDataGridView()
-        {
             dgvRoomServices.AutoGenerateColumns = true;
-            dgvRoomServices.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvRoomServices.MultiSelect = false;
+            dgvRoomServices.DataBindingComplete += (sender, args) => TieuDeTiengViet.GanCho(dgvRoomServices);
+            dgvRoomServices.BackgroundColor = System.Drawing.Color.White;
             dgvRoomServices.ReadOnly = true;
+            dgvRoomServices.MultiSelect = false;
+            dgvRoomServices.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+
+            // Đã bổ sung GET /api/DichVu để đọc danh mục thực.
+            // Chưa cho ghi/xóa dịch vụ khi chưa đồng bộ đủ API và phân quyền.
+            btnAddService.Enabled = false;
+            btnDeleteService.Enabled = false;
+            cboServices.Enabled = false;
+            nudQuantity.Enabled = false;
+            grpInput.Text = "Dịch vụ phát sinh — xem dữ liệu thật (chưa hỗ trợ thêm/xóa)";
+            cboServices.DataSource = new List<DichVuViewModel>();
+            txtPrice.Clear();
+            await LoadDanhMucDichVuAsync();
+            await LoadOccupiedRoomsAsync();
         }
 
-        // 1. TẢI DANH SÁCH PHÒNG ĐANG CÓ KHÁCH Ở (DangSuDung)
+        private async Task LoadDanhMucDichVuAsync()
+        {
+            try
+            {
+                using var response = await BaseApiClient.GetClient().GetAsync("DichVu");
+                if (!response.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"HTTP {(int)response.StatusCode}");
+                var ds = await response.Content.ReadFromJsonAsync<List<DichVuViewModel>>()
+                    ?? new List<DichVuViewModel>();
+                cboServices.DisplayMember = "TenDichVu";
+                cboServices.ValueMember = "Id";
+                cboServices.DataSource = ds;
+                // Chỉ đọc; thao tác thêm/xóa đòi hợp đồng API và phân quyền hoàn chỉnh.
+                cboServices.Enabled = false;
+                if (ds.Count == 0) grpInput.Text = "Chưa có dịch vụ trong cơ sở dữ liệu";
+            }
+            catch (Exception ex)
+            {
+                grpInput.Text = "Không tải được danh mục dịch vụ";
+                MessageBox.Show($"Không lấy được danh mục dịch vụ: {ex.Message}",
+                    "Kết nối API", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
         private async Task LoadOccupiedRoomsAsync()
         {
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
+                btnRefresh.Enabled = false;
+                _loadingRooms = true;
+                var client = BaseApiClient.GetClient();
+                using var response = await client.GetAsync("DatPhong");
+                if (!response.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"API DatPhong trả về {(int)response.StatusCode} ({response.ReasonPhrase}).");
+
+                var bookings = await response.Content.ReadFromJsonAsync<List<BookingViewModel>>()
+                    ?? new List<BookingViewModel>();
+                var active = bookings.Where(b => b.TrangThai == "DangO" || b.TrangThai == "DaNhanPhong").ToList();
+
+                _bookingsByRoomId.Clear();
+                var rooms = new List<PhongViewModel>();
+                foreach (var booking in active)
                 {
-                    HttpResponseMessage response = await client.GetAsync("api/Phong");
-                    if (response.IsSuccessStatusCode)
+                    foreach (var room in booking.DanhSachPhong ?? new List<BookingRoomItem>())
                     {
-                        var allRooms = await response.Content.ReadFromJsonAsync<List<PhongViewModel>>();
-                        var occupiedRooms = allRooms?.Where(r => r.TrangThai == "DangSuDung" || r.TrangThai == "DaNhanPhong").ToList() ?? new List<PhongViewModel>();
-
-                        cboOccupiedRooms.DataSource = occupiedRooms;
-                        cboOccupiedRooms.DisplayMember = "SoPhong";
-                        cboOccupiedRooms.ValueMember = "PhongId";
-
-                        if (occupiedRooms.Count == 0)
+                        if (_bookingsByRoomId.ContainsKey(room.PhongId)) continue;
+                        _bookingsByRoomId[room.PhongId] = booking.Id;
+                        rooms.Add(new PhongViewModel
                         {
-                            dgvRoomServices.DataSource = null;
-                            CalculateTotalAmount();
-                        }
+                            PhongId = room.PhongId,
+                            SoPhong = room.SoPhong,
+                            TrangThai = "DangO",
+                            GiaPhong = room.GiaPhong
+                        });
                     }
                 }
+                cboOccupiedRooms.DataSource = null;
+                cboOccupiedRooms.DisplayMember = "SoPhong";
+                cboOccupiedRooms.ValueMember = "PhongId";
+                cboOccupiedRooms.DataSource = rooms;
+                if (rooms.Count == 0)
+                    grpInput.Text = "Chưa có đơn đang nhận phòng (trạng thái Đang ở)";
+                _currentServices.Clear();
+                dgvRoomServices.DataSource = null;
+                CalculateTotalAmount();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải danh sách phòng: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _bookingsByRoomId.Clear();
+                cboOccupiedRooms.DataSource = null;
+                _currentServices.Clear();
+                dgvRoomServices.DataSource = null;
+                CalculateTotalAmount();
+                MessageBox.Show($"Không tải được danh sách đơn đang ở: {ex.Message}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                _loadingRooms = false;
+                btnRefresh.Enabled = true;
+            }
+
+            if (cboOccupiedRooms.SelectedItem is PhongViewModel roomSelected)
+                await LoadRoomServicesAsync(roomSelected.PhongId);
         }
 
-        // 2. TẢI DANH SÁCH CÁC DỊCH VỤ SẴN CÓ CỦA KHÁCH SẠN
-        private async Task LoadAvailableServicesAsync()
+        private async Task LoadRoomServicesAsync(int roomId)
         {
-            try
-            {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.GetAsync("api/DichVu");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var services = await response.Content.ReadFromJsonAsync<List<DichVuViewModel>>();
-                        cboServices.DataSource = services ?? new List<DichVuViewModel>();
-                        cboServices.DisplayMember = "TenDichVu";
-                        cboServices.ValueMember = "Id";
-
-                        UpdateSelectedServicePrice();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi tải danh mục dịch vụ: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        // 3. TẢI DANH SÁCH DỊCH VỤ ĐÃ DÙNG CỦA PHÒNG ĐƯỢC CHỌN
-        private async Task LoadRoomServicesAsync(string phongId)
-        {
-            if (string.IsNullOrEmpty(phongId)) return;
-
-            try
-            {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.GetAsync($"api/ChiTietDichVu/phong/{phongId}");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var services = await response.Content.ReadFromJsonAsync<List<ChiTietDichVuViewModel>>();
-                        _currentServices = services ?? new List<ChiTietDichVuViewModel>();
-                        dgvRoomServices.DataSource = _currentServices;
-                        CalculateTotalAmount();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi tải dịch vụ phòng: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        // 4. THÊM DỊCH VỤ PHÁT SINH VÀO PHÒNG (POST)
-        private async void btnAddService_Click(object sender, EventArgs e)
-        {
-            if (cboOccupiedRooms.SelectedValue == null)
-            {
-                MessageBox.Show("Vui lòng chọn phòng đang có khách ở!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (cboServices.SelectedItem is not DichVuViewModel selectedService)
-            {
-                MessageBox.Show("Vui lòng chọn dịch vụ cần thêm!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string phongId = cboOccupiedRooms.SelectedValue.ToString() ?? string.Empty;
-            int quantity = (int)nudQuantity.Value;
-
-            var payload = new
-            {
-                PhongId = phongId,
-                DichVuId = selectedService.Id,
-                SoLuong = quantity,
-                DonGia = selectedService.DonGia,
-                ThoiGian = DateTime.Now
-            };
+            _currentServices.Clear();
+            dgvRoomServices.DataSource = null;
+            CalculateTotalAmount();
+            if (!_bookingsByRoomId.TryGetValue(roomId, out int bookingId)) return;
 
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.PostAsJsonAsync("api/ChiTietDichVu", payload);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show($"Đã thêm dịch vụ '{selectedService.TenDichVu}' cho phòng thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        await LoadRoomServicesAsync(phongId);
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Thêm dịch vụ thất bại. Mã lỗi API: {response.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
+                var client = BaseApiClient.GetClient();
+                using var response = await client.GetAsync($"SuDungDichVu/dat-phong/{bookingId}");
+                if (!response.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"API trả về {(int)response.StatusCode} ({response.ReasonPhrase}).");
+
+                var items = await response.Content.ReadFromJsonAsync<List<ChiTietDichVuViewModel>>()
+                    ?? new List<ChiTietDichVuViewModel>();
+                // Không để dữ liệu của phòng vừa tải ghi đè nếu người dùng đã đổi phòng.
+                if (cboOccupiedRooms.SelectedItem is not PhongViewModel selected || selected.PhongId != roomId) return;
+                _currentServices = items;
+                dgvRoomServices.DataSource = _currentServices;
+                CalculateTotalAmount();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi kết nối khi ghi nhận dịch vụ: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Không tải được dịch vụ của đơn #{bookingId}: {ex.Message}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        // 5. XÓA MỘT DỊCH VỤ ĐÃ CHỌN TRÊN BẢNG (DELETE)
-        private async void btnDeleteService_Click(object sender, EventArgs e)
-        {
-            if (dgvRoomServices.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Vui lòng chọn một dòng dịch vụ cần xóa từ bảng!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+        private void btnAddService_Click(object sender, EventArgs e) => ShowPending();
+        private void btnDeleteService_Click(object sender, EventArgs e) => ShowPending();
 
-            var item = dgvRoomServices.SelectedRows[0].DataBoundItem as ChiTietDichVuViewModel;
-            if (item == null) return;
+        private static void ShowPending() => MessageBox.Show(
+            "API hiện chưa có danh mục DichVu và thao tác dịch vụ cần gắn với DatPhongId. " +
+            "Vui lòng hoàn thiện API và phân quyền trước khi cho phép thêm/xóa.",
+            "Chưa tích hợp", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            var confirm = MessageBox.Show($"Xác nhận xóa dịch vụ '{item.TenDichVu}' ra khỏi phòng?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes) return;
-
-            try
-            {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.DeleteAsync($"api/ChiTietDichVu/{item.Id}");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Đã xóa dịch vụ thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        if (cboOccupiedRooms.SelectedValue != null)
-                        {
-                            await LoadRoomServicesAsync(cboOccupiedRooms.SelectedValue.ToString() ?? "");
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Xóa dịch vụ thất bại. Mã lỗi: {response.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi kết nối khi xóa: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        // 6. HELPER & SỰ KIỆN GIAO DIỆN
         private async void cboOccupiedRooms_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cboOccupiedRooms.SelectedValue != null)
-            {
-                string phongId = cboOccupiedRooms.SelectedValue.ToString() ?? string.Empty;
-                await LoadRoomServicesAsync(phongId);
-            }
+            if (_loadingRooms) return;
+            if (cboOccupiedRooms.SelectedItem is PhongViewModel room)
+                await LoadRoomServicesAsync(room.PhongId);
         }
 
         private void cboServices_SelectedIndexChanged(object sender, EventArgs e)
         {
-            UpdateSelectedServicePrice();
+            txtPrice.Text = cboServices.SelectedItem is DichVuViewModel service
+                ? service.DonGia.ToString("N0") : string.Empty;
         }
 
-        private void UpdateSelectedServicePrice()
-        {
-            if (cboServices.SelectedItem is DichVuViewModel service)
-            {
-                txtPrice.Text = service.DonGia.ToString("N0");
-            }
-            else
-            {
-                txtPrice.Clear();
-            }
-        }
+        private void CalculateTotalAmount() =>
+            lblTotalAmount.Text = $"{_currentServices.Sum(s => s.ThanhTien):N0} VNĐ";
 
-        private void CalculateTotalAmount()
-        {
-            decimal total = _currentServices.Sum(s => s.ThanhTien);
-            lblTotalAmount.Text = $"{total:N0} VNĐ";
-        }
-
-        private async void btnRefresh_Click(object sender, EventArgs e)
-        {
-            await LoadOccupiedRoomsAsync();
-            await LoadAvailableServicesAsync();
-        }
+        private async void btnRefresh_Click(object sender, EventArgs e) => await LoadOccupiedRoomsAsync();
     }
 }

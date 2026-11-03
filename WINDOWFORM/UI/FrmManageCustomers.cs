@@ -1,168 +1,139 @@
-﻿using System;
+﻿using HotelManager.Services;
+using HotelManagement.Desktop.Models;
+using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
+using System.Linq;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using HotelManagement.Desktop.Models;
-using HotelManager.UI;
-using HotelManager;
 
 namespace HotelManager.UI
 {
     public partial class FrmManageCustomers : Form
     {
-        private int _selectedCustomerId = 0;
+        private int _selectedCustomerId;
+        private int _searchVersion;
+        private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
         public FrmManageCustomers()
         {
             InitializeComponent();
+            dgvCustomers.AutoGenerateColumns = true;
+            dgvCustomers.ReadOnly = true;
+            dgvCustomers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvCustomers.MultiSelect = false;
+            dgvCustomers.AllowUserToAddRows = false;
+
+            // Current API has NO DELETE /api/KhachHang/{id} route.
+            // Do not show a misleading active button.
+            btnDelete.Enabled = false;
+            btnDelete.Text = "Xóa (chưa hỗ trợ)";
         }
 
-        // 1. TẢI DỮ LIỆU KHI MỞ FORM
         private async void FrmManageCustomers_Load(object sender, EventArgs e)
         {
-            await LoadDataAsync();
+            await LoadCustomersAsync();
         }
 
-        private async Task LoadDataAsync()
+        private async Task LoadCustomersAsync(string? keyword = null, int? requestVersion = null)
         {
             try
             {
-                var client = BaseApiClient.GetClient();
-                var response = await client.GetAsync("KhachHang");
-                if (response.IsSuccessStatusCode)
+                var path = string.IsNullOrWhiteSpace(keyword)
+                    ? "KhachHang"
+                    : "KhachHang/tim-kiem?tuKhoa=" + Uri.EscapeDataString(keyword.Trim());
+                using var response = await BaseApiClient.GetClient().GetAsync(path);
+                if (!response.IsSuccessStatusCode)
                 {
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    var customers = JsonSerializer.Deserialize<List<CustomerDto>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    throw new InvalidOperationException($"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                }
+                var customers = await response.Content.ReadFromJsonAsync<List<CustomerDto>>(_jsonOptions)
+                    ?? new List<CustomerDto>();
 
-                    dgvCustomers.DataSource = null;
-                    dgvCustomers.AutoGenerateColumns = true;
-                    dgvCustomers.DataSource = customers;
-                }
-                else
-                {
-                    MessageBox.Show("Lỗi tải dữ liệu: " + response.StatusCode, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                // User may have typed another search while the old request was pending.
+                if (requestVersion.HasValue && requestVersion.Value != _searchVersion) return;
+                dgvCustomers.DataSource = null;
+                dgvCustomers.DataSource = customers;
+                TranslateHeaders();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi tải dữ liệu: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (requestVersion.HasValue && requestVersion.Value != _searchVersion) return;
+                MessageBox.Show("Không thể tải khách hàng: " + ex.Message,
+                    "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        // 2. CLICK VÀO BẢNG ĐỂ HIỂN THỊ LÊN TEXTBOX
+        private void TranslateHeaders()
+        {
+            var names = new Dictionary<string, string>
+            {
+                ["CustomerId"] = "Mã khách hàng",
+                ["FullName"] = "Họ và tên",
+                ["IdentityCard"] = "CCCD/CMND",
+                ["PhoneNumber"] = "Số điện thoại",
+                ["Email"] = "Email",
+                ["Address"] = "Địa chỉ"
+            };
+            foreach (DataGridViewColumn column in dgvCustomers.Columns)
+                if (names.TryGetValue(column.DataPropertyName, out var header))
+                    column.HeaderText = header;
+        }
+
         private void dgvCustomers_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // Đã bổ sung: Chặn lỗi văng phần mềm khi click bậy vào tiêu đề cột
-            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (e.RowIndex < 0 || e.RowIndex >= dgvCustomers.Rows.Count) return;
+            if (dgvCustomers.Rows[e.RowIndex].DataBoundItem is not CustomerDto customer) return;
 
-            DataGridViewRow row = dgvCustomers.Rows[e.RowIndex];
-
-            // Lấy ID theo thuộc tính KhachHangId hoặc CustomerId
-            if (row.Cells["KhachHangId"].Value != null)
-                _selectedCustomerId = Convert.ToInt32(row.Cells["KhachHangId"].Value);
-            else if (row.Cells["CustomerId"].Value != null)
-                _selectedCustomerId = Convert.ToInt32(row.Cells["CustomerId"].Value);
-
-            txtFullName.Text = row.Cells["HoTen"].Value?.ToString() ?? row.Cells["FullName"].Value?.ToString();
-            txtPhone.Text = row.Cells["SoDienThoai"].Value?.ToString() ?? row.Cells["PhoneNumber"].Value?.ToString();
-            txtEmail.Text = row.Cells["Email"].Value?.ToString();
-            txtIdentityCard.Text = row.Cells["Cccd"].Value?.ToString() ?? row.Cells["IdentityCard"].Value?.ToString();
+            _selectedCustomerId = customer.CustomerId;
+            txtFullName.Text = customer.FullName ?? "";
+            txtPhone.Text = customer.PhoneNumber ?? "";
+            txtEmail.Text = customer.Email ?? "";
+            txtIdentityCard.Text = customer.IdentityCard ?? "";
         }
 
-        // 3. NÚT LƯU (THÊM / SỬA)
         private async void btnSave_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtFullName.Text))
+            if (string.IsNullOrWhiteSpace(txtFullName.Text) || string.IsNullOrWhiteSpace(txtPhone.Text))
             {
-                MessageBox.Show("Họ tên không được để trống!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Cần nhập họ tên và số điện thoại.", "Thiếu thông tin");
                 return;
             }
-
-            var customerData = new
+            var payload = new
             {
                 KhachHangId = _selectedCustomerId,
                 HoTen = txtFullName.Text.Trim(),
                 SoDienThoai = txtPhone.Text.Trim(),
-                Email = txtEmail.Text.Trim(),
-                Cccd = txtIdentityCard.Text.Trim()
+                Email = string.IsNullOrWhiteSpace(txtEmail.Text) ? null : txtEmail.Text.Trim(),
+                Cccd = string.IsNullOrWhiteSpace(txtIdentityCard.Text) ? null : txtIdentityCard.Text.Trim()
             };
-
             try
             {
+                btnSave.Enabled = false;
                 var client = BaseApiClient.GetClient();
-                var content = new StringContent(JsonSerializer.Serialize(customerData), Encoding.UTF8, "application/json");
-
-                HttpResponseMessage response;
-                if (_selectedCustomerId == 0)
-                {
-                    response = await client.PostAsync("KhachHang", content);
-                }
-                else
-                {
-                    response = await client.PutAsync($"KhachHang/{_selectedCustomerId}", content);
-                }
-
-                if (response.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Lưu thông tin khách hàng thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    ResetForm();
-                    await LoadDataAsync();
-                }
-                else
-                {
-                    var errorMsg = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Lỗi từ server ({response.StatusCode}): {errorMsg}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                using var response = _selectedCustomerId == 0
+                    ? await client.PostAsJsonAsync("KhachHang", payload)
+                    : await client.PutAsJsonAsync($"KhachHang/{_selectedCustomerId}", payload);
+                if (!response.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                MessageBox.Show("Đã lưu khách hàng vào API.", "Thành công");
+                ResetForm();
+                await LoadCustomersAsync(txtSearch.Text);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối API: " + ex.Message, "Lỗi Hệ Thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Không thể lưu khách hàng: " + ex.Message, "Lỗi API");
             }
+            finally { btnSave.Enabled = true; }
         }
 
-        // 4. NÚT XÓA KHÁCH HÀNG
-        private async void btnDelete_Click(object sender, EventArgs e)
+        private void btnDelete_Click(object sender, EventArgs e)
         {
-            if (_selectedCustomerId == 0)
-            {
-                MessageBox.Show("Vui lòng chọn khách hàng cần xóa từ bảng!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            var confirm = MessageBox.Show("Bạn có chắc chắn muốn xóa khách hàng này?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm == DialogResult.Yes)
-            {
-                try
-                {
-                    var client = BaseApiClient.GetClient();
-                    var response = await client.DeleteAsync($"KhachHang/{_selectedCustomerId}");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Xóa thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        ResetForm();
-                        await LoadDataAsync();
-                    }
-                    else
-                    {
-                        var errorMsg = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show($"Chức năng xóa chưa hỗ trợ hoặc bị lỗi: {errorMsg}", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Lỗi kết nối API: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
+            MessageBox.Show("API hiện chưa hỗ trợ xóa khách hàng. Chức năng đang tắt để tránh hiểu nhầm.");
         }
 
-        // 5. NÚT RESET FORM
-        private void btnAdd_Click(object sender, EventArgs e)
-        {
-            ResetForm();
-        }
+        private void btnAdd_Click(object sender, EventArgs e) => ResetForm();
 
         private void ResetForm()
         {
@@ -174,42 +145,13 @@ namespace HotelManager.UI
             txtFullName.Focus();
         }
 
-        // 6. CHỨC NĂNG TÌM KIẾM (Đã bổ sung hoàn chỉnh)
         private async void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            string keyword = txtSearch.Text.Trim();
-            try
-            {
-                var client = BaseApiClient.GetClient();
-                HttpResponseMessage response;
-
-                // Nếu ô tìm kiếm trống -> tải lại toàn bộ. Nếu có chữ -> gọi API tìm kiếm.
-                if (string.IsNullOrEmpty(keyword))
-                {
-                    response = await client.GetAsync("KhachHang");
-                }
-                else
-                {
-                    response = await client.GetAsync($"KhachHang/tim-kiem?tuKhoa={keyword}");
-                }
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    var customers = JsonSerializer.Deserialize<List<CustomerDto>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    dgvCustomers.DataSource = null;
-                    dgvCustomers.AutoGenerateColumns = true;
-                    dgvCustomers.DataSource = customers;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Lỗi tìm kiếm: " + ex.Message);
-            }
+            var requestVersion = ++_searchVersion;
+            await LoadCustomersAsync(txtSearch.Text, requestVersion);
         }
 
-        // Các hàm rỗng tránh lỗi Designer
+        // Designer bindings in the original project.
         private void dgvCustomers_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
         private void dgvCustomers_DataError(object sender, DataGridViewDataErrorEventArgs e) { }
     }
