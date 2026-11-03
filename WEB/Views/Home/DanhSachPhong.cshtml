@@ -1,0 +1,459 @@
+﻿@model IEnumerable<QuanLyKhachSan.Web.Models.PhongViewModel>
+
+@{
+    ViewData["Title"] = "Danh sách phòng";
+    ViewData["NavbarOverlay"] = false;
+
+    var rooms = Model?.ToList() ?? new List<QuanLyKhachSan.Web.Models.PhongViewModel>();
+    int? selectedRoomType = ViewBag.LoaiPhong as int?;
+    decimal? selectedMaxPrice = ViewBag.GiaToiDa as decimal?;
+    DateOnly? selectedCheckIn = ViewBag.NgayNhan as DateOnly?;
+    DateOnly? selectedCheckOut = ViewBag.NgayTra as DateOnly?;
+    string? currentSort = ViewBag.SapXepGia as string;
+
+    string? strCheckIn = selectedCheckIn?.ToString("yyyy-MM-dd");
+    string? strCheckOut = selectedCheckOut?.ToString("yyyy-MM-dd");
+
+    var fallbackImgs = new[]
+    {
+        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1618773928120-22165582f349?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80"
+    };
+}
+
+<style>
+    .rooms-page {
+        background: #f7f7f5;
+        min-height: 80vh;
+        padding: 44px 0 70px;
+    }
+
+    .rooms-filter {
+        position: sticky;
+        top: 24px;
+        border: 1px solid #eceae5;
+        border-radius: 18px;
+        padding: 24px;
+        background: #fff;
+        box-shadow: 0 8px 26px rgba(35, 49, 39, .04);
+    }
+
+    .room-card {
+        background: #fff;
+        border: 1px solid #efede8;
+        border-radius: 18px;
+        overflow: hidden;
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 14px 35px rgba(30, 35, 30, .10);
+        }
+
+    .room-image-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        background: #eceae5;
+    }
+
+        .room-image-wrapper img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .5s ease;
+        }
+
+    .room-card:hover .room-image-wrapper img {
+        transform: scale(1.045);
+    }
+
+    .room-content {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .room-price {
+        color: #987447;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .room-btn {
+        display: inline-block;
+        background: #24392f;
+        color: white;
+        border: 1px solid #24392f;
+        border-radius: 999px;
+        padding: 10px 17px;
+        white-space: nowrap;
+        transition: .2s;
+    }
+
+        .room-btn:hover {
+            background: #3c5546;
+            color: white;
+        }
+
+    .room-status {
+        font-size: .82rem;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 6px 10px;
+        display: inline-block;
+    }
+
+        .room-status.available {
+            color: #217348;
+            background: #e7f5ec;
+        }
+
+        .room-status.unavailable {
+            color: #945a2d;
+            background: #fbf0e4;
+        }
+
+        .room-status.occupied {
+            color: #9b4141;
+            background: #fbeaea;
+        }
+
+    .filter-label {
+        display: block;
+        font-size: .85rem;
+        font-weight: 650;
+        color: #6b706b;
+        margin-bottom: 9px;
+    }
+
+    @@media (max-width: 991.98px) {
+        .rooms-filter {
+            position: static;
+        }
+    }
+
+    .custom-pagination .page-link {
+        color: #24392f;
+        border: 1px solid #e0e0e0;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .custom-pagination .page-item.active .page-link {
+        background-color: #24392f;
+        border-color: #24392f;
+        color: white;
+    }
+
+    .custom-pagination .page-link:hover:not(.active) {
+        background-color: #f8f9fa;
+        color: #1a2a22;
+        border-color: #24392f;
+    }
+
+    .custom-pagination .page-item.disabled .page-link {
+        color: #adb5bd;
+        background-color: transparent;
+        border-color: #e0e0e0;
+    }
+</style>
+
+<div class="rooms-page">
+    <div class="container">
+        <div class="row g-4 g-xl-5">
+            <!-- CỘT BỘ LỌC BÊN TRÁI -->
+            <aside class="col-lg-3">
+                <div class="rooms-filter">
+                    <h5 class="fw-bold mb-2">Bộ lọc phòng</h5>
+                    <p class="text-muted small mb-4">Chọn hạng phòng, mức giá và khoảng ngày lưu trú.</p>
+                    <form method="get" asp-controller="Home" asp-action="DanhSachPhong">
+                        <div class="mb-4">
+                            <label class="filter-label" for="filterRoomType">Hạng phòng</label>
+                            <select id="filterRoomType" name="loaiPhong" class="form-select rounded-3">
+                                <option value="">Tất cả hạng phòng</option>
+                                <!-- Đã đổi tên hạng phòng -->
+                                <option value="1" selected="@(ViewBag.LoaiPhong == 1)">Phòng đơn</option>
+                                <option value="2" selected="@(ViewBag.LoaiPhong == 2)">Phòng đôi</option>
+                                <option value="3" selected="@(ViewBag.LoaiPhong == 3)">Phòng VIP</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="filter-label">Sắp xếp giá</label>
+                            <select name="sapXepGia" class="form-select rounded-3">
+                                <option value="">Mặc định</option>
+                                <option value="tang" selected="@(ViewBag.SapXepGia == "tang")">Giá từ thấp đến cao</option>
+                                <option value="giam" selected="@(ViewBag.SapXepGia == "giam")">Giá từ cao đến thấp</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="filter-label">Khoảng giá (VND)</label>
+
+                            <!-- Ô nhập liệu hiển thị cho khách (Có dấu chấm) -->
+                            <div class="d-flex gap-2 mb-2">
+                                <input type="text" id="displayGiaTu" class="form-control form-control-sm rounded-3" placeholder="Từ..." value="@(ViewBag.GiaTu != null ? ((decimal)ViewBag.GiaTu).ToString("#,##0") : "")" />
+                                <input type="text" id="displayGiaDen" class="form-control form-control-sm rounded-3" placeholder="Đến..." value="@(ViewBag.GiaDen != null ? ((decimal)ViewBag.GiaDen).ToString("#,##0") : "")" />
+                            </div>
+
+                            <!-- Ô ẩn chứa số thực tế để gửi về Controller -->
+                            <input type="hidden" name="giaTu" id="giaTu" value="@ViewBag.GiaTu" />
+                            <input type="hidden" name="giaDen" id="giaDen" value="@ViewBag.GiaDen" />
+
+                            <!-- 2 Thanh trượt điều chỉnh -->
+                            <div class="mt-3">
+                                <label class="text-muted d-block mb-1" style="font-size: 0.75rem;">Kéo giá TỪ:</label>
+                                <input type="range" class="form-range" id="sliderGiaTu" min="0" max="10000000" step="100000" value="@(ViewBag.GiaTu ?? 0)">
+
+                                <label class="text-muted d-block mt-2 mb-1" style="font-size: 0.75rem;">Kéo giá ĐẾN:</label>
+                                <input type="range" class="form-range" id="sliderGiaDen" min="0" max="10000000" step="100000" value="@(ViewBag.GiaDen ?? 10000000)">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="filter-label" for="filterCheckIn">Ngày nhận phòng</label>
+                            <input id="filterCheckIn" type="date" name="ngayNhan" class="form-control rounded-3" min="@(DateTime.Today.ToString("yyyy-MM-dd"))" value="@strCheckIn" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="filter-label" for="filterCheckOut">Ngày trả phòng</label>
+                            <input id="filterCheckOut" type="date" name="ngayTra" class="form-control rounded-3" min="@(DateTime.Today.AddDays(1).ToString("yyyy-MM-dd"))" value="@strCheckOut" />
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <!-- Checkbox phòng trống -->
+                            <input class="form-check-input" type="checkbox" name="chiPhongTrong" value="true" id="checkPhongTrong" @(ViewBag.ChiPhongTrong == true ? "checked" : "")>
+                            <label class="form-check-label small fw-semibold" for="checkPhongTrong">Chỉ hiển thị phòng trống</label>
+                        </div>
+
+                        <button type="submit" class="room-btn w-100">Áp dụng bộ lọc</button>
+                        <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-light border rounded-pill w-100 mt-2">Xóa bộ lọc</a>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- CỘT DANH SÁCH PHÒNG BÊN PHẢI -->
+            <section class="col-lg-9" aria-labelledby="roomsHeading">
+                <!-- THANH SẮP XẾP -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold mb-0 text-dark">Hiển thị @rooms.Count phòng</h3>
+                    <div class="d-flex align-items-center">
+                        <span class="text-muted me-2 small">Sắp xếp theo:</span>
+                        <div class="btn-group shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+                    <div>
+                        <span class="text-uppercase small fw-semibold" style="letter-spacing: 2px; color: #987447;">SAWADE · STAY YOUR WAY</span>
+                        <h1 id="roomsHeading" class="fw-bold mt-2 mb-2" style="font-family: Georgia, serif;">Không gian nghỉ dưỡng</h1>
+                        <p class="text-muted mb-0">Lựa chọn căn phòng dành riêng cho kỳ nghỉ của bạn.</p>
+                    </div>
+                    <span class="text-muted small">@rooms.Count phòng hiển thị</span>
+                </div>
+
+                @if (ViewBag.FilterError != null)
+                {
+                    <div class="alert alert-warning rounded-3">@ViewBag.FilterError</div>
+                }
+                @if (ViewBag.ApiError != null)
+                {
+                    <div class="alert alert-danger rounded-3">@ViewBag.ApiError</div>
+                }
+
+                @if (rooms.Any())
+                {
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                        @foreach (var room in rooms)
+                        {
+                            var roomNumber = (room.SoPhong ?? string.Empty).Trim();
+                            var localImage = Url.Content("~/images/" + roomNumber + ".jpg");
+                            var fallbackIndex = (int)(Math.Abs((long)room.PhongId) % fallbackImgs.Length);
+                            var fallback = fallbackImgs[fallbackIndex];
+
+                            var rawStatus = (room.TrangThai ?? string.Empty).Trim();
+                            var normalizedStatus = rawStatus.ToLowerInvariant();
+
+                            var isAvailable = normalizedStatus is "trong" or "trống" or "available";
+                            var isOccupied = normalizedStatus is "dang co khach" or "đang có khách" or "occupied" or "dango";
+                            var isBooked = normalizedStatus is "dadat" or "da dat" or "đã đặt" or "booked";
+                            var isMaintenance = normalizedStatus is "baotri" or "bao tri" or "bảo trì" or "maintenance";
+
+                            var statusText = isAvailable ? "Còn trống" :
+                            isOccupied ? "Đang có khách" :
+                            isMaintenance ? "Đang bảo trì" :
+                            isBooked ? "Đã đặt" :
+                            (string.IsNullOrWhiteSpace(rawStatus) ? "Chưa xác định" : rawStatus);
+
+                            var statusClass = isAvailable ? "available" : isOccupied ? "occupied" : "unavailable";
+
+                            <div class="col">
+                                <article class="room-card h-100 d-flex flex-column">
+                                    <div class="room-image-wrapper">
+                                        <img src="@localImage"
+                                             alt="Ảnh phòng @room.SoPhong"
+                                             loading="lazy"
+                                             decoding="async"
+                                             onerror="this.onerror=null;this.src='@fallback';" />
+                                        <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-white text-dark px-3 py-2 shadow-sm">@room.TenLoaiPhong</span>
+                                    </div>
+                                    <div class="room-content">
+                                        <h2 class="h5 fw-bold mb-2">Phòng @room.SoPhong</h2>
+                                        <div class="d-flex flex-wrap gap-2 mb-3">
+                                            <span class="room-status @statusClass"><i class="bi @(isAvailable ? "bi-check-circle-fill" : (isOccupied ? "bi-x-circle-fill" : "bi-exclamation-circle-fill")) me-1"></i>@statusText</span>
+                                        </div>
+                                        <div class="text-muted small mb-3"><i class="bi bi-building me-2"></i>@room.TenLoaiPhong</div>
+                                        <div class="border-top pt-3 mt-auto d-flex justify-content-between align-items-center gap-2">
+                                            <div>
+                                                <div class="text-muted small">Giá mỗi đêm</div>
+                                                <div class="room-price">@room.GiaPhong.ToString("#,##0") đ</div>
+                                            </div>
+                                            <a asp-controller="Home" asp-action="ChiTietPhong" asp-route-id="@room.PhongId" class="room-btn text-decoration-none">Chi tiết</a>
+                                        </div>
+                                    </div>
+                                </article>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="bg-white rounded-4 p-5 text-center shadow-sm">
+                        <i class="bi bi-house-x fs-1 text-secondary"></i>
+                        <h2 class="h5 fw-bold mt-3">Chưa tìm thấy phòng phù hợp</h2>
+                        <p class="text-muted mb-0">Hãy thử thay đổi điều kiện tìm kiếm hoặc xóa bộ lọc.</p>
+                    </div>
+                }
+            </section>
+        </div>
+    </div>
+</div>
+
+<!-- THANH PHÂN TRANG BOOTSTRAP -->
+@if (ViewBag.TongSoTrang > 1)
+{
+    <nav aria-label="Điều hướng trang" class="mt-5 mb-4">
+        <ul class="pagination justify-content-center custom-pagination">
+
+            <!-- Nút Trước -->
+            <li class="page-item @(ViewBag.TrangHienTai == 1 ? "disabled" : "")">
+                <a class="page-link rounded-pill px-3 me-2" href="@Url.Action("DanhSachPhong", "Home", new {
+                    trang = ViewBag.TrangHienTai - 1,
+                    sapXepGia = ViewBag.SapXepGia,
+                    loaiPhong = ViewBag.LoaiPhong,
+                    giaTu = ViewBag.GiaTu,
+                    giaDen = ViewBag.GiaDen,
+                    chiPhongTrong = ViewBag.ChiPhongTrong,
+                    ngayNhan = strCheckIn,
+                    ngayTra = strCheckOut
+                })">
+                    <i class="bi bi-chevron-left me-1"></i> Trước
+                </a>
+            </li>
+
+            <!-- Các số trang -->
+            @for (int i = 1; i <= ViewBag.TongSoTrang; i++)
+            {
+                <li class="page-item @(ViewBag.TrangHienTai == i ? "active" : "")">
+                    <a class="page-link rounded-circle d-flex justify-content-center align-items-center mx-1"
+                       style="width: 40px; height: 40px;"
+                       href="@Url.Action("DanhSachPhong", "Home", new {
+                           trang = i,
+                           sapXepGia = ViewBag.SapXepGia,
+                           loaiPhong = ViewBag.LoaiPhong,
+                           giaTu = ViewBag.GiaTu,
+                           giaDen = ViewBag.GiaDen,
+                           chiPhongTrong = ViewBag.ChiPhongTrong,
+                           ngayNhan = strCheckIn,
+                           ngayTra = strCheckOut
+                       })">@i</a>
+                </li>
+            }
+
+            <!-- Nút Sau -->
+            <li class="page-item @(ViewBag.TrangHienTai == ViewBag.TongSoTrang ? "disabled" : "")">
+                <a class="page-link rounded-pill px-3 ms-2" href="@Url.Action("DanhSachPhong", "Home", new {
+                    trang = ViewBag.TrangHienTai + 1,
+                    sapXepGia = ViewBag.SapXepGia,
+                    loaiPhong = ViewBag.LoaiPhong,
+                    giaTu = ViewBag.GiaTu,
+                    giaDen = ViewBag.GiaDen,
+                    chiPhongTrong = ViewBag.ChiPhongTrong,
+                    ngayNhan = strCheckIn,
+                    ngayTra = strCheckOut
+                })">
+                    Sau <i class="bi bi-chevron-right ms-1"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            // Xử lý ràng buộc Ngày nhận / Ngày trả
+            const checkIn = document.getElementById('filterCheckIn');
+            const checkOut = document.getElementById('filterCheckOut');
+            if (checkIn && checkOut) {
+                checkIn.addEventListener('change', () => {
+                    if (!checkIn.value) return;
+                    const date = new Date(`${checkIn.value}T00:00:00`);
+                    date.setDate(date.getDate() + 1);
+                    const nextDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    checkOut.min = nextDay;
+                    if (checkOut.value && checkOut.value <= checkIn.value) checkOut.value = nextDay;
+                });
+            }
+
+            // Xử lý Thanh trượt & Định dạng tiền tệ
+            const formatCurrency = (num) => {
+                if (!num) return '';
+                return parseInt(num).toLocaleString('vi-VN');
+            };
+
+            const parseCurrency = (str) => {
+                if (!str) return '';
+                return str.replace(/\./g, '').replace(/,/g, '').replace(/\D/g, '');
+            };
+
+            const setupPriceInput = (displayId, hiddenId, sliderId) => {
+                const display = document.getElementById(displayId);
+                const hidden = document.getElementById(hiddenId);
+                const slider = document.getElementById(sliderId);
+
+                if (!display || !hidden || !slider) return;
+
+                // Khi kéo thanh trượt
+                slider.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    hidden.value = val;
+                    display.value = formatCurrency(val);
+                });
+
+                // Khi gõ tay vào ô text
+                display.addEventListener('input', (e) => {
+                    const rawValue = parseCurrency(e.target.value);
+                    hidden.value = rawValue;
+                    display.value = formatCurrency(rawValue);
+
+                    if(rawValue && !isNaN(rawValue)) {
+                        slider.value = rawValue;
+                    }
+                });
+            };
+
+            setupPriceInput('displayGiaTu', 'giaTu', 'sliderGiaTu');
+            setupPriceInput('displayGiaDen', 'giaDen', 'sliderGiaDen');
+        })();
+    </script>
+}

@@ -1,0 +1,43 @@
+@model List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>
+@{
+ ViewData["Title"] = "Tài khoản của tôi"; ViewData["NavbarOverlay"] = false;
+ var orders = Model ?? new List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>();
+ var active = orders.Count(d => !new[]{"dahuy","đã hủy","datra","đã trả"}.Contains((d.TrangThai??"").Trim().ToLowerInvariant()));
+ var done = orders.Count(d => new[]{"datra","đã trả"}.Contains((d.TrangThai??"").Trim().ToLowerInvariant()));
+}
+<style>
+.profile-page{background:#f8f7f3;min-height:70vh;padding:44px 0 75px}.profile-card{background:white;border:1px solid #eeece6;border-radius:20px;box-shadow:0 8px 26px rgba(25,43,34,.05)}
+.profile-head{background:linear-gradient(130deg,#1c3429,#375a43);border-radius:19px;color:white;padding:26px}.profile-muted{color:#7b847d}.profile-detail{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #f0eee9}.profile-detail i{color:#aa8650;font-size:20px}.profile-order{border:1px solid #eeece6;border-radius:15px;padding:19px;margin-bottom:14px;background:#fff}.profile-sum{background:#f8f7f3;border-radius:15px;padding:18px}.profile-btn{background:#24392f;color:white}.profile-btn:hover{background:#355744;color:white}.profile-avatar{width:57px;height:57px;background:#dce8dc;border-radius:50%;display:grid;place-items:center;color:#213a2d;font-size:25px}
+</style>
+<div class="profile-page"><div class="container">
+ <div class="mb-4"><p class="text-uppercase fw-bold small mb-2" style="color:#a17c44;letter-spacing:2px">SAWADE MEMBER</p><h1 class="fw-bold" style="font-family:Georgia,serif;color:#24392f">Tài khoản của tôi</h1><p class="profile-muted">Quản lý thông tin cá nhân và theo dõi kỳ nghỉ của bạn.</p></div>
+ @if(TempData["ThongBao"]!=null){<div class="alert alert-success">@TempData["ThongBao"]</div>}
+ @if(TempData["Loi"]!=null){<div class="alert alert-danger">@TempData["Loi"]</div>}
+ <div class="row g-4"><aside class="col-lg-4"><div class="profile-card p-3">
+   <div class="profile-head d-flex align-items-center gap-3 mb-3"><div class="profile-avatar"><i class="bi bi-person"></i></div><div><div class="small opacity-75">THÀNH VIÊN SAWADE</div><h2 class="h5 fw-bold mb-0">@ViewBag.HoTen</h2></div></div>
+   <div class="px-2"><div class="profile-detail"><i class="bi bi-telephone"></i><div><small class="profile-muted d-block">Số điện thoại</small><strong>@ViewBag.SoDienThoai</strong></div></div>
+   <div class="profile-detail"><i class="bi bi-envelope"></i><div><small class="profile-muted d-block">Email</small><span>@(string.IsNullOrWhiteSpace((string?)ViewBag.Email)?"Chưa cập nhật":ViewBag.Email)</span></div></div>
+   <div class="profile-detail"><i class="bi bi-person-vcard"></i><div><small class="profile-muted d-block">CCCD/CMND</small><span>@(string.IsNullOrWhiteSpace((string?)ViewBag.Cccd)?"Chưa cập nhật":"Đã cung cấp")</span></div></div>
+   <button type="button" class="btn profile-btn rounded-pill w-100 mt-4 mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i class="bi bi-pencil me-2"></i>Chỉnh sửa hồ sơ</button>
+   <form asp-controller="TaiKhoan" asp-action="DangXuat" method="post">@Html.AntiForgeryToken()<button class="btn btn-outline-danger rounded-pill w-100" type="submit">Đăng xuất</button></form></div>
+ </div></aside>
+ <section class="col-lg-8"><div class="row g-3 mb-4"><div class="col-4"><div class="profile-sum"><div class="profile-muted small">Tổng đơn</div><div class="h3 fw-bold mb-0">@orders.Count</div></div></div><div class="col-4"><div class="profile-sum"><div class="profile-muted small">Đơn đang hoạt động</div><div class="h3 fw-bold mb-0">@active</div></div></div><div class="col-4"><div class="profile-sum"><div class="profile-muted small">Đã trả phòng</div><div class="h3 fw-bold mb-0">@done</div></div></div></div>
+ <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3"><h2 class="h4 fw-bold mb-0" style="font-family:Georgia,serif;color:#24392f">Lịch sử đặt phòng</h2><a asp-controller="TraCuuDon" asp-action="Index" class="small text-decoration-none" style="color:#2c4a38">Xem tra cứu chi tiết <i class="bi bi-arrow-right"></i></a></div>
+ @if(orders.Count == 0){<div class="profile-card text-center p-5"><i class="bi bi-calendar2-x fs-1 profile-muted"></i><h3 class="h5 mt-3">Chưa có đơn đặt phòng</h3><p class="profile-muted">Khám phá các phòng nghỉ và bắt đầu chuyến đi của bạn.</p><a asp-controller="Home" asp-action="DanhSachPhong" class="btn profile-btn rounded-pill px-4">Khám phá phòng</a></div>}
+ @foreach(var d in orders.OrderByDescending(x=>x.NgayDat)){
+  var st=(d.TrangThai??"").Trim().ToLowerInvariant(); var cancelled=st=="dahuy"||st=="đã hủy"; var completed=st=="datra"||st=="đã trả"; var canCancel=st=="dadat"||st=="da dat"||st=="đã đặt"||st=="choxacnhan"||st=="chờ xác nhận";
+  <article class="profile-order"><div class="d-flex justify-content-between align-items-start gap-2 flex-wrap"><div><span class="badge @(cancelled?"bg-danger":completed?"bg-secondary":"bg-success") mb-2">@(cancelled?"Đã hủy":completed?"Đã trả":"Đã đặt / chờ xử lý")</span><h3 class="h5 fw-bold mb-1">@(d.Phong?.TenLoaiPhong??"Đặt phòng") — Phòng @(d.Phong?.SoPhong??"—")</h3><small class="profile-muted">Mã đơn: @(string.IsNullOrWhiteSpace(d.MaDon)?$"DP-{d.DatPhongId:D5}":d.MaDon)</small></div><div class="text-end"><strong style="color:#a17c44">@d.TongTien.ToString("N0") đ</strong><div class="profile-muted small">Đặt ngày @d.NgayDat?.ToString("dd/MM/yyyy")</div></div></div>
+   <div class="row g-2 border-top mt-3 pt-3 small"><div class="col-sm-6"><i class="bi bi-calendar-check me-2" style="color:#a17c44"></i>Nhận: <strong>@d.NgayNhan?.ToString("dd/MM/yyyy HH:mm")</strong></div><div class="col-sm-6"><i class="bi bi-calendar-x me-2" style="color:#a17c44"></i>Trả: <strong>@d.NgayTra?.ToString("dd/MM/yyyy HH:mm")</strong></div></div>
+   @if(canCancel){<form asp-controller="TaiKhoan" asp-action="HuyDonHang" method="post" class="text-end mt-3" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn đặt phòng này?');">@Html.AntiForgeryToken()<input type="hidden" name="datPhongId" value="@d.DatPhongId"/><button class="btn btn-sm btn-outline-danger rounded-pill px-3" type="submit"><i class="bi bi-x-circle me-1"></i>Hủy đơn này</button></form>}
+  </article>
+ }
+ </section></div></div></div>
+@section Modals{
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4"><div class="modal-header"><h2 id="editProfileTitle" class="h5 fw-bold">Chỉnh sửa thông tin</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+<form asp-controller="TaiKhoan" asp-action="CapNhatTaiKhoan" method="post" class="modal-body p-4">@Html.AntiForgeryToken()
+<label class="form-label">Số điện thoại</label><input class="form-control mb-3" value="@ViewBag.SoDienThoai" disabled/>
+<label class="form-label" for="profileName">Họ tên</label><input id="profileName" name="hoTen" class="form-control mb-3" value="@ViewBag.HoTen" maxlength="120" required/>
+<label class="form-label" for="profileId">CCCD/CMND</label><input id="profileId" name="cccd" class="form-control mb-3" value="@ViewBag.Cccd" maxlength="20" required/>
+<label class="form-label" for="profileEmail">Email</label><input id="profileEmail" type="email" name="email" class="form-control mb-3" value="@ViewBag.Email"/>
+<label class="form-label" for="profilePwd">Mật khẩu mới (để trống nếu không đổi)</label><input id="profilePwd" type="password" name="matKhauMoi" class="form-control mb-4" minlength="6" autocomplete="new-password"/>
+<button class="btn profile-btn w-100 rounded-pill" type="submit">Lưu thay đổi</button></form></div></div></div>}

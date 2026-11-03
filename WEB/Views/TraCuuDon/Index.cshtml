@@ -1,0 +1,100 @@
+﻿@model List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>
+@{
+    ViewData["Title"] = "Tra cứu lịch sử đặt phòng";
+    ViewData["NavbarOverlay"] = false;
+    string sdt = ViewBag.SoDienThoai as string ?? "";
+    var donHangs = Model ?? new List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>();
+}
+
+<div class="container py-5 mt-4 mb-5">
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8 col-lg-6 text-center">
+            <h2 class="fw-bold mb-3" style="color: #24392f; font-family: Georgia, serif;">Tra cứu đặt phòng</h2>
+            <p class="text-muted">Nhập số điện thoại bạn đã dùng để đặt phòng để xem lại lịch sử và trạng thái đơn hàng hiện tại.</p>
+
+            <form asp-controller="TraCuuDon" asp-action="Index" method="post" class="mt-4">
+                <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
+                    <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-telephone text-muted"></i></span>
+                    <input type="text" name="soDienThoai" value="@sdt" class="form-control border-0 px-3" placeholder="Nhập số điện thoại của bạn..." required>
+                    <button class="btn btn-dark px-4 fw-bold" type="submit" style="background-color: #24392f;">
+                        Tra cứu ngay
+                    </button>
+                </div>
+            </form>
+
+            @if (TempData["Loi"] != null)
+            {
+                <div class="alert alert-danger mt-4 rounded-3 text-start small">
+                    <i class="bi bi-exclamation-circle me-2"></i>@TempData["Loi"]
+                </div>
+            }
+            @if (TempData["ThongBao"] != null)
+            {
+                <div class="alert alert-success mt-4 rounded-3 text-start small">
+                    <i class="bi bi-check-circle me-2"></i>@TempData["ThongBao"]
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- KHU VỰC HIỂN THỊ KẾT QUẢ TỪ DATABASE -->
+    @if (!string.IsNullOrEmpty(sdt) && donHangs.Any())
+    {
+        <h5 class="fw-bold mb-4">Tìm thấy <span class="text-danger">@donHangs.Count</span> đơn hàng cho SĐT: <span class="text-danger">@sdt</span></h5>
+        <div class="row g-4">
+            @foreach (var don in donHangs)
+            {
+                // Xử lý màu sắc trạng thái
+                var trangThai = don.TrangThai.ToLower();
+                var badgeClass = trangThai.Contains("chờ") ? "bg-warning text-dark" :
+                trangThai.Contains("xác nhận") || trangThai.Contains("đã đặt") ? "bg-success text-white" :
+                trangThai.Contains("hủy") ? "bg-danger text-white" : "bg-secondary text-white";
+
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <span class="badge @badgeClass mb-1">@don.TrangThai</span>
+                                <h6 class="mb-0 fw-bold">Mã đơn: @don.MaDon</h6>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">Ngày tạo: @(don.NgayDat?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</small>
+                                <strong class="text-danger fs-5">@don.TongTien.ToString("#,##0") đ</strong>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                @if (don.Phong != null)
+                                {
+                                    var imgPath = Url.Content($"~/images/{don.Phong.SoPhong.Trim()}.jpg");
+                                    <div class="col-md-3 mb-3 mb-md-0">
+                                        <img src="@imgPath" class="w-100 rounded-3 object-fit-cover" style="height: 120px;" alt="Phòng @don.Phong.SoPhong" onerror="this.src='https://images.unsplash.com/photo-1618773928120-22165582f349?q=80&w=400&auto=format&fit=crop';">
+                                    </div>
+                                    <div class="col-md-9">
+                                        <h5 class="fw-bold mb-2">@don.Phong.TenLoaiPhong (@don.Phong.SoPhong)</h5>
+                                        <div class="row g-3">
+                                            <div class="col-sm-6">
+                                                <p class="mb-1 small text-muted"><i class="bi bi-box-arrow-in-right me-1"></i> Nhận phòng:</p>
+                                                <!-- Đã lấy GIỜ THẬT từ Database (định dạng: Ngày/Tháng/Năm - Giờ:Phút) -->
+                                                <strong class="d-block text-primary">@(don.NgayNhan?.ToString("dd/MM/yyyy - HH:mm") ?? "N/A")</strong>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <p class="mb-1 small text-muted"><i class="bi bi-box-arrow-right me-1"></i> Trả phòng:</p>
+                                                <!-- Đã lấy GIỜ THẬT từ Database -->
+                                                <strong class="d-block text-danger">@(don.NgayTra?.ToString("dd/MM/yyyy - HH:mm") ?? "N/A")</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-12 text-muted fst-italic">Đơn hàng không có chi tiết phòng.</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
