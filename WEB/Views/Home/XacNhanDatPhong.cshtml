@@ -5,10 +5,11 @@
 <div class="container py-5 my-5">
   <div class="card border-0 shadow-sm rounded-4 mx-auto p-4 p-md-5 text-center" style="max-width:680px">
     <div class="text-success display-3 mb-3"><i class="bi bi-check-circle-fill"></i></div>
-    <h1 class="h3 fw-bold">Đặt phòng thành công!</h1>
-    <p class="text-muted mb-3">Yêu cầu đặt phòng đã được hệ thống ghi nhận.</p>
+    <h1 class="h3 fw-bold">Đã gửi yêu cầu đặt phòng!</h1>
+    <p class="text-muted mb-3">Yêu cầu đặt phòng đã được hệ thống ghi nhận. Bạn có thể theo dõi tiến độ xác nhận từ lễ tân trong lịch sử đặt phòng.</p>
+    <p class="small text-muted">Trạng thái hiện tại: <strong>@ViewBag.TrangThai</strong></p>
     <div class="bg-light rounded-3 p-3 mb-4"><span class="text-muted">Mã đơn đặt phòng</span><div class="h4 fw-bold mb-0">@ViewBag.MaDon</div></div>
-    <p class="small text-muted">Hãy lưu mã đơn để đối chiếu khi liên hệ khách sạn. Trạng thái và chi tiết đơn phụ thuộc dữ liệu từ hệ thống.</p>
+    <p class="small text-muted">Hãy lưu mã đơn để đối chiếu khi liên hệ khách sạn. Bạn có thể theo dõi trạng thái mới nhất trong lịch sử đặt phòng.</p>
     <div class="d-flex gap-2 justify-content-center flex-wrap">
        <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-outline-dark">Xem phòng khác</a>
        <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="btn btn-success">Lịch sử đặt phòng</a>

@@ -1,4 +1,4 @@
-﻿@model QuanLyKhachSan.Web.Models.PhongViewModel
+@model QuanLyKhachSan.Web.Models.PhongViewModel
 
 @{
     ViewData["Title"] = "Chi tiết phòng " + Model.SoPhong;
@@ -17,25 +17,20 @@
     var fallbackIndex = (int)(Math.Abs((long)Model.PhongId) % fallbackImgs.Length);
     var fallbackImage = fallbackImgs[fallbackIndex];
 
-    // XỬ LÝ CHUẨN HÓA TRẠNG THÁI TIẾNG VIỆT
-    var rawStatus = (Model.TrangThai ?? string.Empty).Trim();
-    var normalizedStatus = rawStatus.ToLowerInvariant();
-
-    var isAvailable = normalizedStatus is "trong" or "trống" or "available";
-    var isOccupied = normalizedStatus is "dang co khach" or "đang có khách" or "occupied" or "dango";
-    var isBooked = normalizedStatus is "dadat" or "da dat" or "đã đặt" or "booked";
-
-    var statusText = normalizedStatus switch
+    var statusText = HienThiPhong.TrangThai(Model.TrangThai);
+    var statusClass = statusText switch
     {
-        "trong" or "trống" or "available" => "Còn trống",
-        "dang co khach" or "đang có khách" or "occupied" or "dango" => "Đang có khách",
-        "bao tri" or "bảo trì" or "maintenance" => "Đang bảo trì",
-        "dadat" or "da dat" or "đã đặt" or "booked" => "Đã đặt", // <-- Đã thêm "dadat" viết liền
-        _ => string.IsNullOrWhiteSpace(rawStatus) ? "Chưa xác định" : rawStatus
+        "Còn trống" => "text-success",
+        "Đang có khách" => "text-danger",
+        "Đã đặt" => "text-warning",
+        _ => "text-secondary"
     };
+    DateOnly? selectedCheckIn = ViewBag.NgayNhan as DateOnly?;
+    DateOnly? selectedCheckOut = ViewBag.NgayTra as DateOnly?;
+    int? selectedGuests = ViewBag.SoKhach as int?;
+    string initialCheckIn = selectedCheckIn?.ToString("yyyy-MM-dd") + (selectedCheckIn.HasValue ? "T14:00" : "");
+    string initialCheckOut = selectedCheckOut?.ToString("yyyy-MM-dd") + (selectedCheckOut.HasValue ? "T12:00" : "");
 
-    // Thêm màu text-warning cho trạng thái Đã đặt
-    var statusClass = isAvailable ? "text-success" : (isOccupied ? "text-danger" : (isBooked ? "text-warning" : "text-secondary"));
 }
 <div class="container py-4 py-lg-5">
     <nav aria-label="breadcrumb" class="mb-4">
@@ -62,14 +57,23 @@
         </div>
 
         <div class="col-lg-5">
-            <span class="detail-type-badge"><i class="bi bi-door-open me-1" aria-hidden="true"></i>@(string.IsNullOrWhiteSpace(Model.TenLoaiPhong) ? "Hạng phòng" : Model.TenLoaiPhong)</span>
+            <span class="detail-type-badge"><i class="bi bi-door-open me-1" aria-hidden="true"></i>@HienThiPhong.TenLoai(Model.TenLoaiPhong)</span>
             <h1 class="display-6 fw-bold mt-3 mb-2">Phòng @Model.SoPhong</h1>
-            <p class="text-muted mb-3">Tận hưởng không gian nghỉ ngơi yên tĩnh với thiết kế tinh tế, phù hợp cho kỳ nghỉ thư giãn.</p>
+            <p class="text-muted mb-3">@(string.IsNullOrWhiteSpace(Model.MoTaLoaiPhong) ? "Không gian lưu trú thuận tiện, thông tin đặt phòng và giá được đồng bộ từ hệ thống khách sạn." : Model.MoTaLoaiPhong)</p>
+            @if (Model.SoNguoiToiDa.HasValue)
+            {
+                <p class="small mb-3"><i class="bi bi-people-fill me-2 text-success"></i>Sức chứa tối đa: <strong>@Model.SoNguoiToiDa người</strong></p>
+            }
+            @if (selectedGuests.HasValue && Model.SoNguoiToiDa.HasValue && selectedGuests.Value > Model.SoNguoiToiDa.Value)
+            {
+                <div class="alert alert-warning small">Phòng này không đủ sức chứa cho @selectedGuests người. Vui lòng chọn hạng phòng phù hợp.</div>
+            }
             <div class="row g-2 mb-3 small">
                <div class="col-6"><i class="bi bi-check-circle text-success me-2"></i>Thông tin giá rõ ràng</div>
                <div class="col-6"><i class="bi bi-calendar2-check text-success me-2"></i>Kiểm tra lịch theo ngày</div>
                <div class="col-6"><i class="bi bi-receipt text-success me-2"></i>Nhận mã đơn sau khi đặt</div>
                <div class="col-6"><i class="bi bi-person-check text-success me-2"></i>Tra cứu lịch sử đặt phòng</div>
+               <div class="col-12 mt-2"><a asp-controller="Home" asp-action="DichVu" class="small text-decoration-none"><i class="bi bi-cup-hot me-1"></i>Khám phá dịch vụ khách sạn</a></div>
             </div>
 
             <div class="detail-price mb-3">
@@ -89,40 +93,63 @@
 
             <div class="booking-panel">
                 <h2 class="h5 fw-bold mb-1"><i class="bi bi-calendar2-heart me-2"></i>Đặt phòng của bạn</h2>
-                <p class="text-muted small mb-4">Điền thông tin chính xác và chọn ngày lưu trú. Hệ thống sẽ kiểm tra phòng còn trống trước khi ghi nhận.</p>
+                <p class="text-muted small mb-4">Chọn thời gian lưu trú. Hệ thống sẽ kiểm tra lại tình trạng phòng và gửi yêu cầu đến lễ tân.</p>
 
                 <form asp-controller="Home" asp-action="DatPhong" method="post" class="row g-3" id="bookingForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="PhongId" value="@Model.PhongId" />
 
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold" for="bookingName">Họ và tên</label>
-                        <input id="bookingName" type="text" class="form-control rounded-3 py-2" name="HoTen" value="@User.Identity?.Name" autocomplete="name" maxlength="120" placeholder="Nhập họ tên khách hàng" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold" for="bookingPhone">Số điện thoại</label>
-                        <input id="bookingPhone" type="tel" class="form-control rounded-3 py-2" name="SoDienThoai" value="@User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10,11}" maxlength="11" placeholder="10–11 chữ số" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold" for="bookingCccd">CCCD / CMND</label>
-                        <input id="bookingCccd" type="text" class="form-control rounded-3 py-2" name="CCCD" inputmode="numeric" maxlength="20" placeholder="Số giấy tờ" required />
-                    </div>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-light border small mb-0">
+                                Đặt phòng bằng tài khoản <strong>@User.Identity.Name</strong>
+                                (@User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value).
+                                <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan">Cập nhật hồ sơ</a> nếu thông tin chưa đúng.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-warning small mb-0">
+                                Bạn cần <a asp-controller="TaiKhoan" asp-action="DangNhap">đăng nhập</a>
+                                hoặc <a asp-controller="TaiKhoan" asp-action="DangKy">đăng ký</a> để đặt phòng.
+                            </div>
+                        </div>
+                    }
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold" for="bookingCheckIn">Thời gian nhận phòng</label>
                         <!-- Đã đổi thành datetime-local -->
-                        <input id="bookingCheckIn" type="datetime-local" class="form-control rounded-3 py-2" name="NgayNhan" required />
+                        <input id="bookingCheckIn" type="datetime-local" class="form-control rounded-3 py-2" name="NgayNhan" value="@initialCheckIn" required />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold" for="bookingCheckOut">Thời gian trả phòng</label>
-                        <input id="bookingCheckOut" type="datetime-local" class="form-control rounded-3 py-2" name="NgayTra" required />
+                        <input id="bookingCheckOut" type="datetime-local" class="form-control rounded-3 py-2" name="NgayTra" value="@initialCheckOut" required />
+                    </div>
+                    <div class="col-12">
+                        <label for="bookingGuests" class="form-label small fw-semibold">Số khách lưu trú</label>
+                        <select id="bookingGuests" name="SoKhach" class="form-select rounded-3" required>
+                            @for (int guests = 1; guests <= (Model.SoNguoiToiDa.HasValue ? Math.Min(Model.SoNguoiToiDa.Value, 30) : 10); guests++)
+                            {
+                                <option value="@guests" selected="@(selectedGuests == guests || (!selectedGuests.HasValue && guests == 1))">@guests người</option>
+                            }
+                        </select>
+                        <small class="text-muted">Số khách được kiểm tra theo sức chứa hạng phòng. API hiện chưa lưu số khách trong đơn.</small>
                     </div>
                     <div class="col-12"><div class="rounded-3 p-3" style="background:#f1ede5">
                       <div class="small text-muted mb-1">Giá phòng tham khảo</div>
                       <div class="d-flex justify-content-between"><span>Giá mỗi đêm</span><strong>@Model.GiaPhong.ToString("N0") đ</strong></div>
-                      <div class="small text-muted mt-2">Tổng tiền cuối cùng được tính theo thời gian lưu trú và xác nhận bởi hệ thống.</div>
+                      <div class="d-flex justify-content-between align-items-center mt-2 border-top pt-2">
+                          <span class="small">Số đêm dự kiến</span><strong id="bookingNights">—</strong>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center mt-2">
+                          <span>Tạm tính tiền phòng</span><strong id="bookingEstimate">—</strong>
+                      </div>
+                      <div class="small text-muted mt-2">Tạm tính theo thời gian lưu trú, làm tròn lên ngày theo API. Chưa bao gồm dịch vụ phát sinh. Số tiền chính thức do hệ thống xác nhận.</div>
                     </div></div>
                     <div class="col-12 pt-2">
-                        <button type="submit" class="btn btn-dark btn-lg w-100 rounded-pill py-3">Gửi yêu cầu đặt phòng <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+                        <button type="submit" class="btn btn-dark btn-lg w-100 rounded-pill py-3" disabled="@(User.Identity?.IsAuthenticated != true)">Gửi yêu cầu đặt phòng <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
                         <p class="small text-muted text-center mt-3 mb-0">Yêu cầu chỉ được xác nhận khi hệ thống xử lý thành công.</p>
                     </div>
                 </form>
@@ -223,6 +250,29 @@
             const checkOut = document.getElementById('bookingCheckOut');
             if (!checkIn || !checkOut) return;
 
+            const nightlyPrice = @Model.GiaPhong.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const nightsEl = document.getElementById('bookingNights');
+            const estimateEl = document.getElementById('bookingEstimate');
+
+            const updateEstimate = () => {
+                if (!checkIn.value || !checkOut.value) {
+                    nightsEl.textContent = '—';
+                    estimateEl.textContent = '—';
+                    return;
+                }
+                const start = new Date(checkIn.value);
+                const end = new Date(checkOut.value);
+                const total = end.getTime() - start.getTime();
+                if (!Number.isFinite(total) || total <= 0) {
+                    nightsEl.textContent = 'Chưa hợp lệ';
+                    estimateEl.textContent = '—';
+                    return;
+                }
+                const nights = Math.ceil(total / (24 * 60 * 60 * 1000));
+                nightsEl.textContent = `${nights} đêm`;
+                estimateEl.textContent = (nights * nightlyPrice).toLocaleString('vi-VN') + ' đ';
+            };
+
             // Hàm lấy thời gian hiện tại chuẩn định dạng datetime-local (YYYY-MM-DDTHH:mm)
             const getLocalIsoString = (date) => {
                 const tzOffset = date.getTimezoneOffset() * 60000;
@@ -244,7 +294,10 @@
                 if (checkOut.value && checkOut.value <= checkIn.value) {
                     checkOut.value = minCheckOut;
                 }
+                updateEstimate();
             });
+            checkOut.addEventListener('change', updateEstimate);
+            updateEstimate();
         })();
     </script>
 }

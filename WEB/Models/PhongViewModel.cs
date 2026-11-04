@@ -1,4 +1,4 @@
-﻿namespace QuanLyKhachSan.Web.Models
+namespace QuanLyKhachSan.Web.Models
 {
     public class PhongViewModel
     {
@@ -9,5 +9,7 @@
         public string TenLoaiPhong { get; set; } = string.Empty;
         public decimal GiaPhong { get; set; }
         public string? HinhAnh { get; set; }
+        public int? SoNguoiToiDa { get; set; }
+        public string? MoTaLoaiPhong { get; set; }
     }
 }

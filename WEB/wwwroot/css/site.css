@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --sawade-forest: #24392f;
     --sawade-forest-dark: #17271f;
     --sawade-gold: #c4a36a;
@@ -383,4 +383,38 @@ a {
         height: 215px;
     }
 
+}
+
+/* SAWADE | Nâng cấp tìm phòng và khả năng sử dụng trên thiết bị nhỏ */
+.form-control:focus-visible, .form-select:focus-visible, .btn:focus-visible, a:focus-visible {
+    outline-offset: 2px;
+}
+@media (max-width: 767.98px) {
+    .floating-search-bar {
+        position: relative;
+        left: auto;
+        bottom: auto;
+        transform: none;
+        width: calc(100% - 24px);
+        margin: -54px auto 8px;
+        padding: 14px;
+    }
+    .hero-banner {
+        height: auto;
+        min-height: 670px;
+        padding: 115px 0 48px;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+    }
+    .hero-content .col-lg-8 {
+        padding-top: 12px !important;
+        margin-top: 14px !important;
+        padding-bottom: 78px !important;
+        margin-bottom: 0 !important;
+    }
+    .navbar-sawade .navbar-collapse .d-flex.ms-auto { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .page-transition, .room-card, .room-card img { animation: none !important; transition: none !important; }
 }
