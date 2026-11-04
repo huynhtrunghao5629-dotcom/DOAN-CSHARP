@@ -1,0 +1,80 @@
+@model IEnumerable<QuanLyKhachSan.Web.Models.DichVuKhachViewModel>
+@{
+    ViewData["Title"] = "Dịch vụ khách sạn";
+    ViewData["NavbarOverlay"] = false;
+    var services = Model?.ToList() ?? new();
+}
+<section class="py-5" style="background:#f8f7f3;min-height:70vh">
+    <div class="container">
+        <div class="text-center mx-auto mb-5" style="max-width:720px">
+            <p class="text-uppercase fw-semibold small" style="letter-spacing:2px;color:#997545">TIỆN ÍCH SAWADE</p>
+            <h1 class="fw-bold mb-3" style="font-family:Georgia,serif;color:#24392f">Dịch vụ dành cho kỳ nghỉ của bạn</h1>
+            <p class="text-muted">Tìm hiểu danh mục dịch vụ và giá tham khảo đang được khách sạn cập nhật trong hệ thống.</p>
+        </div>
+        @if (ViewBag.ApiError != null)
+        {
+            <div class="alert alert-warning" role="alert">@ViewBag.ApiError</div>
+        }
+        @if (services.Any())
+        {
+            <div class="row justify-content-between align-items-center g-3 mb-4">
+                <div class="col-md-6"><label class="form-label fw-semibold" for="serviceSearch">Tìm dịch vụ</label><input id="serviceSearch" type="search" class="form-control rounded-3" placeholder="Ví dụ: ăn sáng, giặt ủi..." /></div>
+                <div class="col-md-auto text-muted small"><span id="serviceCount">@services.Count</span> dịch vụ đang hiển thị</div>
+            </div>
+            <div class="row g-4" id="servicesGrid">
+                @foreach (var service in services)
+                {
+                    <div class="col-md-6 col-xl-4 service-item" data-search="@(HienThiDichVu.Ten(service.TenDichVu) + " " + HienThiDichVu.MoTa(service.MoTa))">
+                        <article class="h-100 bg-white rounded-4 shadow-sm p-4" style="border:1px solid #eceae5">
+                            <div class="d-inline-flex justify-content-center align-items-center rounded-4 mb-3" style="background:#ecf1ea;width:58px;height:58px"><i class="bi @HienThiDichVu.Icon(service.TenDichVu) fs-3" style="color:#31513e"></i></div>
+                            <h2 class="h5 fw-bold mb-2">@HienThiDichVu.Ten(service.TenDichVu)</h2>
+                            @if (!string.IsNullOrWhiteSpace(service.MoTa))
+                            {
+                                <p class="small text-muted">@HienThiDichVu.MoTa(service.MoTa)</p>
+                            }
+                            <div class="border-top mt-4 pt-3 d-flex justify-content-between align-items-center gap-2">
+                                <span class="small text-muted">Giá tham khảo</span>
+                                <strong style="color:#987447">@service.DonGia.ToString("N0") đ / @HienThiDichVu.DonVi(service.DonViTinh)</strong>
+                            </div>
+                        </article>
+                    </div>
+                }
+            </div>
+            <p class="text-muted small mt-4"><i class="bi bi-info-circle me-1"></i>Dịch vụ phát sinh được nhân viên khách sạn ghi nhận và thanh toán theo đơn thực tế. Trang này chỉ giới thiệu dịch vụ, chưa hỗ trợ đặt trực tuyến.</p>
+            <div id="noServices" class="alert alert-light border mt-4" hidden>Không tìm thấy dịch vụ phù hợp với từ khóa.</div>
+        }
+        else if (ViewBag.ApiError == null)
+        {
+            <div class="bg-white rounded-4 p-5 text-center"><i class="bi bi-bag-x fs-1 text-muted"></i><h2 class="h5 mt-3">Chưa có dịch vụ để hiển thị</h2><p class="text-muted">Danh mục dịch vụ đang được cập nhật.</p></div>
+        }
+        <div class="text-center mt-5"><a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade rounded-pill px-4 py-2">Khám phá phòng nghỉ</a></div>
+    </div>
+</section>
+@section Scripts {
+<script>
+ (() => {
+   const search = document.getElementById('serviceSearch');
+   if (!search) return;
+   const cards = [...document.querySelectorAll('.service-item')];
+   const count = document.getElementById('serviceCount');
+   const empty = document.getElementById('noServices');
+   // NFD loại dấu thanh; Đ/đ phải thay riêng để "doi" tìm được "đôi".
+   const boDau = text => (text || '')
+     .normalize('NFD')
+     .replace(/[\u0300-\u036f]/g, '')
+     .replace(/[đĐ]/g, 'd')
+     .toLocaleLowerCase('vi-VN');
+   search.addEventListener('input', () => {
+     const keyword = boDau(search.value.trim());
+     let visible = 0;
+     cards.forEach(card => {
+       const match = boDau(card.dataset.search).includes(keyword);
+       card.hidden = !match;
+       if (match) visible++;
+     });
+     count.textContent = String(visible);
+     empty.hidden = visible > 0;
+   });
+ })();
+</script>
+}

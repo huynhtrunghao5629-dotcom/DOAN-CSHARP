@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.ComponentModel.DataAnnotations;
 using QuanLyKhachSan.Web.Models;
 using System.Security.Claims;
 using System.Text.Json;
@@ -78,6 +80,7 @@ namespace QuanLyKhachSan.Web.Controllers
                 return View(model);
             }
         }
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> HuyDonHang(int datPhongId)
@@ -94,26 +97,38 @@ namespace QuanLyKhachSan.Web.Controllers
             {
                 var history = await client.GetFromJsonAsync<List<LichSuDatPhongViewModel>>(
                     $"api/DatPhong/tra-cuu?sdt={Uri.EscapeDataString(phone)}");
-                if (history == null || !history.Any(d => d.DatPhongId == datPhongId))
+                var matchedOrder = history?.FirstOrDefault(d => d.DatPhongId == datPhongId);
+                if (matchedOrder == null)
                 {
                     TempData["Loi"] = "Không tìm thấy đơn đặt phòng thuộc tài khoản của bạn.";
                     return RedirectToAction("HoSoCaNhan");
                 }
+                if (!TrangThaiDatPhong.ChoPhepHuy(matchedOrder.TrangThai))
+                {
+                    TempData["Loi"] = "Chỉ có thể tự hủy đơn đang chờ xác nhận.";
+                    return RedirectToAction("HoSoCaNhan");
+                }
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
             {
                 TempData["Loi"] = "Không thể kiểm tra đơn đặt phòng. Vui lòng thử lại.";
                 return RedirectToAction("HoSoCaNhan");
             }
-            using var response = await client.PutAsync($"api/DatPhong/{datPhongId}/huy-don", null);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                TempData["ThongBao"] = "Hủy đơn đặt phòng thành công!";
+                using var response = await client.PutAsync($"api/DatPhong/{datPhongId}/huy-don", null);
+                if (response.IsSuccessStatusCode)
+                    TempData["ThongBao"] = "Đã hủy yêu cầu đặt phòng.";
+                else
+                    TempData["Loi"] = "Không thể hủy đơn. Chỉ đơn đang chờ xác nhận mới được tự hủy.";
             }
-            else
+            catch (HttpRequestException)
             {
-                TempData["Loi"] = "Hủy đơn thất bại. Đơn này có thể đã được xử lý bởi lễ tân.";
+                TempData["Loi"] = "Không thể kết nối API để hủy đơn. Vui lòng thử lại.";
+            }
+            catch (TaskCanceledException)
+            {
+                TempData["Loi"] = "API phản hồi quá lâu. Vui lòng kiểm tra trạng thái đơn trước khi thử lại.";
             }
 
             return RedirectToAction("HoSoCaNhan");
@@ -126,6 +141,7 @@ namespace QuanLyKhachSan.Web.Controllers
                 return RedirectToAction("Index", "Home");
             return View();
         }
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> HoSoCaNhan()
         {
@@ -140,22 +156,36 @@ namespace QuanLyKhachSan.Web.Controllers
 
             if (!string.IsNullOrEmpty(sdt))
             {
-                // 1. Lấy lịch sử đặt phòng
-                var response = await client.GetAsync($"api/DatPhong/tra-cuu?sdt={Uri.EscapeDataString(sdt)}");
-                if (response.IsSuccessStatusCode)
-                    donHangs = await response.Content.ReadFromJsonAsync<List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>>() ?? new();
-
-                // 2. Lấy thông tin cá nhân (CCCD, Email) để điền sẵn vào Form sửa
-                var profileResponse = await client.GetAsync($"api/KhachHang/tim-kiem?tuKhoa={Uri.EscapeDataString(sdt)}");
-                if (profileResponse.IsSuccessStatusCode)
+                try
                 {
-                    var khList = await profileResponse.Content.ReadFromJsonAsync<List<ThongTinKhachHangDto>>();
-                    var kh = khList?.FirstOrDefault();
-                    if (kh != null)
+                    // Chỉ dùng số điện thoại có trong phiên đăng nhập, không nhận từ query string.
+                    using var response = await client.GetAsync($"api/DatPhong/tra-cuu?sdt={Uri.EscapeDataString(sdt)}");
+                    if (response.IsSuccessStatusCode)
+                        donHangs = await response.Content.ReadFromJsonAsync<List<LichSuDatPhongViewModel>>() ?? new();
+                    else
+                        TempData["Loi"] = "Không thể tải lịch sử đặt phòng lúc này.";
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+                {
+                    TempData["Loi"] = "Kết nối đến API gián đoạn. Lịch sử đặt phòng chưa được cập nhật.";
+                }
+                try
+                {
+                    using var profileResponse = await client.GetAsync($"api/KhachHang/tim-kiem?tuKhoa={Uri.EscapeDataString(sdt)}");
+                    if (profileResponse.IsSuccessStatusCode)
                     {
-                        ViewBag.Cccd = kh.Cccd;
-                        ViewBag.Email = kh.Email;
+                        var khList = await profileResponse.Content.ReadFromJsonAsync<List<ThongTinKhachHangDto>>();
+                        var kh = khList?.FirstOrDefault();
+                        if (kh != null)
+                        {
+                            ViewBag.Cccd = kh.Cccd;
+                            ViewBag.Email = kh.Email;
+                        }
                     }
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+                {
+                    // Chỉ phần email/CCCD bị thiếu, vẫn cho xem lịch sử đã tải.
                 }
             }
 
@@ -164,6 +194,7 @@ namespace QuanLyKhachSan.Web.Controllers
             return View(donHangs);
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CapNhatTaiKhoan(string hoTen, string cccd, string email, string matKhauMoi)
@@ -171,6 +202,19 @@ namespace QuanLyKhachSan.Web.Controllers
             var phoneClaim = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.MobilePhone);
             string sdt = phoneClaim?.Value ?? "";
             if (string.IsNullOrEmpty(sdt)) return RedirectToAction("DangNhap");
+
+            hoTen = hoTen?.Trim() ?? string.Empty;
+            cccd = cccd?.Trim() ?? string.Empty;
+            email = email?.Trim() ?? string.Empty;
+            matKhauMoi ??= string.Empty;
+
+            if (hoTen.Length is < 2 or > 120 || cccd.Length > 20 ||
+                (!string.IsNullOrWhiteSpace(email) && !new EmailAddressAttribute().IsValid(email)) ||
+                (!string.IsNullOrEmpty(matKhauMoi) && matKhauMoi.Length < 6))
+            {
+                TempData["Loi"] = "Thông tin chưa hợp lệ. Vui lòng kiểm tra họ tên, email và mật khẩu (ít nhất 6 ký tự nếu đổi).";
+                return RedirectToAction("HoSoCaNhan");
+            }
 
             var payload = new
             {
@@ -180,26 +224,23 @@ namespace QuanLyKhachSan.Web.Controllers
                 Email = email,
                 MatKhauMoi = matKhauMoi
             };
-            var client = _client;
-            var response = await client.PutAsJsonAsync("api/KhachHang/cap-nhat-ho-so", payload);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                // Ghi đè lại Cookie ngay lập tức với Họ tên mới
-                // Preserve ID and all existing claims; change only the display name.
-                var claims = User.Claims.Where(c => c.Type != ClaimTypes.Name).ToList();
-                claims.Add(new Claim(ClaimTypes.Name, hoTen ?? string.Empty));
-
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
-
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-
-                TempData["ThongBao"] = "Cập nhật hồ sơ thành công!";
+                using var response = await _client.PutAsJsonAsync("api/KhachHang/cap-nhat-ho-so", payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    var claims = User.Claims.Where(c => c.Type != ClaimTypes.Name).ToList();
+                    claims.Add(new Claim(ClaimTypes.Name, hoTen));
+                    var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                    TempData["ThongBao"] = "Cập nhật hồ sơ thành công!";
+                }
+                else
+                    TempData["Loi"] = "Cập nhật thất bại. Vui lòng kiểm tra thông tin hoặc thử lại.";
             }
-            else
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
             {
-                TempData["Loi"] = "Cập nhật thất bại. Số CCCD có thể đã bị trùng lặp.";
+                TempData["Loi"] = "Không thể kết nối API để cập nhật hồ sơ.";
             }
 
             return RedirectToAction("HoSoCaNhan");
@@ -229,8 +270,7 @@ namespace QuanLyKhachSan.Web.Controllers
                     return RedirectToAction("DangNhap");
                 }
 
-                var error = await response.Content.ReadAsStringAsync();
-                TempData["Loi"] = $"Đăng ký thất bại: {error}";
+                TempData["Loi"] = "Đăng ký chưa thành công. Vui lòng kiểm tra lại thông tin và đảm bảo số điện thoại, CCCD chưa được sử dụng.";
                 return View(model);
             }
             catch

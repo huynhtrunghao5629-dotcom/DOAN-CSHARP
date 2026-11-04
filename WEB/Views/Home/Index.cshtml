@@ -1,4 +1,4 @@
-﻿@model IEnumerable<QuanLyKhachSan.Web.Models.PhongViewModel>
+@model IEnumerable<QuanLyKhachSan.Web.Models.PhongViewModel>
 @using System.Linq
 
 @{
@@ -48,9 +48,9 @@
 
     <div class="floating-search-bar">
         <form asp-controller="Home" asp-action="DanhSachPhong" method="get" class="row align-items-center g-2">
-            <div class="col-lg-3 col-md-12 px-lg-3 px-2 py-2">
+            <div class="col-lg-2 col-md-12 px-lg-3 px-2 py-2">
                 <label class="text-muted small fw-bold mb-1 d-block"><i class="bi bi-buildings me-1" aria-hidden="true"></i>Khu nghỉ dưỡng</label>
-                <div class="fw-semibold">Sawade Hotels &amp; Resorts</div>
+                <div class="fw-semibold">Khách sạn SAWADE</div>
                 <div class="text-muted small">Khám phá danh sách phòng</div>
             </div>
             <div class="col-lg-3 col-md-5 col-6 border-lg-start px-lg-3 px-2 py-2">
@@ -61,7 +61,14 @@
                 <label class="text-muted small fw-bold mb-1" for="homeNgayTra"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>Ngày trả phòng</label>
                 <input id="homeNgayTra" type="date" name="ngayTra" min="@(DateTime.Today.AddDays(1).ToString("yyyy-MM-dd"))" class="form-control search-input" required />
             </div>
-            <div class="col-lg-3 col-md-2 col-12 px-lg-3 px-2 py-2">
+            <div class="col-lg-2 col-md-5 col-6 px-lg-3 px-2 py-2">
+                <label class="text-muted small fw-bold mb-1" for="homeGuests"><i class="bi bi-people me-1" aria-hidden="true"></i>Số khách</label>
+                <select id="homeGuests" name="soKhach" class="form-select search-input" aria-label="Số khách">
+                    <option value="">Tất cả</option>
+                    @for (int guests = 1; guests <= 6; guests++) { <option value="@guests">@guests người</option> }
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-2 col-12 px-lg-3 px-2 py-2">
                 <button type="submit" class="btn btn-sawade w-100 rounded-pill py-3"><i class="bi bi-search me-2" aria-hidden="true"></i>Tìm phòng</button>
             </div>
         </form>
@@ -106,9 +113,9 @@
                     <a class="horizontal-scroll-item text-decoration-none" href="@(Url.Action("DanhSachPhong", "Home", new { loaiPhong = typeRoom.LoaiPhongId }))">
                         <article class="room-card h-100">
                             <div class="room-image-wrapper" style="height: 250px;">
-                                <img src="@imagePath" alt="@typeRoom.TenLoaiPhong" loading="lazy" onerror="this.onerror=null;this.src='@fallback';" />
+                                <img src="@imagePath" alt="@HienThiPhong.TenLoai(typeRoom.TenLoaiPhong)" loading="lazy" onerror="this.onerror=null;this.src='@fallback';" />
                                 <div class="category-overlay">
-                                    <h5 class="fw-bold mb-1">@typeRoom.TenLoaiPhong</h5>
+                                    <h5 class="fw-bold mb-1">@HienThiPhong.TenLoai(typeRoom.TenLoaiPhong)</h5>
                                     <span class="small text-white-50">Xem các phòng thuộc hạng này <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></span>
                                 </div>
                             </div>
@@ -145,37 +152,22 @@
                     var fallbackIndex = (int)(Math.Abs((long)room.PhongId) % fallbackImgs.Length);
                     var fallback = fallbackImgs[fallbackIndex];
 
-                    // Xử lý trạng thái chuẩn hóa
-                    var rawStatus = (room.TrangThai ?? string.Empty).Trim();
-                    var normalizedStatus = rawStatus.ToLowerInvariant();
-                    var isAvailable = normalizedStatus is "trong" or "trống" or "available";
-                    var isOccupied = normalizedStatus is "dang co khach" or "đang có khách" or "occupied" or "dango";
-                    var isBooked = normalizedStatus is "dadat" or "da dat" or "đã đặt" or "booked"; // Thêm dòng này
-
-                    var statusText = normalizedStatus switch
-                    {
-                        "trong" or "trống" or "available" => "Còn trống",
-                        "dang co khach" or "đang có khách" or "occupied" or "dango" => "Đang có khách",
-                        "bao tri" or "bảo trì" or "maintenance" => "Đang bảo trì",
-                        "dadat" or "da dat" or "đã đặt" or "booked" => "Đã đặt", // Bổ sung "dadat"
-                        _ => string.IsNullOrWhiteSpace(rawStatus) ? "Chưa xác định" : rawStatus
-                    };
-
-                    // Cập nhật class css để hiển thị màu
-                    var statusClass = isAvailable ? "available" : (isOccupied ? "occupied" : (isBooked ? "booked" : "unavailable"));
+                    var statusText = HienThiPhong.TrangThai(room.TrangThai);
+                    var isAvailable = HienThiPhong.DangTrong(room.TrangThai);
+                    var statusClass = isAvailable ? "available" : statusText == "Đang có khách" ? "occupied" : "unavailable";
 
                     <div class="horizontal-scroll-item">
                         <article class="room-card d-flex flex-column h-100">
                             <div class="room-image-wrapper">
                                 <img src="@imagePath" alt="Phòng @room.SoPhong" loading="lazy" onerror="this.onerror=null;this.src='@fallback';" />
-                                <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-white text-dark px-3 py-2 shadow-sm">@room.TenLoaiPhong</span>
+                                <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-white text-dark px-3 py-2 shadow-sm">@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
                             </div>
                             <div class="card-body p-4 d-flex flex-column">
                                 <h5 class="fw-bold text-dark mb-2">Phòng @room.SoPhong</h5>
                                 <div class="d-flex flex-wrap gap-2 mb-3">
                                     <span class="room-status @statusClass"><i class="bi @(isAvailable ? "bi-check-circle-fill" : "bi-info-circle-fill") me-1" aria-hidden="true"></i>@statusText</span>
                                 </div>
-                                <p class="text-muted small mb-3"><i class="bi bi-building me-2" aria-hidden="true"></i>@room.TenLoaiPhong</p>
+                                <p class="text-muted small mb-3"><i class="bi bi-building me-2" aria-hidden="true"></i>@HienThiPhong.TenLoai(room.TenLoaiPhong)</p>
                                 <div class="mt-auto d-flex justify-content-between align-items-end gap-2 border-top pt-3">
                                     <div>
                                         <span class="text-muted small d-block mb-1">Giá mỗi đêm</span>

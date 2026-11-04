@@ -1,6 +1,15 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "Thông tin quyền riêng tư";
+    ViewData["NavbarOverlay"] = false;
 }
-<h1>@ViewData["Title"]</h1>
-
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="container py-5" style="max-width:850px">
+    <h1 class="fw-bold mb-3">Thông tin quyền riêng tư</h1>
+    <p class="text-muted">SAWADE là ứng dụng minh họa quản lý và đặt phòng khách sạn trong phạm vi đồ án.</p>
+    <h2 class="h5 mt-4">Thông tin bạn cung cấp</h2>
+    <p>Họ tên, số điện thoại, email và thông tin nhận dạng (nếu được yêu cầu) được sử dụng trong quy trình tạo tài khoản, đặt phòng và tra cứu đơn.</p>
+    <h2 class="h5 mt-4">Dữ liệu đặt phòng</h2>
+    <p>Thông tin đặt phòng được gửi đến Web API của hệ thống và lưu trong cơ sở dữ liệu do nhóm triển khai. Chỉ sử dụng dữ liệu mẫu khi trình diễn.</p>
+    <h2 class="h5 mt-4">Lưu ý bảo mật</h2>
+    <p>Đây là hệ thống đang phát triển. Không sử dụng mật khẩu thật, giấy tờ thật hoặc dữ liệu cá nhân nhạy cảm khi kiểm thử trên môi trường đồ án.</p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark rounded-pill mt-3">Quay lại trang chủ</a>
+</div>

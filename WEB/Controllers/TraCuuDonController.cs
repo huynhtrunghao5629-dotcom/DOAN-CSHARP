@@ -10,23 +10,29 @@ namespace QuanLyKhachSan.Web.Controllers
         public TraCuuDonController(IHttpClientFactory factory) => _client = factory.CreateClient("HotelApi");
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             if (User.Identity?.IsAuthenticated != true) return RedirectToAction("DangNhap", "TaiKhoan");
+            var phone = User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value;
+            if (string.IsNullOrWhiteSpace(phone)) return Forbid();
             ViewData["NavbarOverlay"] = false;
-            // Nếu khách đã đăng nhập, tự động điền SĐT vào ô tìm kiếm
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            ViewBag.SoDienThoai = phone;
+            try
             {
-                var phoneClaim = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.MobilePhone);
-                if (phoneClaim != null)
-                {
-                    ViewBag.SoDienThoai = phoneClaim.Value;
-                }
+                using var response = await _client.GetAsync($"api/DatPhong/tra-cuu?sdt={Uri.EscapeDataString(phone)}");
+                if (response.IsSuccessStatusCode)
+                    return View(await response.Content.ReadFromJsonAsync<List<LichSuDatPhongViewModel>>() ?? new());
+                TempData["Loi"] = "Không thể lấy lịch sử đặt phòng lúc này.";
             }
-            return View();
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+            {
+                TempData["Loi"] = "Không thể kết nối API để tra cứu đơn.";
+            }
+            return View(new List<LichSuDatPhongViewModel>());
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(string soDienThoai)
         {
             if (User.Identity?.IsAuthenticated != true) return RedirectToAction("DangNhap", "TaiKhoan");
