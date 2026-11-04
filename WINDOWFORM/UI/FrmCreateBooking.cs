@@ -1,10 +1,10 @@
-﻿using HotelManagement.Desktop.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using HotelManagement.Desktop.Models;
+using HotelManager.Services;
 
 namespace HotelManager.UI
 {
@@ -19,121 +19,81 @@ namespace HotelManager.UI
         {
             dtpCheckIn.Value = DateTime.Now;
             dtpCheckOut.Value = DateTime.Now.AddDays(1);
-            await LoadRoomListAsync();
+
+            // Bắt sự kiện thay đổi ngày để load lại danh sách phòng trống
+            dtpCheckIn.ValueChanged += async (s, ev) => await LoadPhongTrongAsync();
+            dtpCheckOut.ValueChanged += async (s, ev) => await LoadPhongTrongAsync();
+
+            await LoadPhongTrongAsync();
         }
 
-        // Tải danh sách phòng trống/sẵn có lên ComboBox
-        private async Task LoadRoomListAsync()
+        private async System.Threading.Tasks.Task LoadPhongTrongAsync()
         {
             try
             {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.GetAsync("api/Phong");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var rooms = await response.Content.ReadFromJsonAsync<List<PhongViewModel>>();
-                        cboRooms.DataSource = rooms;
-                        cboRooms.DisplayMember = "SoPhong";
-                        cboRooms.ValueMember = "PhongId"; // Đồng bộ thuộc tính PhongId
-                    }
-                }
+                var tuNgay = dtpCheckIn.Value.ToString("yyyy-MM-dd");
+                var denNgay = dtpCheckOut.Value.ToString("yyyy-MM-dd");
+
+                var client = BaseApiClient.GetClient(); // BaseAddress = "https://localhost:7203/api/"
+                var phongTrongs = await client.GetFromJsonAsync<List<PhongViewModel>>($"Phong/phong-trong?tuNgay={tuNgay}&denNgay={denNgay}");
+
+                cboRooms.DataSource = phongTrongs;
+                cboRooms.DisplayMember = "SoPhong";
+                cboRooms.ValueMember = "PhongId";
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải danh sách phòng: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Không thể tải danh sách phòng trống: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        // Nút Lưu đơn đặt phòng tại quầy
         private async void btnSave_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtCustomerName.Text) || string.IsNullOrWhiteSpace(txtPhone.Text))
             {
-                MessageBox.Show("Vui lòng nhập đầy đủ tên và số điện thoại khách hàng!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (dtpCheckOut.Value.Date <= dtpCheckIn.Value.Date)
-            {
-                MessageBox.Show("Ngày trả phòng phải sau ngày nhận phòng!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng nhập tên khách hàng và số điện thoại!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (cboRooms.SelectedValue == null)
             {
-                MessageBox.Show("Vui lòng chọn phòng!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng chọn phòng trống!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string roomId = cboRooms.SelectedValue.ToString() ?? string.Empty;
-            DateTime checkIn = dtpCheckIn.Value.Date;
-            DateTime checkOut = dtpCheckOut.Value.Date;
-
-            // 1. Kiểm tra trùng lịch phòng qua API trước khi tạo
-            bool isAvailable = await CheckRoomAvailabilityAsync(roomId, checkIn, checkOut);
-            if (!isAvailable)
+            if (dtpCheckOut.Value <= dtpCheckIn.Value)
             {
-                MessageBox.Show("Phòng này đã có người đặt trong thời gian bạn chọn! Vui lòng chọn phòng hoặc ngày khác.",
-                                "Trùng lịch đặt phòng", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Ngày trả phòng phải lớn hơn ngày nhận phòng!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // 2. Tạo DTO và gửi API lưu đơn
-            var dto = new
+            // Nếu ngày nhận phòng là hôm nay -> Khách nhận phòng ngay (DaNhanPhong), ngược lại là Đã đặt (DaDat)
+            string trangThai = (dtpCheckIn.Value.Date == DateTime.Today) ? "DaNhanPhong" : "DaDat";
+
+            var req = new
             {
                 TenKhachHang = txtCustomerName.Text.Trim(),
                 SoDienThoai = txtPhone.Text.Trim(),
-                PhongId = roomId,
-                NgayNhanPhong = checkIn,
-                NgayTraPhong = checkOut,
-                TrangThai = "DaXacNhan", // Đặt trực tiếp tại quầy mặc định trạng thái Đã xác nhận
-                GhiChu = txtNote.Text.Trim()
+                PhongId = (int)cboRooms.SelectedValue,
+                NgayNhan = dtpCheckIn.Value,
+                NgayTra = dtpCheckOut.Value,
+                GhiChu = txtNote.Text.Trim(),
+                TrangThai = trangThai
             };
 
-            try
-            {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    HttpResponseMessage response = await client.PostAsJsonAsync("api/DonDatPhong", dto);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Tạo đơn đặt phòng tại quầy thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.DialogResult = DialogResult.OK;
-                        this.Close();
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Tạo đơn thất bại. Mã lỗi API: {response.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi kết nối API: {ex.Message}", "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+            var client = BaseApiClient.GetClient();
+            var res = await client.PostAsJsonAsync("DatPhong", req);
 
-        // Gọi API kiểm tra xem phòng có bị trùng lịch trong khoảng [checkIn, checkOut] hay không
-        private async Task<bool> CheckRoomAvailabilityAsync(string roomId, DateTime checkIn, DateTime checkOut)
-        {
-            try
+            if (res.IsSuccessStatusCode)
             {
-                using (HttpClient client = BaseApiClient.GetClient())
-                {
-                    string url = $"api/DonDatPhong/kiem-tra-trung?phongId={roomId}&checkIn={checkIn:yyyy-MM-dd}&checkOut={checkOut:yyyy-MM-dd}";
-                    HttpResponseMessage response = await client.GetAsync(url);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return await response.Content.ReadFromJsonAsync<bool>();
-                    }
-                }
+                MessageBox.Show($"Tạo đơn đặt phòng thành công! (Trạng thái: {TrangThaiTiengViet.Don(trangThai)})", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.DialogResult = DialogResult.OK;
+                this.Close();
             }
-            catch
+            else
             {
-                // Nếu API chưa hỗ trợ endpoint check trùng, bỏ qua để fallback
+                MessageBox.Show("Tạo đơn đặt phòng thất bại!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            return true;
         }
 
         private void btnCancel_Click(object sender, EventArgs e)

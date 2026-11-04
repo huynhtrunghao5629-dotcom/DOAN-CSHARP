@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSanAPI.Models;
 
@@ -135,7 +135,7 @@ public class DatPhongController : ControllerBase
             NgayDat = DateTime.Now,
             NgayNhan = request.NgayNhan,
             NgayTra = request.NgayTra,
-            TrangThai = "DaDat",
+            TrangThai = "ChoXacNhan",
             TongTien = tongTien
         };
 
@@ -195,9 +195,29 @@ public class DatPhongController : ControllerBase
         return Ok(donDatPhongs);
     }
     // PUT: api/DatPhong/5/trang-thai
+    // Mã trạng thái khớp CK_DatPhong_TrangThai trong SQL Server.
+    // ChoXacNhan -> DaDat -> DaNhanPhong. Check-out được xử lý riêng.
     [HttpPut("{id:int}/trang-thai")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] CapNhatTrangThaiRequest request)
     {
+        if (request == null || string.IsNullOrWhiteSpace(request.TrangThai))
+            return BadRequest("Vui lòng cung cấp trạng thái.");
+
+        // Chấp nhận một vài alias cũ từ WinForms nhưng CHỈ lưu mã SQL hợp lệ.
+        static string ChuanHoa(string? value) => (value ?? "").Trim().ToLowerInvariant() switch
+        {
+            "choxacnhan" or "chờ xác nhận" => "ChoXacNhan",
+            "dadat" or "daxacnhan" => "DaDat",
+            "danhanphong" or "dango" => "DaNhanPhong",
+            "datraphong" or "datra" => "DaTraPhong",
+            "dahuy" or "đã hủy" => "DaHuy",
+            _ => ""
+        };
+
+        var mucTieu = ChuanHoa(request.TrangThai);
+        if (mucTieu.Length == 0)
+            return BadRequest("Trạng thái yêu cầu không nằm trong danh sách được hỗ trợ.");
+
         var datPhong = await _context.DatPhongs
             .Include(d => d.ChiTietDatPhongs)
                 .ThenInclude(ct => ct.Phong)
@@ -206,26 +226,55 @@ public class DatPhongController : ControllerBase
         if (datPhong == null)
             return NotFound("Không tìm thấy đơn đặt phòng.");
 
-        datPhong.TrangThai = request.TrangThai;
+        var hienTai = ChuanHoa(datPhong.TrangThai);
+        bool hopLe = (hienTai == "ChoXacNhan" && (mucTieu == "DaDat" || mucTieu == "DaHuy"))
+                  || (hienTai == "DaDat" && (mucTieu == "DaNhanPhong" || mucTieu == "DaHuy"));
+        if (!hopLe)
+            return Conflict(new { Message = $"Không thể chuyển từ {hienTai} sang {mucTieu}." });
 
-        // Tự động giải phóng trạng thái phòng nếu hoàn thành hoặc hủy
-        if (request.TrangThai == "DaTra" || request.TrangThai == "DaHuy")
+        if (mucTieu == "DaNhanPhong")
+        {
+            if (datPhong.ChiTietDatPhongs.Count == 0)
+                return Conflict("Đơn chưa có phòng để nhận.");
+            if (datPhong.ChiTietDatPhongs.Any(ct => ct.Phong == null ||
+                new[] { "dangsudung", "dango", "đang có khách" }
+                    .Contains((ct.Phong.TrangThai ?? "").Trim().ToLowerInvariant())))
+                return Conflict("Một trong các phòng đã có khách hoặc không còn tồn tại.");
+        }
+
+        datPhong.TrangThai = mucTieu;
+        if (mucTieu == "DaNhanPhong")
+        {
+            foreach (var ct in datPhong.ChiTietDatPhongs)
+                ct.Phong.TrangThai = "DangSuDung"; // Giá trị trong SQL script CK_Phong_TrangThai.
+        }
+        else if (mucTieu == "DaHuy")
         {
             foreach (var ct in datPhong.ChiTietDatPhongs)
             {
-                ct.Phong.TrangThai = "Trong";
-            }
-        }
-        else if (request.TrangThai == "DangO")
-        {
-            foreach (var ct in datPhong.ChiTietDatPhongs)
-            {
-                ct.Phong.TrangThai = "DangO";
+                var phongId = ct.PhongId;
+                var coDonKhac = await _context.ChiTietDatPhongs.AnyAsync(x =>
+                    x.PhongId == phongId && x.DatPhongId != id &&
+                    (x.DatPhong.TrangThai == "ChoXacNhan" ||
+                     x.DatPhong.TrangThai == "DaDat" ||
+                     x.DatPhong.TrangThai == "DaNhanPhong"));
+                if (!coDonKhac && ct.Phong != null &&
+                    !new[] { "dangsudung", "dango", "đang có khách" }
+                        .Contains((ct.Phong.TrangThai ?? "").Trim().ToLowerInvariant()))
+                    ct.Phong.TrangThai = "Trong";
             }
         }
 
-        await _context.SaveChangesAsync();
-        return Ok(new { Message = "Cập nhật trạng thái thành công.", TrangThai = datPhong.TrangThai });
+        try
+        {
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Cập nhật trạng thái thành công.", TrangThai = datPhong.TrangThai });
+        }
+        catch (DbUpdateException)
+        {
+            // Không trả stack trace/chi tiết SQL nội bộ cho giao diện WinForms.
+            return Conflict(new { Message = "Không lưu được trạng thái. Kiểm tra ràng buộc trạng thái phòng và đơn trong SQL Server." });
+        }
     }
 
     // PUT: api/DatPhong/5
@@ -277,37 +326,9 @@ public class DatPhongController : ControllerBase
         return Ok("Xóa đơn đặt phòng thành công.");
     }
     // PUT: api/DatPhong/5/huy-don
+    // Dùng chung quy tắc chuyển trạng thái; tránh ghi giá trị "Đã hủy" sai CHECK.
+    // TODO: Bắt buộc xác thực và kiểm tra người sở hữu đơn ở tầng API trước khi triển khai công khai.
     [HttpPut("{id:int}/huy-don")]
-    public async Task<IActionResult> HuyDonKhachHangTuLam(int id)
-    {
-        var datPhong = await _context.DatPhongs
-            .Include(d => d.ChiTietDatPhongs)
-                .ThenInclude(ct => ct.Phong)
-            .FirstOrDefaultAsync(d => d.DatPhongId == id);
-
-        if (datPhong == null)
-            return NotFound("Không tìm thấy đơn đặt phòng.");
-
-        // Chỉ cho phép hủy khi đơn còn đang "Chờ xác nhận"
-        var currentStatus = (datPhong.TrangThai ?? string.Empty).Trim().ToLowerInvariant();
-        if (currentStatus != "chờ xác nhận" && currentStatus != "choxacnhan")
-        {
-            return BadRequest("Chỉ có thể hủy đơn khi đang ở trạng thái Chờ xác nhận.");
-        }
-
-        // 1. Đổi trạng thái đơn thành Đã hủy
-        datPhong.TrangThai = "Đã hủy";
-
-        // 2. Nhả các phòng trong đơn này về lại trạng thái "Còn trống"
-        foreach (var ct in datPhong.ChiTietDatPhongs)
-        {
-            if (ct.Phong != null)
-            {
-                ct.Phong.TrangThai = "Trong";
-            }
-        }
-
-        await _context.SaveChangesAsync();
-        return Ok(new { Message = "Hủy đơn đặt phòng thành công." });
-    }
+    public Task<IActionResult> HuyDonKhachHangTuLam(int id)
+        => UpdateStatus(id, new CapNhatTrangThaiRequest { TrangThai = "DaHuy" });
 }

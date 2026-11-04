@@ -1,12 +1,13 @@
-﻿using HotelManagement.Desktop.Models;               
-using System;
+﻿using System;
+using System.Net.Http.Json;
 using System.Windows.Forms;
+using HotelManagement.Desktop.Models;
+using HotelManager.Services;
 
 namespace HotelManager.UI
 {
     public partial class FrmLogin : Form
     {
-        // Thuộc tính lưu thông tin phiên đăng nhập sau khi xác thực thành công
         public UserSession? CurrentUser { get; private set; }
 
         public FrmLogin()
@@ -14,38 +15,38 @@ namespace HotelManager.UI
             InitializeComponent();
         }
 
-        private void btnLogin_Click(object sender, EventArgs e)
+        private async void btnLogin_Click(object sender, EventArgs e)
         {
-            string username = txtUsername.Text.Trim();
-            string password = txtPassword.Text;
+            var req = new LoginRequest
+            {
+                Username = txtUsername.Text.Trim(),
+                Password = txtPassword.Text.Trim()
+            };
 
-            // Kiểm tra ràng buộc nhập liệu cơ bản
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            try
             {
-                MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                var client = BaseApiClient.GetClient();
+                var response = await client.PostAsJsonAsync("TaiKhoan/login", req);
 
-            // Giả lập tài khoản xác thực & phân quyền (Admin / Staff)
-            if (username == "admin" && password == "123456")
-            {
-                CurrentUser = new UserSession { Username = username, Role = "Admin", Token = "fake-jwt-token-admin" };
-                MessageBox.Show("Đăng nhập thành công với quyền Admin!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<UserSession>();
+                    if (result != null)
+                    {
+                        CurrentUser = result;
+                        BaseApiClient.SetToken(result.Token); // Gắn Token vào Header[cite: 17]
+
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                        return;
+                    }
+                }
+
+                MessageBox.Show("Tài khoản hoặc mật khẩu không đúng!", "Đăng nhập thất bại", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            else if (username == "staff" && password == "123456")
+            catch (Exception ex)
             {
-                CurrentUser = new UserSession { Username = username, Role = "Staff", Token = "fake-jwt-token-staff" };
-                MessageBox.Show("Đăng nhập thành công với quyền Staff!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.DialogResult = DialogResult.OK;
-                this.Close();
-            }
-            else
-            {
-                MessageBox.Show("Tài khoản hoặc mật khẩu không chính xác!", "Lỗi xác thực", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                txtPassword.Clear();
-                txtPassword.Focus();
+                MessageBox.Show($"Lỗi kết nối API Server: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

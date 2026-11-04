@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSanAPI.Models;
 
@@ -46,7 +46,7 @@ public class KhachHangController : ControllerBase
         {
             HoTen = request.HoTen.Trim(),
             SoDienThoai = request.SoDienThoai.Trim(),
-            Cccd = request.CCCD.Trim(),
+            Cccd = string.IsNullOrWhiteSpace(request.CCCD) ? null : request.CCCD.Trim(),
             Email = request.Email?.Trim(),
             MatKhau = request.MatKhau
         };
@@ -89,7 +89,16 @@ public class KhachHangController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var khachHangs = await _context.KhachHangs.ToListAsync();
+        var khachHangs = await _context.KhachHangs.AsNoTracking()
+            .Select(k => new
+            {
+                k.KhachHangId,
+                k.HoTen,
+                k.Cccd,
+                k.SoDienThoai,
+                k.Email,
+                k.DiaChi
+            }).ToListAsync();
         return Ok(khachHangs);
     }
 
@@ -97,7 +106,10 @@ public class KhachHangController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var kh = await _context.KhachHangs.FindAsync(id);
+        var kh = await _context.KhachHangs.AsNoTracking()
+            .Where(k => k.KhachHangId == id)
+            .Select(k => new { k.KhachHangId, k.HoTen, k.Cccd, k.SoDienThoai, k.Email, k.DiaChi })
+            .FirstOrDefaultAsync();
         if (kh == null)
             return NotFound("Không tìm thấy khách hàng.");
 
@@ -108,12 +120,15 @@ public class KhachHangController : ControllerBase
     public async Task<IActionResult> Search([FromQuery] string tuKhoa)
     {
         if (string.IsNullOrWhiteSpace(tuKhoa))
-            return Ok(await _context.KhachHangs.ToListAsync());
+            return Ok(await _context.KhachHangs.AsNoTracking()
+                .Select(k => new { k.KhachHangId, k.HoTen, k.Cccd, k.SoDienThoai, k.Email, k.DiaChi })
+                .ToListAsync());
 
         var result = await _context.KhachHangs
             .Where(k => k.HoTen.Contains(tuKhoa) 
                      || (k.SoDienThoai != null && k.SoDienThoai.Contains(tuKhoa)) 
                      || (k.Cccd != null && k.Cccd.Contains(tuKhoa)))
+            .Select(k => new { k.KhachHangId, k.HoTen, k.Cccd, k.SoDienThoai, k.Email, k.DiaChi })
             .ToListAsync();
 
         return Ok(result);
@@ -133,15 +148,8 @@ public class KhachHangController : ControllerBase
 
         if (khachCu != null)
         {
-            khachCu.HoTen = khachHang.HoTen.Trim();
-
-            if (!string.IsNullOrWhiteSpace(khachHang.SoDienThoai)) khachCu.SoDienThoai = khachHang.SoDienThoai.Trim();
-            if (!string.IsNullOrWhiteSpace(khachHang.Cccd)) khachCu.Cccd = khachHang.Cccd.Trim();
-            if (!string.IsNullOrWhiteSpace(khachHang.Email)) khachCu.Email = khachHang.Email.Trim();
-
-            await _context.SaveChangesAsync();
-
-            return Ok(khachCu);
+            // Never silently overwrite an existing customer's profile by matching phone/CCCD.
+            return Conflict("Số điện thoại hoặc CCCD đã thuộc khách hàng khác.");
         }
 
         khachHang.KhachHangId = 0;
@@ -153,7 +161,9 @@ public class KhachHangController : ControllerBase
         _context.KhachHangs.Add(khachHang);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = khachHang.KhachHangId }, khachHang);
+        return CreatedAtAction(nameof(GetById), new { id = khachHang.KhachHangId },
+            new { khachHang.KhachHangId, khachHang.HoTen, khachHang.Cccd,
+                  khachHang.SoDienThoai, khachHang.Email, khachHang.DiaChi });
     }
 
     // PUT: api/KhachHang/5
@@ -183,7 +193,8 @@ public class KhachHangController : ControllerBase
 
 
         await _context.SaveChangesAsync();
-        return Ok(khachHang);
+        return Ok(new { khachHang.KhachHangId, khachHang.HoTen, khachHang.Cccd,
+            khachHang.SoDienThoai, khachHang.Email, khachHang.DiaChi });
     }
     [HttpPut("cap-nhat-ho-so")]
     public async Task<IActionResult> CapNhatHoSo([FromBody] CapNhatHoSoDto request)

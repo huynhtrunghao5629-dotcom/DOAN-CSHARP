@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSanAPI.Models;
 
@@ -41,17 +41,20 @@ public class ThongKeController : ControllerBase
         });
     }
 
-    // GET: api/ThongKe/doanh-thu-theo-thang?nam=2024
+    // GET: api/ThongKe/doanh-thu-theo-thang?nam=2026
+    // SoDon = bookings created that month; DoanhThu = bookings paid/completed.
+    // A booked-but-not-paid reservation is NOT recognized as revenue.
     [HttpGet("doanh-thu-theo-thang")]
     public async Task<IActionResult> GetDoanhThuTheoThang([FromQuery] int nam)
     {
         var thongKe = await _context.DatPhongs
-            .Where(d => d.NgayDat.Year == nam && (d.TrangThai == "DaTra" || d.TrangThai == "DaThanhToan"))
+            .Where(d => d.NgayDat.Year == nam)
             .GroupBy(d => d.NgayDat.Month)
             .Select(g => new
             {
                 Thang = g.Key,
-                DoanhThu = g.Sum(d => d.TongTien),
+                DoanhThu = g.Sum(d => d.TrangThai == "DaTra" || d.TrangThai == "DaThanhToan"
+                    ? d.TongTien : 0m),
                 SoDon = g.Count()
             })
             .OrderBy(x => x.Thang)

@@ -49,7 +49,8 @@ namespace HotelManagement.Desktop.Services
             await Task.Delay(100); // Giả lập bất đồng bộ
             if (string.IsNullOrWhiteSpace(keyword)) return _rooms;
 
-            return _rooms.FindAll(r => r.RoomNumber.Contains(keyword) || r.RoomTypeName.Contains(keyword));
+            return _rooms.FindAll(r => (r.RoomNumber != null && r.RoomNumber.Contains(keyword)) ||
+                           (r.RoomTypeName != null && r.RoomTypeName.Contains(keyword)));
         }
 
         public async Task<bool> SaveRoomAsync(RoomDto room)
