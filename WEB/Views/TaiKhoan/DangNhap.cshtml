@@ -1,4 +1,4 @@
-﻿@model QuanLyKhachSan.Web.Models.DangNhapViewModel
+@model QuanLyKhachSan.Web.Models.DangNhapViewModel
 @{
     ViewData["Title"] = "Đăng nhập";
     ViewData["NavbarOverlay"] = false;
@@ -13,16 +13,8 @@
                     <p class="text-muted small">Đăng nhập để quản lý đặt phòng và nhận ưu đãi riêng.</p>
                 </div>
 
-                @if (TempData["Loi"] != null)
-                {
-                    <div class="alert alert-danger rounded-3 small">@TempData["Loi"]</div>
-                }
-                @if (TempData["ThongBao"] != null)
-                {
-                    <div class="alert alert-success rounded-3 small">@TempData["ThongBao"]</div>
-                }
 
-                <form asp-controller="TaiKhoan" asp-action="DangNhap" method="post">
+                <form asp-controller="TaiKhoan" asp-action="DangNhap" method="post" data-sawade-busy="Đang đăng nhập...">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Số điện thoại hoặc Email</label>
                         <div class="input-group">

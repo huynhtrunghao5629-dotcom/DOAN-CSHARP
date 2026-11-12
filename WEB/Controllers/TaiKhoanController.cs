@@ -16,6 +16,7 @@ namespace QuanLyKhachSan.Web.Controllers
         public class ThongTinKhachHangDto
         {
             public string HoTen { get; set; } = "";
+            public string SoDienThoai { get; set; } = "";
             public string Cccd { get; set; } = "";
             public string Email { get; set; } = "";
         }
@@ -143,6 +144,7 @@ namespace QuanLyKhachSan.Web.Controllers
         }
         [Authorize]
         [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> HoSoCaNhan()
         {
             if (User.Identity == null || !User.Identity.IsAuthenticated)
@@ -150,8 +152,15 @@ namespace QuanLyKhachSan.Web.Controllers
 
             var phoneClaim = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.MobilePhone);
             string sdt = phoneClaim?.Value ?? "";
+            if (string.IsNullOrWhiteSpace(sdt))
+            {
+                await HttpContext.SignOutAsync("Cookies");
+                TempData["Loi"] = "Phiên đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.";
+                return RedirectToAction("DangNhap");
+            }
 
             var donHangs = new List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>();
+            ViewBag.LoiTaiLichSu = false;
             var client = _client;
 
             if (!string.IsNullOrEmpty(sdt))
@@ -163,10 +172,14 @@ namespace QuanLyKhachSan.Web.Controllers
                     if (response.IsSuccessStatusCode)
                         donHangs = await response.Content.ReadFromJsonAsync<List<LichSuDatPhongViewModel>>() ?? new();
                     else
+                    {
+                        ViewBag.LoiTaiLichSu = true;
                         TempData["Loi"] = "Không thể tải lịch sử đặt phòng lúc này.";
+                    }
                 }
                 catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
                 {
+                    ViewBag.LoiTaiLichSu = true;
                     TempData["Loi"] = "Kết nối đến API gián đoạn. Lịch sử đặt phòng chưa được cập nhật.";
                 }
                 try
@@ -175,7 +188,9 @@ namespace QuanLyKhachSan.Web.Controllers
                     if (profileResponse.IsSuccessStatusCode)
                     {
                         var khList = await profileResponse.Content.ReadFromJsonAsync<List<ThongTinKhachHangDto>>();
-                        var kh = khList?.FirstOrDefault();
+                        // Kết quả tìm kiếm có thể chứa nhiều khách; chỉ lấy khớp chính xác số điện thoại tài khoản.
+                        var kh = khList?.FirstOrDefault(k =>
+                            string.Equals(k.SoDienThoai?.Trim(), sdt, StringComparison.Ordinal));
                         if (kh != null)
                         {
                             ViewBag.Cccd = kh.Cccd;

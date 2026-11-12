@@ -253,13 +253,14 @@ namespace QuanLyKhachSan.Web.Controllers
                 ViewData["NavbarOverlay"] = false;
                 return View(room);
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
             {
-                return StatusCode(503, "Không thể kết nối Web API để tải chi tiết phòng.");
-            }
-            catch (JsonException)
-            {
-                return StatusCode(502, "Dữ liệu chi tiết phòng từ Web API không đúng định dạng.");
+                Response.StatusCode = ex is JsonException ? 502 : 503;
+                ViewData["Title"] = "Không thể tải chi tiết phòng";
+                ViewBag.ThongBaoLoiKetNoi = ex is JsonException
+                    ? "Hệ thống đang gặp sự cố dữ liệu phòng. Vui lòng thử lại sau."
+                    : "Kết nối đến hệ thống phòng bị gián đoạn hoặc phản hồi quá lâu.";
+                return View("ApiUnavailable");
             }
         }
 
@@ -398,6 +399,7 @@ namespace QuanLyKhachSan.Web.Controllers
 
         [Authorize]
         [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> XacNhanDatPhong(int id)
         {
             if (id <= 0) return RedirectToAction(nameof(Index));
@@ -412,6 +414,7 @@ namespace QuanLyKhachSan.Web.Controllers
                 var booking = history.FirstOrDefault(d => d.DatPhongId == id);
                 if (booking == null) return NotFound("Không tìm thấy đơn đặt phòng của tài khoản.");
                 ViewData["NavbarOverlay"] = false;
+                ViewBag.DatPhongId = booking.DatPhongId;
                 ViewBag.MaDon = string.IsNullOrWhiteSpace(booking.MaDon) ? $"#DP-{id:D5}" : booking.MaDon;
                 ViewBag.TrangThai = TrangThaiDatPhong.HienThi(booking.TrangThai);
                 return View();

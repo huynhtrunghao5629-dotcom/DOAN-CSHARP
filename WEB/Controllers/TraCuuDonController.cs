@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using QuanLyKhachSan.Web.Models;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication;
 
 namespace QuanLyKhachSan.Web.Controllers
 {
@@ -10,11 +11,17 @@ namespace QuanLyKhachSan.Web.Controllers
         public TraCuuDonController(IHttpClientFactory factory) => _client = factory.CreateClient("HotelApi");
 
         [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> Index()
         {
             if (User.Identity?.IsAuthenticated != true) return RedirectToAction("DangNhap", "TaiKhoan");
             var phone = User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value;
-            if (string.IsNullOrWhiteSpace(phone)) return Forbid();
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                await HttpContext.SignOutAsync("Cookies");
+                TempData["Loi"] = "Phiên đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.";
+                return RedirectToAction("DangNhap", "TaiKhoan");
+            }
             ViewData["NavbarOverlay"] = false;
             ViewBag.SoDienThoai = phone;
             try
@@ -22,10 +29,12 @@ namespace QuanLyKhachSan.Web.Controllers
                 using var response = await _client.GetAsync($"api/DatPhong/tra-cuu?sdt={Uri.EscapeDataString(phone)}");
                 if (response.IsSuccessStatusCode)
                     return View(await response.Content.ReadFromJsonAsync<List<LichSuDatPhongViewModel>>() ?? new());
+                ViewBag.LoiTaiLichSu = true;
                 TempData["Loi"] = "Không thể lấy lịch sử đặt phòng lúc này.";
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
             {
+                ViewBag.LoiTaiLichSu = true;
                 TempData["Loi"] = "Không thể kết nối API để tra cứu đơn.";
             }
             return View(new List<LichSuDatPhongViewModel>());
@@ -67,11 +76,13 @@ namespace QuanLyKhachSan.Web.Controllers
                     return View(data ?? new List<LichSuDatPhongViewModel>());
                 }
 
+                ViewBag.LoiTaiLichSu = true;
                 TempData["Loi"] = "Có lỗi xảy ra khi tra cứu dữ liệu.";
                 return View(new List<LichSuDatPhongViewModel>());
             }
             catch
             {
+                ViewBag.LoiTaiLichSu = true;
                 TempData["Loi"] = "Không thể kết nối đến máy chủ API.";
                 return View(new List<LichSuDatPhongViewModel>());
             }

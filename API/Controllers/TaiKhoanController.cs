@@ -1,9 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens; // Thư viện JWT
 using System.IdentityModel.Tokens.Jwt; // Thư viện JWT
 using System.Security.Claims; // Thư viện JWT
 using System.Text; // Thư viện JWT
+using Microsoft.AspNetCore.Authorization;
+using QuanLyKhachSanAPI.Security;
 using QuanLyKhachSanAPI.Models;
 
 namespace QuanLyKhachSanAPI.Controllers;
@@ -14,15 +16,24 @@ public class LoginRequest
     public string MatKhau { get; set; } = null!;
 }
 
+public sealed class TaiKhoanEditRequest
+{
+    public string? TenDangNhap { get; set; }
+    public string? MatKhau { get; set; }
+    public string? VaiTro { get; set; }
+}
+
 [ApiController]
 [Route("api/[controller]")]
 public class TaiKhoanController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JwtSigningSettings _jwt;
 
-    public TaiKhoanController(AppDbContext context)
+    public TaiKhoanController(AppDbContext context, JwtSigningSettings jwt)
     {
         _context = context;
+        _jwt = jwt;
     }
 
     // POST: api/TaiKhoan/dang-nhap
@@ -34,26 +45,32 @@ public class TaiKhoanController : ControllerBase
 
         var taiKhoan = await _context.TaiKhoans
             .Include(t => t.NhanVien)
-            .FirstOrDefaultAsync(t => t.TenDangNhap == request.TenDangNhap && t.MatKhau == request.MatKhau);
+            .FirstOrDefaultAsync(t => t.TenDangNhap == request.TenDangNhap);
 
-        if (taiKhoan == null)
+        if (taiKhoan == null ||
+            !PasswordSecurity.Verify(request.MatKhau, taiKhoan.MatKhau, out bool needsUpgrade))
             return Unauthorized("Tên đăng nhập hoặc mật khẩu không chính xác.");
+        if (needsUpgrade)
+        {
+            taiKhoan.MatKhau = PasswordSecurity.Hash(request.MatKhau);
+            await _context.SaveChangesAsync();
+        }
 
         // --- BẮT ĐẦU TẠO TOKEN JWT ---
-        // Khóa bí mật (Phải giống hệt khóa lúc cấu hình trong Program.cs nếu có)
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("ChuoiBiMatCuaDoAnQuanLyKhachSanDai1234567890"));
+        var securityKey = new SymmetricSecurityKey(_jwt.Key);
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         // Gắn thông tin quyền (VaiTro) vào Token
         var claims = new[] {
             new Claim(JwtRegisteredClaimNames.Sub, taiKhoan.TenDangNhap),
-            new Claim("VaiTro", taiKhoan.VaiTro ?? "NhanVien"), 
+            new Claim("VaiTro", taiKhoan.VaiTro ?? "NhanVien"),
+            new Claim(ClaimTypes.Role, taiKhoan.VaiTro ?? "NhanVien"), 
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var token = new JwtSecurityToken(
-            issuer: "QuanLyKhachSan",
-            audience: "QuanLyKhachSanUser",
+            issuer: _jwt.Issuer,
+            audience: _jwt.Audience,
             claims: claims,
             expires: DateTime.Now.AddHours(2), // Token sống được 2 tiếng
             signingCredentials: credentials);
@@ -75,6 +92,7 @@ public class TaiKhoanController : ControllerBase
     }
 
     // GET: api/TaiKhoan
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -85,43 +103,52 @@ public class TaiKhoanController : ControllerBase
     }
 
     // GET: api/TaiKhoan/5
+    [Authorize(Roles = "Admin")]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var tk = await _context.TaiKhoans.FindAsync(id);
+        var tk = await _context.TaiKhoans.AsNoTracking().Where(t => t.TaiKhoanId == id)
+            .Select(t => new { t.TaiKhoanId, t.TenDangNhap, t.VaiTro }).FirstOrDefaultAsync();
         if (tk == null) return NotFound("Không tìm thấy tài khoản.");
         return Ok(tk);
     }
 
-    // POST: api/TaiKhoan
+    [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(TaiKhoan model)
+    public async Task<IActionResult> Create([FromBody] TaiKhoanEditRequest request)
     {
-        bool tonTai = await _context.TaiKhoans.AnyAsync(t => t.TenDangNhap == model.TenDangNhap);
-        if (tonTai) return BadRequest("Tên đăng nhập đã tồn tại.");
-
-        model.TaiKhoanId = 0;
-        _context.TaiKhoans.Add(model);
+        if (string.IsNullOrWhiteSpace(request.TenDangNhap) ||
+            string.IsNullOrWhiteSpace(request.MatKhau) ||
+            request.VaiTro is not ("Admin" or "NhanVien"))
+            return BadRequest("Thiếu tên đăng nhập/mật khẩu hoặc vai trò không hợp lệ.");
+        var username = request.TenDangNhap.Trim();
+        if (await _context.TaiKhoans.AnyAsync(t => t.TenDangNhap == username))
+            return Conflict("Tên đăng nhập đã tồn tại.");
+        var tk = new TaiKhoan { TenDangNhap = username,
+            MatKhau = PasswordSecurity.Hash(request.MatKhau), VaiTro = request.VaiTro };
+        _context.TaiKhoans.Add(tk);
         await _context.SaveChangesAsync();
-        
-        return CreatedAtAction(nameof(GetById), new { id = model.TaiKhoanId }, model);
+        return CreatedAtAction(nameof(GetById), new { id = tk.TaiKhoanId },
+            new { tk.TaiKhoanId, tk.TenDangNhap, tk.VaiTro });
     }
 
-    // PUT: api/TaiKhoan/5
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, TaiKhoan model)
+    public async Task<IActionResult> Update(int id, [FromBody] TaiKhoanEditRequest request)
     {
         var tk = await _context.TaiKhoans.FindAsync(id);
         if (tk == null) return NotFound("Không tìm thấy tài khoản.");
-
-        tk.MatKhau = model.MatKhau;
-        tk.VaiTro = model.VaiTro;
-        
+        if (request.VaiTro is not ("Admin" or "NhanVien"))
+            return BadRequest("Vai trò không hợp lệ.");
+        tk.VaiTro = request.VaiTro;
+        if (!string.IsNullOrWhiteSpace(request.MatKhau))
+            tk.MatKhau = PasswordSecurity.Hash(request.MatKhau);
         await _context.SaveChangesAsync();
-        return Ok(tk);
+        return Ok(new { tk.TaiKhoanId, tk.TenDangNhap, tk.VaiTro });
     }
 
     // DELETE: api/TaiKhoan/5
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {

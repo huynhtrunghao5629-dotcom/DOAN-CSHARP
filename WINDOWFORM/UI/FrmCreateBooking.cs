@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows.Forms;
@@ -17,8 +18,8 @@ namespace HotelManager.UI
 
         private async void FrmCreateBooking_Load(object sender, EventArgs e)
         {
-            dtpCheckIn.Value = DateTime.Now;
-            dtpCheckOut.Value = DateTime.Now.AddDays(1);
+            dtpCheckIn.Value = DateTime.Today;
+            dtpCheckOut.Value = DateTime.Today.AddDays(1);
 
             // Bắt sự kiện thay đổi ngày để load lại danh sách phòng trống
             dtpCheckIn.ValueChanged += async (s, ev) => await LoadPhongTrongAsync();
@@ -31,11 +32,17 @@ namespace HotelManager.UI
         {
             try
             {
+                if (dtpCheckOut.Value.Date <= dtpCheckIn.Value.Date)
+                {
+                    cboRooms.DataSource = null;
+                    return;
+                }
                 var tuNgay = dtpCheckIn.Value.ToString("yyyy-MM-dd");
                 var denNgay = dtpCheckOut.Value.ToString("yyyy-MM-dd");
 
                 var client = BaseApiClient.GetClient(); // BaseAddress = "https://localhost:7203/api/"
-                var phongTrongs = await client.GetFromJsonAsync<List<PhongViewModel>>($"Phong/phong-trong?tuNgay={tuNgay}&denNgay={denNgay}");
+                var phongTrongs = await client.GetFromJsonAsync<List<PhongViewModel>>(
+                    $"Phong/tim-kiem?ngayNhan={tuNgay}&ngayTra={denNgay}");
 
                 cboRooms.DataSource = phongTrongs;
                 cboRooms.DisplayMember = "SoPhong";
@@ -49,50 +56,86 @@ namespace HotelManager.UI
 
         private async void btnSave_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtCustomerName.Text) || string.IsNullOrWhiteSpace(txtPhone.Text))
+            var ten = txtCustomerName.Text.Trim();
+            var sdt = txtPhone.Text.Trim();
+            if (string.IsNullOrWhiteSpace(ten) || string.IsNullOrWhiteSpace(sdt))
             {
-                MessageBox.Show("Vui lòng nhập tên khách hàng và số điện thoại!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng nhập tên và số điện thoại khách hàng.");
                 return;
             }
-
-            if (cboRooms.SelectedValue == null)
+            if (cboRooms.SelectedValue is not int phongId || phongId <= 0)
             {
-                MessageBox.Show("Vui lòng chọn phòng trống!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng chọn phòng trống.");
                 return;
             }
-
-            if (dtpCheckOut.Value <= dtpCheckIn.Value)
+            if (dtpCheckIn.Value.Date < DateTime.Today ||
+                dtpCheckOut.Value.Date <= dtpCheckIn.Value.Date)
             {
-                MessageBox.Show("Ngày trả phòng phải lớn hơn ngày nhận phòng!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Ngày nhận/trả không hợp lệ.");
                 return;
             }
-
-            // Nếu ngày nhận phòng là hôm nay -> Khách nhận phòng ngay (DaNhanPhong), ngược lại là Đã đặt (DaDat)
-            string trangThai = (dtpCheckIn.Value.Date == DateTime.Today) ? "DaNhanPhong" : "DaDat";
-
-            var req = new
+            btnSave.Enabled = false;
+            try
             {
-                TenKhachHang = txtCustomerName.Text.Trim(),
-                SoDienThoai = txtPhone.Text.Trim(),
-                PhongId = (int)cboRooms.SelectedValue,
-                NgayNhan = dtpCheckIn.Value,
-                NgayTra = dtpCheckOut.Value,
-                GhiChu = txtNote.Text.Trim(),
-                TrangThai = trangThai
-            };
-
-            var client = BaseApiClient.GetClient();
-            var res = await client.PostAsJsonAsync("DatPhong", req);
-
-            if (res.IsSuccessStatusCode)
-            {
-                MessageBox.Show($"Tạo đơn đặt phòng thành công! (Trạng thái: {TrangThaiTiengViet.Don(trangThai)})", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                var client = BaseApiClient.GetClient();
+                // Tìm chính xác theo số điện thoại để không tạo trùng hồ sơ.
+                var dsKhach = await client.GetFromJsonAsync<List<CustomerDto>>(
+                    $"KhachHang/tim-kiem?tuKhoa={Uri.EscapeDataString(sdt)}") ?? new();
+                var khach = dsKhach.FirstOrDefault(k =>
+                    string.Equals(k.PhoneNumber?.Trim(), sdt, StringComparison.Ordinal));
+                int khachHangId;
+                if (khach != null)
+                {
+                    khachHangId = khach.CustomerId;
+                    if (!string.Equals(khach.FullName?.Trim(), ten, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var confirm = MessageBox.Show(
+                            $"Số điện thoại đã thuộc khách '{khach.FullName}'. Dùng hồ sơ đã có?",
+                            "Kiểm tra khách hàng", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        if (confirm != DialogResult.Yes) return;
+                    }
+                }
+                else
+                {
+                    using var taoKhach = await client.PostAsJsonAsync("KhachHang",
+                        new { HoTen = ten, SoDienThoai = sdt });
+                    if (!taoKhach.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show($"Không thể tạo khách hàng: HTTP {(int)taoKhach.StatusCode}.");
+                        return;
+                    }
+                    var moi = await taoKhach.Content.ReadFromJsonAsync<CustomerDto>();
+                    if (moi == null || moi.CustomerId <= 0)
+                    {
+                        MessageBox.Show("API không trả mã khách hàng hợp lệ.");
+                        return;
+                    }
+                    khachHangId = moi.CustomerId;
+                }
+                using var response = await client.PostAsJsonAsync("DatPhong", new
+                {
+                    KhachHangId = khachHangId,
+                    DanhSachPhongId = new[] { phongId },
+                    NgayNhan = dtpCheckIn.Value.Date,
+                    NgayTra = dtpCheckOut.Value.Date
+                });
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Không tạo được đơn (HTTP {(int)response.StatusCode}): {error}");
+                    return;
+                }
+                MessageBox.Show("Đặt phòng tại quầy thành công, đơn đang chờ xác nhận.");
+                DialogResult = DialogResult.OK;
+                Close();
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Tạo đơn đặt phòng thất bại!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Lỗi đặt phòng tại quầy: {ex.Message}");
+            }
+            finally
+            {
+                btnSave.Enabled = true;
             }
         }
 

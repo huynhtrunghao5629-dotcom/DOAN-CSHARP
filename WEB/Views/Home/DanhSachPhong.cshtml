@@ -22,6 +22,13 @@
     string? strCheckIn = selectedCheckIn?.ToString("yyyy-MM-dd");
     string? strCheckOut = selectedCheckOut?.ToString("yyyy-MM-dd");
 
+    int appliedFilters = (selectedRoomType.HasValue ? 1 : 0)
+        + (selectedGuests.HasValue ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(searchKeyword) ? 1 : 0)
+        + ((ViewBag.GiaTu != null || ViewBag.GiaDen != null) ? 1 : 0)
+        + ((selectedCheckIn.HasValue || selectedCheckOut.HasValue) ? 1 : 0)
+        + (ViewBag.ChiPhongTrong == true ? 1 : 0)
+        + (!string.IsNullOrWhiteSpace(currentSort) ? 1 : 0);
     var fallbackImgs = new[]
     {
         "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80",
@@ -180,9 +187,9 @@
             <!-- CỘT BỘ LỌC BÊN TRÁI -->
             <aside class="col-lg-3">
                 <div class="rooms-filter">
-                    <h5 class="fw-bold mb-2">Bộ lọc phòng</h5>
+                    <h5 class="fw-bold mb-2">Bộ lọc phòng @if (appliedFilters > 0) { <span class="badge rounded-pill" style="background:#e9eee9;color:#24392f;font-size:.75rem">@appliedFilters đang áp dụng</span> }</h5>
                     <p class="text-muted small mb-4">Chọn hạng phòng, mức giá và khoảng ngày lưu trú.</p>
-                    <form method="get" asp-controller="Home" asp-action="DanhSachPhong">
+                    <form method="get" asp-controller="Home" asp-action="DanhSachPhong" data-sawade-busy="Đang lọc phòng...">
                         <div class="mb-4">
                             <label class="filter-label" for="filterRoomType">Hạng phòng</label>
                             <select id="filterRoomType" name="loaiPhong" class="form-select rounded-3">
@@ -299,7 +306,10 @@
                 }
                 @if (ViewBag.ApiError != null)
                 {
-                    <div class="alert alert-danger rounded-3">@ViewBag.ApiError</div>
+                    <div class="alert alert-danger rounded-3" role="alert">
+                        @ViewBag.ApiError
+                        <a href="@(Context.Request.Path.ToString() + Context.Request.QueryString.ToString())" class="alert-link ms-2">Thử tải lại</a>
+                    </div>
                 }
 
                 @if (rooms.Any())
@@ -322,7 +332,7 @@
                                     <div class="room-image-wrapper">
                                         <img src="@localImage"
                                              alt="Ảnh phòng @room.SoPhong"
-                                             loading="lazy"
+                                             loading="lazy" decoding="async"
                                              decoding="async"
                                              onerror="this.onerror=null;this.src='@fallback';" />
                                         <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-white text-dark px-3 py-2 shadow-sm">@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
@@ -356,8 +366,15 @@
                     <div class="bg-white rounded-4 p-5 text-center shadow-sm">
                         <i class="bi bi-house-x fs-1 text-secondary"></i>
                         <h2 class="h5 fw-bold mt-3">@(ViewBag.ApiError != null ? "Chưa thể tải danh sách phòng" : "Chưa tìm thấy phòng phù hợp")</h2>
-                        <p class="text-muted mb-3">Hãy thử thay đổi ngày, số khách hoặc khoảng giá. Nếu API đang lỗi, kiểm tra thông báo phía trên.</p>
-                        <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-outline-dark rounded-pill px-4">Xóa toàn bộ bộ lọc</a>
+                        <p class="text-muted mb-3">@(ViewBag.ApiError != null ? "Kết nối đến hệ thống phòng bị gián đoạn. Vui lòng thử tải lại." : "Hãy thử thay đổi ngày, số khách hoặc khoảng giá.")</p>
+                        @if (ViewBag.ApiError != null)
+                        {
+                            <a href="@(Context.Request.Path.ToString() + Context.Request.QueryString.ToString())" class="btn btn-sawade rounded-pill px-4">Thử tải lại</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-outline-dark rounded-pill px-4">Xóa toàn bộ bộ lọc</a>
+                        }
                     </div>
                 }
             </section>

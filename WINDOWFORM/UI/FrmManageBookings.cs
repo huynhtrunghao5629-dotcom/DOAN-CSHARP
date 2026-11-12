@@ -47,11 +47,10 @@ namespace HotelManager.UI
             dgvBookings.MultiSelect = false;
             dgvBookings.ReadOnly = true;
 
-            // Hai quy trình này phải chờ API có hợp đồng thống nhất, tránh ghi sai dữ liệu.
-            btnCreateAtCounter.Enabled = false;
-            btnCreateAtCounter.Text = "Đặt tại quầy (*)";
+            btnCreateAtCounter.Enabled = true;
+            btnCreateAtCounter.Text = "Đặt tại quầy";
             btnCheckOut.Enabled = false;
-            btnCheckOut.Text = "Trả phòng (*)";
+            btnCheckOut.Text = "Thanh toán";
             await LoadBookingsAsync();
         }
 
@@ -133,8 +132,8 @@ namespace HotelManager.UI
             btnConfirm.Enabled = !_busy && status == "pending";
             btnCheckIn.Enabled = !_busy && status == "confirmed";
             btnCancel.Enabled = !_busy && (status == "pending" || status == "confirmed");
-            // Check-out cần lưu hóa đơn và thay đổi trạng thái trong một giao dịch ở API.
-            btnCheckOut.Enabled = false;
+            // Chỉ mở màn hình thanh toán khi khách đã nhận phòng.
+            btnCheckOut.Enabled = !_busy && status == "occupied";
         }
 
         private async Task ChangeStatusAsync(int bookingId, string status, string message)
@@ -189,11 +188,21 @@ namespace HotelManager.UI
                 await ChangeStatusAsync(booking.Id, "DaHuy", "Đã hủy đơn.");
         }
 
-        private void btnCreateAtCounter_Click(object sender, EventArgs e) =>
-            MessageBox.Show("Chức năng đặt tại quầy cần API chuẩn hóa KhachHangId, PhongId và kiểm tra lịch trùng.");
+        private async void btnCreateAtCounter_Click(object sender, EventArgs e)
+        {
+            using var frm = new FrmCreateBooking();
+            if (frm.ShowDialog(this) == DialogResult.OK)
+                await LoadBookingsAsync();
+        }
 
-        private void btnCheckOut_Click(object sender, EventArgs e) =>
-            MessageBox.Show("Check-out đang tạm khóa: phải hoàn thiện lưu thanh toán và hóa đơn phía API.");
+        private async void btnCheckOut_Click(object sender, EventArgs e)
+        {
+            var booking = SelectedBooking;
+            if (booking == null || CanonicalStatus(booking.TrangThai) != "occupied") return;
+            using var thanhToan = new FrmManageInvoices(booking.Id);
+            thanhToan.ShowDialog(this);
+            await LoadBookingsAsync();
+        }
 
         private async void btnRefresh_Click(object sender, EventArgs e) => await LoadBookingsAsync();
         private void cboStatusFilter_SelectedIndexChanged(object sender, EventArgs e) => ApplyFilter();

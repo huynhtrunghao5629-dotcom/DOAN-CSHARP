@@ -17,16 +17,13 @@
     };
 }
 
-@if (TempData["ThongBao"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show rounded-0 text-center m-0" role="alert">
-        <i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i>@TempData["ThongBao"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng thông báo"></button>
-    </div>
-}
+
 @if (ViewBag.ApiError != null)
 {
-    <div class="alert alert-warning text-center rounded-0 mb-0" role="alert">@ViewBag.ApiError</div>
+    <div class="alert alert-warning text-center rounded-0 mb-0" role="alert">
+        <i class="bi bi-wifi-off me-2" aria-hidden="true"></i>@ViewBag.ApiError
+        <a asp-controller="Home" asp-action="Index" class="alert-link ms-2">Thử tải lại</a>
+    </div>
 }
 
 <section class="hero-banner" style="background-image: url('https://images.unsplash.com/photo-1542314831-c6a4d27ce66f?q=80&w=2000&auto=format&fit=crop');">
@@ -47,7 +44,7 @@
     </div>
 
     <div class="floating-search-bar">
-        <form asp-controller="Home" asp-action="DanhSachPhong" method="get" class="row align-items-center g-2">
+        <form asp-controller="Home" asp-action="DanhSachPhong" method="get" class="row align-items-center g-2" data-sawade-busy="Đang tìm phòng...">
             <div class="col-lg-2 col-md-12 px-lg-3 px-2 py-2">
                 <label class="text-muted small fw-bold mb-1 d-block"><i class="bi bi-buildings me-1" aria-hidden="true"></i>Khu nghỉ dưỡng</label>
                 <div class="fw-semibold">Khách sạn SAWADE</div>
@@ -113,7 +110,7 @@
                     <a class="horizontal-scroll-item text-decoration-none" href="@(Url.Action("DanhSachPhong", "Home", new { loaiPhong = typeRoom.LoaiPhongId }))">
                         <article class="room-card h-100">
                             <div class="room-image-wrapper" style="height: 250px;">
-                                <img src="@imagePath" alt="@HienThiPhong.TenLoai(typeRoom.TenLoaiPhong)" loading="lazy" onerror="this.onerror=null;this.src='@fallback';" />
+                                <img src="@imagePath" alt="@HienThiPhong.TenLoai(typeRoom.TenLoaiPhong)" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='@fallback';" />
                                 <div class="category-overlay">
                                     <h5 class="fw-bold mb-1">@HienThiPhong.TenLoai(typeRoom.TenLoaiPhong)</h5>
                                     <span class="small text-white-50">Xem các phòng thuộc hạng này <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></span>
@@ -126,7 +123,7 @@
         }
         else
         {
-            <div class="bg-white rounded-4 p-4 text-center text-muted">Hiện chưa có dữ liệu hạng phòng để hiển thị.</div>
+            <div class="bg-white rounded-4 p-4 text-center text-muted">@(ViewBag.ApiError != null ? "Không tải được hạng phòng do kết nối API gián đoạn." : "Hiện chưa có dữ liệu hạng phòng để hiển thị.")</div>
         }
     </section>
 
@@ -159,7 +156,7 @@
                     <div class="horizontal-scroll-item">
                         <article class="room-card d-flex flex-column h-100">
                             <div class="room-image-wrapper">
-                                <img src="@imagePath" alt="Phòng @room.SoPhong" loading="lazy" onerror="this.onerror=null;this.src='@fallback';" />
+                                <img src="@imagePath" alt="Phòng @room.SoPhong" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='@fallback';" />
                                 <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-white text-dark px-3 py-2 shadow-sm">@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
                             </div>
                             <div class="card-body p-4 d-flex flex-column">
@@ -185,8 +182,8 @@
         {
             <div class="bg-white rounded-4 p-5 text-center shadow-sm">
                 <i class="bi bi-house-x fs-1 text-secondary" aria-hidden="true"></i>
-                <h5 class="fw-bold mt-3">Chưa có phòng để hiển thị</h5>
-                <p class="text-muted mb-0">Hãy kiểm tra Web API và dữ liệu phòng trong cơ sở dữ liệu.</p>
+                <h5 class="fw-bold mt-3">@(ViewBag.ApiError != null ? "Không tải được dữ liệu phòng" : "Chưa có phòng để hiển thị")</h5>
+                <p class="text-muted mb-0">@(ViewBag.ApiError != null ? "Vui lòng kiểm tra kết nối API và thử tải lại trang." : "Dữ liệu phòng chưa có trong hệ thống. Vui lòng quay lại sau.")</p>
             </div>
         }
     </section>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -12,6 +12,9 @@ namespace HotelManager.UI
     public partial class FrmManageRooms : Form
     {
         private string _selectedPhongId = string.Empty;
+        // Designer cũ chỉ có TextBox hiển thị tên loại phòng, không có ComboBox.
+        // Tạo ComboBox tại đúng vị trí đó để khách sạn có thể CHỌN loại phòng.
+        private readonly ComboBox _cboLoaiPhong = new ComboBox();
 
         public FrmManageRooms()
         {
@@ -21,7 +24,10 @@ namespace HotelManager.UI
         private async void FrmManageRooms_Load(object sender, EventArgs e)
         {
             InitStatusComboBox();
+            InitLoaiPhongComboBox();
             SetupDataGridView();
+            txtGiaPhong.ReadOnly = true; // Giá thuộc loại phòng, không sửa bằng API /Phong.
+            txtTenLoaiPhong.ReadOnly = true;
             await LoadLoaiPhongAsync();
             await LoadRoomsAsync();
         }
@@ -34,19 +40,45 @@ namespace HotelManager.UI
 
             // Đồng bộ mã trạng thái phòng chuẩn SQL / API
             cboTrangThai.Items.Add(new StatusOption("Trong", "Trống"));
-            cboTrangThai.Items.Add(new StatusOption("DaNhanPhong", "Đang có khách"));
+            cboTrangThai.Items.Add(new StatusOption("DangSuDung", "Đang có khách"));
             cboTrangThai.Items.Add(new StatusOption("DaDat", "Đã đặt"));
             cboTrangThai.Items.Add(new StatusOption("DangBaoTri", "Đang bảo trì"));
             cboTrangThai.SelectedIndex = 0;
         }
 
+
+        private void InitLoaiPhongComboBox()
+        {
+            _cboLoaiPhong.Name = "cboLoaiPhong";
+            _cboLoaiPhong.Bounds = txtTenLoaiPhong.Bounds;
+            _cboLoaiPhong.DropDownStyle = ComboBoxStyle.DropDownList;
+            _cboLoaiPhong.DropDownWidth = Math.Max(_cboLoaiPhong.Width, 260);
+            _cboLoaiPhong.DisplayMember = "TenLoai";
+            _cboLoaiPhong.ValueMember = "LoaiPhongId";
+            _cboLoaiPhong.SelectedIndexChanged += LoaiPhong_SelectedIndexChanged;
+            txtTenLoaiPhong.Visible = false;
+            grpInput.Controls.Add(_cboLoaiPhong);
+            _cboLoaiPhong.BringToFront();
+        }
+
         private void SetupDataGridView()
         {
-            dgvRooms.AutoGenerateColumns = true;
-            dgvRooms.DataBindingComplete += (sender, args) => TieuDeTiengViet.GanCho(dgvRooms);
+            grpInput.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            dgvRooms.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgvRooms.AutoGenerateColumns = false;
+            dgvRooms.Columns.Clear();
+            dgvRooms.AllowUserToAddRows = false;
             dgvRooms.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvRooms.MultiSelect = false;
             dgvRooms.ReadOnly = true;
+            dgvRooms.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            AddRoomColumn("PhongId", "Mã phòng", 65);
+            AddRoomColumn("SoPhong", "Số phòng", 110);
+            AddRoomColumn("TenLoaiPhong", "Loại phòng", 155);
+            AddRoomColumn("GiaPhong", "Giá / đêm", 120, "N0");
+            AddRoomColumn("TrangThai", "Trạng thái", 140);
+            // LoaiPhongId chỉ dùng nội bộ cho ComboBox, KHÔNG hiển thị cột kỹ thuật.
             dgvRooms.CellFormatting += (sender, args) =>
             {
                 if (args.RowIndex >= 0 && args.ColumnIndex >= 0 &&
@@ -58,30 +90,50 @@ namespace HotelManager.UI
             };
         }
 
+        private void AddRoomColumn(string property, string header, int width, string? format = null)
+        {
+            var column = new DataGridViewTextBoxColumn
+            {
+                Name = property,
+                DataPropertyName = property,
+                HeaderText = header,
+                MinimumWidth = Math.Min(width, 80),
+                FillWeight = width,
+                ReadOnly = true
+            };
+            if (format != null) column.DefaultCellStyle.Format = format;
+            dgvRooms.Columns.Add(column);
+        }
+
         private async Task LoadLoaiPhongAsync()
         {
             try
             {
-                var client = BaseApiClient.GetClient();
-                var response = await client.GetAsync("LoaiPhong");
-                if (response.IsSuccessStatusCode)
+                using var response = await BaseApiClient.GetClient().GetAsync("LoaiPhong");
+                if (!response.IsSuccessStatusCode)
                 {
-                    var dsLoaiPhong = await response.Content.ReadFromJsonAsync<List<dynamic>>();
-                    if (dsLoaiPhong != null && Controls.Find("cboLoaiPhong", true).Length > 0)
-                    {
-                        var cbo = Controls.Find("cboLoaiPhong", true)[0] as ComboBox;
-                        if (cbo != null)
-                        {
-                            cbo.DataSource = dsLoaiPhong;
-                            cbo.DisplayMember = "TenLoaiPhong";
-                            cbo.ValueMember = "LoaiPhongId";
-                        }
-                    }
+                    MessageBox.Show($"Không tải được loại phòng: HTTP {(int)response.StatusCode}", "Lỗi API");
+                    return;
                 }
+                var loaiPhongs = await response.Content.ReadFromJsonAsync<List<LoaiPhongSelection>>() ?? new();
+                _cboLoaiPhong.DataSource = null;
+                _cboLoaiPhong.DataSource = loaiPhongs;
+                _cboLoaiPhong.SelectedIndex = -1;
+                if (loaiPhongs.Count == 0)
+                    MessageBox.Show("Chưa có hạng phòng trong cơ sở dữ liệu.", "Thông báo");
             }
-            catch
+            catch (Exception ex)
             {
-                // Bỏ qua nếu endpoint LoaiPhong chưa sẵn sàng
+                MessageBox.Show($"Không tải được loại phòng: {ex.Message}", "Lỗi API");
+            }
+        }
+
+        private void LoaiPhong_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (sender is ComboBox combo && combo.SelectedItem is LoaiPhongSelection loai)
+            {
+                txtTenLoaiPhong.Text = loai.TenLoai;
+                txtGiaPhong.Text = loai.GiaPhong.ToString("N0");
             }
         }
 
@@ -95,6 +147,7 @@ namespace HotelManager.UI
                 {
                     var rooms = await response.Content.ReadFromJsonAsync<List<PhongViewModel>>();
                     dgvRooms.DataSource = rooms ?? new List<PhongViewModel>();
+                    dgvRooms.ClearSelection();
                     ClearInputFields();
                 }
                 else
@@ -110,11 +163,7 @@ namespace HotelManager.UI
 
         private int GetSelectedLoaiPhongId()
         {
-            if (Controls.Find("cboLoaiPhong", true).Length > 0 && Controls.Find("cboLoaiPhong", true)[0] is ComboBox cbo && cbo.SelectedValue != null)
-            {
-                if (int.TryParse(cbo.SelectedValue.ToString(), out int id)) return id;
-            }
-            return 1; // Default LoaiPhongId fallback
+            return _cboLoaiPhong.SelectedItem is LoaiPhongSelection loai ? loai.LoaiPhongId : 0;
         }
 
         private async void btnAdd_Click(object sender, EventArgs e)
@@ -177,7 +226,8 @@ namespace HotelManager.UI
                 }
                 else
                 {
-                    MessageBox.Show($"Cập nhật thất bại. Mã lỗi API: {response.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    var detail = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Cập nhật thất bại. HTTP {(int)response.StatusCode}: {detail}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
@@ -228,6 +278,8 @@ namespace HotelManager.UI
                     txtSoPhong.Text = room.SoPhong;
                     txtTenLoaiPhong.Text = room.TenLoaiPhong;
                     txtGiaPhong.Text = room.GiaPhong.ToString("G0");
+                    if (room.LoaiPhongId > 0 && _cboLoaiPhong.DataSource != null)
+                        _cboLoaiPhong.SelectedValue = room.LoaiPhongId;
 
                     for (int i = 0; i < cboTrangThai.Items.Count; i++)
                     {
@@ -244,17 +296,15 @@ namespace HotelManager.UI
 
         private bool ValidateInput()
         {
+            if (GetSelectedLoaiPhongId() <= 0)
+            {
+                MessageBox.Show("Vui lòng chọn loại phòng hợp lệ.", "Cảnh báo");
+                return false;
+            }
             if (string.IsNullOrWhiteSpace(txtSoPhong.Text))
             {
                 MessageBox.Show("Vui lòng nhập số phòng!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtSoPhong.Focus();
-                return false;
-            }
-
-            if (!decimal.TryParse(txtGiaPhong.Text.Trim(), out decimal price) || price < 0)
-            {
-                MessageBox.Show("Giá phòng phải là một số hợp lệ lớn hơn hoặc bằng 0!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtGiaPhong.Focus();
                 return false;
             }
 
@@ -267,6 +317,7 @@ namespace HotelManager.UI
             txtSoPhong.Clear();
             txtTenLoaiPhong.Clear();
             txtGiaPhong.Clear();
+            _cboLoaiPhong.SelectedIndex = -1;
             if (cboTrangThai.Items.Count > 0) cboTrangThai.SelectedIndex = 0;
         }
 
@@ -278,6 +329,13 @@ namespace HotelManager.UI
         private async void btnRefresh_Click(object sender, EventArgs e)
         {
             await LoadRoomsAsync();
+        }
+
+        private sealed class LoaiPhongSelection
+        {
+            public int LoaiPhongId { get; set; }
+            public string TenLoai { get; set; } = string.Empty;
+            public decimal GiaPhong { get; set; }
         }
 
         private sealed class StatusOption

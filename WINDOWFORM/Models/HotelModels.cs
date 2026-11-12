@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
 
 namespace HotelManagement.Desktop.Models
@@ -52,7 +52,9 @@ namespace HotelManagement.Desktop.Models
     public class UserSession
     {
         public string? Token { get; set; }
+        [JsonPropertyName("tenDangNhap")]
         public string? Username { get; set; }
-        public string? Role { get; set; } // Admin, Staff
+        [JsonPropertyName("vaiTro")]
+        public string? Role { get; set; } // Admin, NhanVien
     }
 }

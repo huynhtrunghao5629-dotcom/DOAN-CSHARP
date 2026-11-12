@@ -86,11 +86,6 @@
                 <strong class="@statusClass">@statusText</strong>
             </div>
 
-            @if (TempData["Loi"] != null)
-            {
-                <div class="alert alert-danger rounded-3" role="alert">@TempData["Loi"]</div>
-            }
-
             <div class="booking-panel">
                 <h2 class="h5 fw-bold mb-1"><i class="bi bi-calendar2-heart me-2"></i>Đặt phòng của bạn</h2>
                 <p class="text-muted small mb-4">Chọn thời gian lưu trú. Hệ thống sẽ kiểm tra lại tình trạng phòng và gửi yêu cầu đến lễ tân.</p>
@@ -297,6 +292,31 @@
                 updateEstimate();
             });
             checkOut.addEventListener('change', updateEstimate);
+
+            // Ngăn nhấn nút gửi nhiều lần khi API đang xử lý.
+            // API vẫn cần tự chống tạo đơn trùng khi nhận nhiều yêu cầu đồng thời.
+            const bookingForm = document.getElementById('bookingForm');
+            const submitButton = bookingForm?.querySelector('button[type="submit"]');
+            if (bookingForm && submitButton) {
+                const originallyDisabled = submitButton.disabled;
+                const buttonText = submitButton.innerHTML;
+                let sending = false;
+                bookingForm.addEventListener('submit', event => {
+                    if (!bookingForm.checkValidity()) return;
+                    if (sending) {
+                        event.preventDefault();
+                        return;
+                    }
+                    sending = true;
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Đang gửi yêu cầu đặt phòng...';
+                });
+                window.addEventListener('pageshow', () => {
+                    sending = false;
+                    submitButton.disabled = originallyDisabled;
+                    submitButton.innerHTML = buttonText;
+                });
+            }
             updateEstimate();
         })();
     </script>

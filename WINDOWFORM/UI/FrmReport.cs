@@ -1,4 +1,4 @@
-﻿using HotelManager.Services;
+using HotelManager.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +26,13 @@ namespace HotelManager.UI
             cboMonth.SelectedIndex = DateTime.Now.Month - 1;
             nudYear.Value = Math.Min(nudYear.Maximum, Math.Max(nudYear.Minimum, DateTime.Now.Year));
             dgvReport.AutoGenerateColumns = true;
+            dgvReport.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvReport.ReadOnly = true;
+            dgvReport.AllowUserToAddRows = false;
+            dgvReport.RowHeadersVisible = false;
+            dgvReport.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            grpFilter.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            pnlSummary.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             dgvReport.BackgroundColor = System.Drawing.Color.White;
             lblTotalBookingsTitle.Text = "SỐ ĐƠN ĐẶT PHÁT SINH:";
             dgvReport.DataBindingComplete += (_, _) =>

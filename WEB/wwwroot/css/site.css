@@ -418,3 +418,259 @@ a {
 @media (prefers-reduced-motion: reduce) {
     .page-transition, .room-card, .room-card img { animation: none !important; transition: none !important; }
 }
+
+
+/* GIAI ĐOẠN 5 | Thông báo và trạng thái tải dùng chung toàn Web */
+.sawade-flash-stack {
+    position: fixed;
+    z-index: 1080;
+    top: max(16px, env(safe-area-inset-top));
+    right: 16px;
+    width: min(420px, calc(100vw - 32px));
+    pointer-events: none;
+}
+.sawade-flash-stack .sawade-flash {
+    pointer-events: auto;
+    line-height: 1.5;
+    padding: 16px 48px 16px 18px;
+    border: 1px solid rgba(25, 43, 35, .12);
+}
+.sawade-offline-banner {
+    position: fixed;
+    z-index: 1085;
+    left: 50%;
+    top: 10px;
+    transform: translateX(-50%);
+    width: min(640px, calc(100vw - 24px));
+    border-radius: 12px;
+    background: #fff3d7;
+    border: 1px solid #eac976;
+    color: #5c410e;
+    padding: 12px 18px;
+    text-align: center;
+    box-shadow: 0 8px 22px rgba(0,0,0,.13);
+}
+.sawade-offline-banner[hidden] { display: none !important; }
+.sawade-navigation-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1100;
+    height: 3px;
+    width: 0;
+    opacity: 0;
+    background: var(--sawade-gold);
+    box-shadow: 0 0 9px rgba(196,163,106,.6);
+    pointer-events: none;
+}
+.sawade-navigation-progress.is-active {
+    opacity: 1;
+    width: 70%;
+    animation: sawade-loading 1.35s ease-in-out infinite alternate;
+}
+@keyframes sawade-loading {
+    from { width: 8%; }
+    to { width: 88%; }
+}
+.sawade-empty-icon {
+    width: 76px;
+    height: 76px;
+    margin: auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f3f2e9;
+    color: #78603d;
+    font-size: 2rem;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #789682;
+    box-shadow: 0 0 0 .2rem rgba(36,57,47,.12);
+}
+.btn:focus-visible, a:focus-visible, .form-control:focus-visible, .form-select:focus-visible {
+    outline: 2px solid #987447;
+    outline-offset: 3px;
+}
+[hidden] { display: none !important; }
+@media (max-width: 767.98px) {
+    .sawade-flash-stack { top: 60px; right: 12px; width: calc(100vw - 24px); }
+    .rooms-page .rooms-filter { position: static; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sawade-navigation-progress.is-active { animation: none; width: 45%; }
+}
+
+/* SAWADE MOTION V2 – ưu tiên phản hồi nhanh và chuyển động GPU.
+   Không chặn request khi đổi trang, không ẩn hàng loạt thẻ khi cuộn. */
+:root {
+    --sawade-ease-out: cubic-bezier(.21, .75, .29, 1);
+    --sawade-ease-ui: cubic-bezier(.2, .7, .25, 1);
+}
+
+/* View Transitions trên trình duyệt hỗ trợ (Chrome/Edge mới):
+   chuyển liền mạch giữa hai trang cùng nguồn, không có thời gian chờ JS. */
+@view-transition { navigation: auto; }
+@keyframes sawade-native-fade-out {
+    to { opacity: .68; }
+}
+@keyframes sawade-native-fade-in {
+    from { opacity: .35; }
+    to { opacity: 1; }
+}
+::view-transition-old(root) {
+    animation: 115ms ease-in both sawade-native-fade-out;
+}
+::view-transition-new(root) {
+    animation: 205ms var(--sawade-ease-out) both sawade-native-fade-in;
+}
+
+/* Bỏ animation cũ trên toàn bộ main: chúng làm trang mới xuất hiện muộn. */
+.page-transition, .sawade-is-leaving .page-transition {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+    translate: none;
+}
+
+/* Loại bỏ trạng thái giấu nội dung của bản reveal cũ, tránh giật khi cuộn. */
+.sawade-reveal,
+.sawade-reveal:not(.sawade-reveal-visible),
+.sawade-reveal.sawade-reveal-visible {
+    opacity: 1 !important;
+    translate: none !important;
+    animation: none !important;
+}
+
+/* Hiệu ứng thẻ phòng: ưu tiên transform thay vì shadow/filter quá lớn. */
+.room-card, .rooms-page .room-card {
+    transition: transform 280ms var(--sawade-ease-out),
+                border-color 180ms ease !important;
+}
+.room-image-wrapper img, .rooms-page .room-image-wrapper img {
+    transition: transform 440ms var(--sawade-ease-out) !important;
+    backface-visibility: hidden;
+}
+
+/* Chỉ nâng thẻ khi thực sự có chuột, không áp hiệu ứng lên cảm ứng. */
+@media (hover: hover) and (pointer: fine) {
+    .room-card:hover, .rooms-page .room-card:hover {
+        transform: translate3d(0, -4px, 0);
+        border-color: rgba(196, 163, 106, .42);
+        box-shadow: 0 12px 28px rgba(31, 45, 35, .105);
+    }
+    .room-card:hover .room-image-wrapper img,
+    .rooms-page .room-card:hover .room-image-wrapper img {
+        transform: scale(1.045);
+        filter: none;
+    }
+    .service-item > article:hover,
+    .profile-order:hover, .detail-feature:hover {
+        transform: translate3d(0, -3px, 0);
+    }
+    .btn:hover:not(:disabled), .room-btn:hover,
+    .profile-btn:hover:not(:disabled) {
+        transform: translate3d(0, -2px, 0);
+    }
+    .detail-room-image { overflow: hidden; }
+    .detail-room-image:hover img { transform: scale(1.025); }
+}
+@media (hover: none) {
+    .room-card:hover, .rooms-page .room-card:hover,
+    .service-item > article:hover, .profile-order:hover,
+    .btn:hover, .room-btn:hover, .profile-btn:hover {
+        transform: none !important;
+    }
+    .room-card:hover .room-image-wrapper img,
+    .rooms-page .room-card:hover .room-image-wrapper img { transform: none !important; }
+}
+
+/* Giữ màu & focus, chỉ animate thuộc tính cần thiết. */
+.btn, .room-btn, .profile-btn {
+    transition: transform 190ms var(--sawade-ease-ui),
+                background-color 170ms ease,
+                border-color 170ms ease,
+                color 170ms ease !important;
+}
+.btn:active:not(:disabled), .room-btn:active,
+.profile-btn:active:not(:disabled) { transform: scale(.985); }
+
+.service-item > article, .profile-order, .detail-feature {
+    transition: transform 240ms var(--sawade-ease-ui),
+                border-color 190ms ease !important;
+}
+.detail-room-image img { transition: transform 430ms var(--sawade-ease-out); }
+.form-control, .form-select, .form-range {
+    transition: border-color 160ms ease, box-shadow 160ms ease !important;
+}
+.rooms-page .custom-pagination .page-link {
+    transition: background-color 170ms ease,
+                border-color 170ms ease, color 170ms ease !important;
+}
+.navbar-sawade .navbar-nav .nav-link { position: relative; }
+.navbar-sawade .navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: .3rem; left: .45rem; right: .45rem;
+    height: 2px; border-radius: 2px;
+    background: var(--sawade-gold);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 230ms var(--sawade-ease-out);
+    pointer-events: none;
+}
+.navbar-sawade .navbar-nav .nav-link:hover::after,
+.navbar-sawade .navbar-nav .nav-link:focus-visible::after { transform: scaleX(1); }
+
+/* Flash nhẹ, không đè lên hoạt ảnh điều hướng. */
+.sawade-flash { animation: sawade-toast-enter 190ms var(--sawade-ease-out) both; }
+@keyframes sawade-toast-enter {
+    from { opacity: .55; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Thanh tiến trình chỉ xuất hiện nếu request thật sự chậm (JS trì hoãn hiển thị). */
+.sawade-navigation-progress.is-active {
+    animation: sawade-loading-light 1.4s ease-in-out infinite alternate;
+}
+@keyframes sawade-loading-light {
+    from { width: 12%; }
+    to { width: 76%; }
+}
+
+/* Tránh nhiều hoạt ảnh gây quá tải trên điện thoại. */
+@media (max-width: 767.98px) {
+    .room-card, .rooms-page .room-card,
+    .room-image-wrapper img, .rooms-page .room-image-wrapper img {
+        transition-duration: 180ms !important;
+    }
+    .navbar-sawade .navbar-nav .nav-link::after { display: none; }
+}
+
+/* Khả năng tiếp cận và khi in phiếu đơn đặt phòng. */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    ::view-transition-old(root), ::view-transition-new(root),
+    .sawade-flash, .sawade-navigation-progress.is-active {
+        animation: none !important;
+    }
+    .room-card, .rooms-page .room-card,
+    .room-image-wrapper img, .rooms-page .room-image-wrapper img,
+    .service-item > article, .profile-order, .detail-feature,
+    .btn, .room-btn, .profile-btn, .form-control, .form-select,
+    .form-range, .navbar-sawade .navbar-nav .nav-link::after,
+    .detail-room-image img {
+        transition: none !important;
+    }
+    .room-card:hover, .rooms-page .room-card:hover,
+    .service-item > article:hover, .profile-order:hover,
+    .detail-feature:hover, .btn:hover, .room-btn:hover,
+    .profile-btn:hover, .room-card:hover .room-image-wrapper img,
+    .rooms-page .room-card:hover .room-image-wrapper img {
+        transform: none !important;
+    }
+}
+@media print {
+    ::view-transition-old(root), ::view-transition-new(root),
+    .sawade-flash { animation: none !important; }
+    .page-transition { opacity: 1 !important; transform: none !important; }
+}

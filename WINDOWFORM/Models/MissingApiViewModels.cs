@@ -18,6 +18,7 @@ namespace HotelManagement.Desktop.Models
         public decimal TongTien { get; set; }
         public List<BookingRoomItem> DanhSachPhong { get; set; } = new();
         public string SoPhong => string.Join(", ", DanhSachPhong.Select(x => x.SoPhong));
+        public string DisplayBooking => $"#{Id} - {TenKhachHang} ({SoPhong})";
     }
 
     public class BookingRoomItem

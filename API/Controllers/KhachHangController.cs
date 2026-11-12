@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSanAPI.Models;
+using QuanLyKhachSanAPI.Security;
 
 namespace QuanLyKhachSanAPI.Controllers;
 
@@ -48,7 +49,7 @@ public class KhachHangController : ControllerBase
             SoDienThoai = request.SoDienThoai.Trim(),
             Cccd = string.IsNullOrWhiteSpace(request.CCCD) ? null : request.CCCD.Trim(),
             Email = request.Email?.Trim(),
-            MatKhau = request.MatKhau
+            MatKhau = PasswordSecurity.Hash(request.MatKhau)
         };
 
         try
@@ -75,8 +76,13 @@ public class KhachHangController : ControllerBase
 
         if (khachHang == null)
             return NotFound("Không tìm thấy tài khoản.");
-        if (khachHang.MatKhau != request.MatKhau) 
-            return BadRequest("Sai mật khẩu.");
+        if (!PasswordSecurity.Verify(request.MatKhau, khachHang.MatKhau, out bool needsUpgrade))
+            return Unauthorized("Tài khoản hoặc mật khẩu không chính xác.");
+        if (needsUpgrade)
+        {
+            khachHang.MatKhau = PasswordSecurity.Hash(request.MatKhau);
+            await _context.SaveChangesAsync();
+        }
 
         return Ok(new
         {
@@ -216,7 +222,7 @@ public class KhachHangController : ControllerBase
 
         // Cập nhật mật khẩu nếu khách hàng có nhập mật khẩu mới
         if (!string.IsNullOrWhiteSpace(request.MatKhauMoi))
-            khachHang.MatKhau = request.MatKhauMoi;
+            khachHang.MatKhau = PasswordSecurity.Hash(request.MatKhauMoi);
 
         await _context.SaveChangesAsync();
         return Ok(new { Message = "Cập nhật thành công" });

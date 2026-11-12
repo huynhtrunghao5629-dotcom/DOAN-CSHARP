@@ -1,4 +1,4 @@
-﻿@model QuanLyKhachSan.Web.Models.DangKyViewModel
+@model QuanLyKhachSan.Web.Models.DangKyViewModel
 @{
     ViewData["Title"] = "Đăng ký thành viên";
     ViewData["NavbarOverlay"] = false;
@@ -13,12 +13,8 @@
                     <p class="text-muted small">Trở thành thành viên của Sawade để nhận ưu đãi và quản lý phòng dễ dàng.</p>
                 </div>
 
-                @if (TempData["Loi"] != null)
-                {
-                    <div class="alert alert-danger rounded-3 small">@TempData["Loi"]</div>
-                }
 
-                <form asp-controller="TaiKhoan" asp-action="DangKy" method="post" class="row g-3">
+                <form asp-controller="TaiKhoan" asp-action="DangKy" method="post" class="row g-3" data-sawade-busy="Đang tạo tài khoản...">
                     <div class="col-12">
                         <label class="form-label small fw-bold text-muted">Họ và tên *</label>
                         <input type="text" asp-for="HoTen" class="form-control py-2 rounded-3" placeholder="Nhập họ tên đầy đủ..." required>

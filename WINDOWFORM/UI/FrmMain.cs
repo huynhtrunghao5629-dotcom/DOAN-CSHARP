@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
 using HotelManagement.Desktop.Models;
 using HotelManager.Services;
@@ -17,44 +17,52 @@ namespace HotelManager.UI
 
         private void FrmMain_Load(object sender, EventArgs e)
         {
-            this.Text = $"Quản lý khách sạn - Tài khoản: {_user.Username} ({TrangThaiTiengViet.VaiTro(_user.Role)})";
-
+            Text = $"Quản lý khách sạn - Tài khoản: {_user.Username} ({TrangThaiTiengViet.VaiTro(_user.Role)})";
             bool isAdmin = string.Equals(_user.Role, "Admin", StringComparison.OrdinalIgnoreCase);
-
-            // Phân quyền Menu quản lý
-            if (Controls.Find("mnuManagerRooms", true).Length > 0)
-                Controls.Find("mnuManagerRooms", true)[0].Enabled = isAdmin;
-
-            // Đăng ký sự kiện Đăng xuất & Thoát để giải quyết warning CS0169
-            if (đăngXuấtToolStripMenuItem != null)
-                đăngXuấtToolStripMenuItem.Click += đăngXuấtToolStripMenuItem_Click;
-
-            if (thoátToolStripMenuItem != null)
-                thoátToolStripMenuItem.Click += thoátToolStripMenuItem_Click;
+            mnuManageRooms.Enabled = isAdmin;
+            mnuManageCustomers.Enabled = true;
+            menuStrip1.Visible = false; // Menu trống do Designer cũ tạo.
+            MainMenuStrip = menuStrip2;
+            // Bổ sung lối mở những màn hình đang có trong dự án.
+            AddMenu("Quản lý đặt phòng", () => OpenChild(new FrmManageBookings()));
+            AddMenu("Sơ đồ phòng", () => OpenChild(new FrmRoomGrid()));
+            AddMenu("Dịch vụ phát sinh", () => OpenChild(new FrmManageServices()));
+            AddMenu("Thanh toán / Trả phòng", () => OpenChild(new FrmManageInvoices()));
+            if (isAdmin)
+            {
+                AddMenu("Quản lý loại phòng / Giá", () => OpenChild(new FrmManageRoomTypes()));
+                AddMenu("Quản lý tài khoản", () => OpenChild(new FrmManageUsers()));
+            }
+            // ToolStripMenuItem không thuộc Controls.Find(): gắn sự kiện trực tiếp.
+            mnuManageCustomers.Click += (_, _) => OpenChild(new FrmManageCustomers());
+            mnuReports.Click += (_, _) => OpenChild(new FrmReport());
+            mnuLogout.Click += (_, _) => { BaseApiClient.ClearToken(); Application.Restart(); };
+            mnuExit.Click += (_, _) => Application.Exit();
         }
 
-        // Khớp chính xác với tên hàm mnuManagerRooms_Click trong FrmMain.Designer.cs (Dòng 66)
-        public void mnuManagerRooms_Click(object sender, EventArgs e)
+        private void AddMenu(string title, Action action)
         {
-            FrmManageRooms frm = new FrmManageRooms();
-            frm.MdiParent = this;
-            frm.Show();
+            var item = new ToolStripMenuItem(title);
+            item.Click += (_, _) => action();
+            menuStrip2.Items.Insert(menuStrip2.Items.Count - 1, item);
+        }
+
+        private void OpenChild(Form form)
+        {
+            foreach (Form child in MdiChildren)
+            {
+                if (child.GetType() == form.GetType())
+                {
+                    form.Dispose();
+                    child.Activate();
+                    return;
+                }
+            }
+            form.MdiParent = this;
+            form.Show();
         }
 
         public void mnuManageRooms_Click(object sender, EventArgs e)
-        {
-            mnuManagerRooms_Click(sender, e);
-        }
-
-        private void đăngXuấtToolStripMenuItem_Click(object? sender, EventArgs e)
-        {
-            BaseApiClient.ClearToken();
-            Application.Restart();
-        }
-
-        private void thoátToolStripMenuItem_Click(object? sender, EventArgs e)
-        {
-            Application.Exit();
-        }
+            => OpenChild(new FrmManageRooms());
     }
 }

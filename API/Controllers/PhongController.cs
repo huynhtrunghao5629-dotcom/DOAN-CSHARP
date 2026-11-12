@@ -1,3 +1,4 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSanAPI.Models;
@@ -140,15 +141,12 @@ namespace QuanLyKhachSanAPI.Controllers
             if (giaTu.HasValue && giaDen.HasValue && giaTu.Value > giaDen.Value)
                 return BadRequest("Giá tối thiểu không được lớn hơn giá tối đa.");
 
-            var roomQuery = _context.Phongs
-                .AsNoTracking()
-                .Where(p => p.TrangThai == null ||
-                            (p.TrangThai.Trim().ToLower() != "bao tri" &&
-                             p.TrangThai.Trim().ToLower() != "bảo trì" &&
-                             p.TrangThai.Trim().ToLower() != "maintenance" &&
-                             p.TrangThai.Trim().ToLower() != "da dat" &&
-                             p.TrangThai.Trim().ToLower() != "đã đặt" &&
-                             p.TrangThai.Trim().ToLower() != "booked"));
+            // Với tìm kiếm theo ngày, kiểm tra lịch đặt thực tế thay vì TrangThai "DaDat".
+            // Không nhận phòng đang bảo trì trong bất cứ trường hợp nào.
+            var roomQuery = _context.Phongs.AsNoTracking()
+                .Where(p => p.TrangThai != "DangBaoTri");
+            if (!ngayNhan.HasValue)
+                roomQuery = roomQuery.Where(p => p.TrangThai == "Trong");
 
             if (giaTu.HasValue)
                 roomQuery = roomQuery.Where(p => p.LoaiPhong.GiaPhong >= giaTu.Value);
@@ -161,24 +159,12 @@ namespace QuanLyKhachSanAPI.Controllers
                 var ngayVao = ngayNhan.Value;
                 var ngayRa = ngayTra.Value;
 
-                var phongBiDat = await _context.ChiTietDatPhongs
-                    .AsNoTracking()
-                    .Where(ct =>
-                        ct.DatPhong != null &&
-                        (ct.DatPhong.TrangThai == null ||
-                         (ct.DatPhong.TrangThai.ToLower() != "dahuy" &&
-                          ct.DatPhong.TrangThai.ToLower() != "đã hủy" &&
-                          ct.DatPhong.TrangThai.ToLower() != "da huy" &&
-                          ct.DatPhong.TrangThai.ToLower() != "datra" &&
-                          ct.DatPhong.TrangThai.ToLower() != "đã trả" &&
-                          ct.DatPhong.TrangThai.ToLower() != "da tra" &&
-                          ct.DatPhong.TrangThai.ToLower() != "cancelled" &&
-                          ct.DatPhong.TrangThai.ToLower() != "checkedout")) &&
-                        ct.DatPhong.NgayNhan < ngayRa &&
-                        ct.DatPhong.NgayTra > ngayVao)
-                    .Select(ct => ct.PhongId)
-                    .Distinct()
-                    .ToListAsync();
+                var phongBiDat = await _context.ChiTietDatPhongs.AsNoTracking()
+                    .Where(ct => ct.DatPhong.TrangThai != "DaHuy" &&
+                                 ct.DatPhong.TrangThai != "DaTraPhong" &&
+                                 ct.DatPhong.NgayNhan < ngayRa &&
+                                 ct.DatPhong.NgayTra > ngayVao)
+                    .Select(ct => ct.PhongId).Distinct().ToListAsync();
 
                 // Dùng .Any() thay cho .Count > 0 để tránh lỗi method group
                 if (phongBiDat.Any())
@@ -202,8 +188,12 @@ namespace QuanLyKhachSanAPI.Controllers
             return Ok(rooms);
         }
 
+        private static bool TrangThaiPhongHopLe(string? value) =>
+            value is "Trong" or "DaDat" or "DangSuDung" or "DangBaoTri";
+
         // POST: api/Phong
-        [HttpPost]
+        [Authorize(Roles = "Admin,NhanVien")]
+    [HttpPost]
         public async Task<IActionResult> Create([FromBody] PhongDtoRequest request)
         {
             if (request == null || string.IsNullOrWhiteSpace(request.SoPhong))
@@ -218,11 +208,14 @@ namespace QuanLyKhachSanAPI.Controllers
             if (!loaiPhongTonTai)
                 return BadRequest("Loại phòng không tồn tại.");
 
+            var trangThai = string.IsNullOrWhiteSpace(request.TrangThai) ? "Trong" : request.TrangThai.Trim();
+            if (!TrangThaiPhongHopLe(trangThai))
+                return BadRequest("Trạng thái phòng không hợp lệ.");
             var room = new QuanLyKhachSanAPI.Models.Phong
             {
                 SoPhong = soPhong,
                 LoaiPhongId = request.LoaiPhongId,
-                TrangThai = string.IsNullOrWhiteSpace(request.TrangThai) ? "Trong" : request.TrangThai.Trim()
+                TrangThai = trangThai
             };
 
             _context.Phongs.Add(room);
@@ -231,7 +224,8 @@ namespace QuanLyKhachSanAPI.Controllers
         }
 
         // PUT: api/Phong/5
-        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin,NhanVien")]
+    [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] PhongDtoRequest request)
         {
             if (request == null || string.IsNullOrWhiteSpace(request.SoPhong))
@@ -250,16 +244,25 @@ namespace QuanLyKhachSanAPI.Controllers
             if (!loaiPhongTonTai)
                 return BadRequest("Loại phòng không tồn tại.");
 
+            var trangThai = string.IsNullOrWhiteSpace(request.TrangThai) ? "Trong" : request.TrangThai.Trim();
+            if (!TrangThaiPhongHopLe(trangThai))
+                return BadRequest("Trạng thái phòng không hợp lệ.");
+            // Chặn chỉnh trạng thái thủ công khi phòng đang có khách thực tế.
+            var dangCoKhach = await _context.ChiTietDatPhongs.AnyAsync(ct =>
+                ct.PhongId == id && ct.DatPhong.TrangThai == "DaNhanPhong");
+            if (dangCoKhach && trangThai != "DangSuDung")
+                return Conflict("Phòng đang có khách. Vui lòng thực hiện trả phòng đúng quy trình.");
             room.SoPhong = soPhong;
             room.LoaiPhongId = request.LoaiPhongId;
-            room.TrangThai = string.IsNullOrWhiteSpace(request.TrangThai) ? "Trong" : request.TrangThai.Trim();
+            room.TrangThai = trangThai;
 
             await _context.SaveChangesAsync();
             return Ok(await QueryPhong().FirstAsync(p => p.PhongId == id));
         }
 
         // DELETE: api/Phong/5
-        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin,NhanVien")]
+    [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
             var room = await _context.Phongs.FindAsync(id);

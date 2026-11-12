@@ -12,7 +12,7 @@
             <h2 class="fw-bold mb-3" style="color: #24392f; font-family: Georgia, serif;">Tra cứu đặt phòng</h2>
             <p class="text-muted">Xem mã đơn, thời gian lưu trú và trạng thái những đơn đặt phòng thuộc tài khoản của bạn.</p>
 
-            <form asp-controller="TraCuuDon" asp-action="Index" method="post" class="mt-4">
+            <form asp-controller="TraCuuDon" asp-action="Index" method="post" class="mt-4" data-sawade-busy="Đang tải đơn...">
                 @Html.AntiForgeryToken()
                 <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
                     <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-telephone text-muted"></i></span>
@@ -23,18 +23,6 @@
                 </div>
             </form>
 
-            @if (TempData["Loi"] != null)
-            {
-                <div class="alert alert-danger mt-4 rounded-3 text-start small">
-                    <i class="bi bi-exclamation-circle me-2"></i>@TempData["Loi"]
-                </div>
-            }
-            @if (TempData["ThongBao"] != null)
-            {
-                <div class="alert alert-success mt-4 rounded-3 text-start small">
-                    <i class="bi bi-check-circle me-2"></i>@TempData["ThongBao"]
-                </div>
-            }
         </div>
     </div>
 
@@ -90,18 +78,30 @@
                                 }
                             </div>
                         </div>
+                        <div class="card-footer bg-white border-top p-3 text-end">
+                            <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@don.DatPhongId" class="btn btn-outline-dark btn-sm rounded-pill px-4"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Xem chi tiết đơn</a>
+                        </div>
                     </div>
                 </div>
             }
         </div>
     }
-    else if (TempData["Loi"] == null)
+    else if (ViewBag.LoiTaiLichSu != true)
     {
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
             <i class="bi bi-calendar2-x fs-1 text-muted" aria-hidden="true"></i>
             <h3 class="h5 mt-3">Chưa có đơn đặt phòng</h3>
             <p class="text-muted">Bạn có thể tìm phòng và gửi yêu cầu đặt phòng ngay trên website.</p>
             <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade rounded-pill px-4 mx-auto">Tìm phòng</a>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center" role="alert">
+            <i class="bi bi-wifi-off fs-1 text-muted" aria-hidden="true"></i>
+            <h3 class="h5 mt-3">Chưa thể tải lịch sử đặt phòng</h3>
+            <p class="text-muted">Không kết nối được với hệ thống. Vui lòng thử lại sau.</p>
+            <a asp-controller="TraCuuDon" asp-action="Index" class="btn btn-sawade rounded-pill px-4 mx-auto">Thử tải lại</a>
         </div>
     }
 </div>

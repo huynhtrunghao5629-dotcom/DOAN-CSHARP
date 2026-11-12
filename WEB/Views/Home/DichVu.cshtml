@@ -13,7 +13,7 @@
         </div>
         @if (ViewBag.ApiError != null)
         {
-            <div class="alert alert-warning" role="alert">@ViewBag.ApiError</div>
+            <div class="alert alert-warning" role="alert">@ViewBag.ApiError <a asp-controller="Home" asp-action="DichVu" class="alert-link ms-2">Thử tải lại</a></div>
         }
         @if (services.Any())
         {

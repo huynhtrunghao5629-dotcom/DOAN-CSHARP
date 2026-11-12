@@ -1,0 +1,104 @@
+@model QuanLyKhachSan.Web.Models.ChiTietDonViewModel
+@{
+    ViewData["Title"] = "Chi tiết đơn " + Model.MaDon;
+    ViewData["NavbarOverlay"] = false;
+    var nights = Model.NgayNhan.HasValue && Model.NgayTra.HasValue
+        ? (int?)Math.Max(1, Math.Ceiling((Model.NgayTra.Value - Model.NgayNhan.Value).TotalDays))
+        : null;
+    var canCancel = TrangThaiDatPhong.ChoPhepHuy(Model.TrangThai);
+}
+<style>
+    .booking-detail-page{background:#f8f7f3;padding:42px 0 74px;min-height:70vh}
+    .booking-detail-sheet{max-width:900px;margin:auto;background:white;border:1px solid #eeeae3;border-radius:20px;box-shadow:0 12px 34px rgba(30,52,40,.06);overflow:hidden}
+    .booking-detail-head{padding:30px;background:linear-gradient(125deg,#20382c,#395c46);color:#fff}
+    .booking-detail-body{padding:28px 32px}
+    .booking-detail-label{display:block;color:#69776e;font-size:.84rem;margin-bottom:5px}
+    .booking-detail-box{border:1px solid #ebe8e2;border-radius:14px;padding:15px;height:100%}
+    .booking-detail-money{color:#946c39;font-size:1.4rem;font-weight:750}
+    .booking-detail-actions{max-width:900px;margin:20px auto 0}
+    @@media(max-width:575.98px){.booking-detail-head{padding:22px}.booking-detail-body{padding:20px}}
+    @@media print{
+        @@page{size:A4;margin:13mm}
+        .navbar,.site-footer,.booking-detail-actions,.booking-detail-note,.booking-detail-page .breadcrumb{display:none!important}
+        body,.booking-detail-page{background:#fff!important;margin:0!important;padding:0!important}
+        .booking-detail-sheet{max-width:none;border:0;border-radius:0;box-shadow:none}
+        .booking-detail-head{background:#fff!important;color:#20382c!important;border-bottom:2px solid #20382c;padding:10px 0 20px}
+        .booking-detail-body{padding:20px 0}
+        .booking-detail-box{break-inside:avoid}
+        .badge{border:1px solid #888}
+    }
+</style>
+<div class="booking-detail-page">
+  <div class="container">
+    <nav class="breadcrumb mb-4" aria-label="Đường dẫn">
+      <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="text-decoration-none">Tài khoản của tôi</a>
+      <span class="mx-2 text-muted">/</span><span>Chi tiết đơn đặt phòng</span>
+    </nav>
+    <article class="booking-detail-sheet">
+      <header class="booking-detail-head d-flex flex-wrap justify-content-between gap-3 align-items-start">
+        <div>
+          <div class="small text-uppercase fw-semibold mb-2" style="letter-spacing:2px">SAWADE HOTELS & RESORTS</div>
+          <h1 class="h3 fw-bold mb-2">Phiếu thông tin đặt phòng</h1>
+          <div>Mã đơn: <strong>@Model.MaDon</strong></div>
+        </div>
+        <div><span class="badge @TrangThaiDatPhong.MauBadge(Model.TrangThai) px-3 py-2">@TrangThaiDatPhong.HienThi(Model.TrangThai)</span></div>
+      </header>
+      <div class="booking-detail-body">
+        <div class="alert alert-light border booking-detail-note small mb-4">
+          Đây là phiếu thông tin đặt phòng, <strong>không phải hóa đơn hoặc xác nhận đã thanh toán</strong>.
+          Trạng thái và tổng tiền được cập nhật từ hệ thống khách sạn.
+        </div>
+        <h2 class="h5 fw-bold mb-3">Thông tin khách đặt</h2>
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6"><div class="booking-detail-box"><span class="booking-detail-label">Khách hàng</span><strong>@Model.TenKhachHang</strong></div></div>
+          <div class="col-sm-6"><div class="booking-detail-box"><span class="booking-detail-label">Số điện thoại tài khoản</span><strong>@Model.SoDienThoai</strong></div></div>
+        </div>
+        <h2 class="h5 fw-bold mb-3">Thời gian lưu trú</h2>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4"><div class="booking-detail-box"><span class="booking-detail-label">Nhận phòng</span><strong>@(Model.NgayNhan?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</strong></div></div>
+          <div class="col-md-4"><div class="booking-detail-box"><span class="booking-detail-label">Trả phòng</span><strong>@(Model.NgayTra?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</strong></div></div>
+          <div class="col-md-4"><div class="booking-detail-box"><span class="booking-detail-label">Thời gian tính tiền dự kiến</span><strong>@(nights.HasValue ? $"{nights} đêm" : "Chưa xác định")</strong></div></div>
+        </div>
+        <h2 class="h5 fw-bold mb-3">Danh sách phòng</h2>
+        @if (Model.ChiTietPhong.Count > 0)
+        {
+          <div class="table-responsive mb-4">
+            <table class="table align-middle">
+              <thead class="table-light"><tr><th scope="col">Phòng</th><th scope="col" class="text-end">Đơn giá tham khảo / đêm</th></tr></thead>
+              <tbody>
+                @foreach (var phong in Model.ChiTietPhong)
+                {
+                  <tr><td><i class="bi bi-door-open me-2" aria-hidden="true"></i>Phòng @phong.SoPhong</td><td class="text-end">@phong.GiaPhong.ToString("N0") đ</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        else
+        {
+          <p class="text-muted">Chưa có thông tin phòng trong đơn này.</p>
+        }
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 bg-light rounded-3 p-3 mb-3">
+          <span class="fw-semibold">Tổng tiền đặt phòng theo hệ thống</span>
+          <span class="booking-detail-money">@Model.TongTien.ToString("N0") đ</span>
+        </div>
+        <p class="text-muted small mb-0">Đặt ngày: @(Model.NgayDat?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật"). Dịch vụ phát sinh và thanh toán thực tế được nhân viên khách sạn xử lý riêng.</p>
+      </div>
+    </article>
+    <div class="booking-detail-actions d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="btn btn-outline-secondary rounded-pill">Quay lại lịch sử</a>
+        <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@Model.DatPhongId" class="btn btn-outline-dark rounded-pill"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Làm mới trạng thái</a>
+        <button type="button" class="btn btn-dark rounded-pill" onclick="window.print()"><i class="bi bi-printer me-1" aria-hidden="true"></i>In phiếu</button>
+      </div>
+      @if (canCancel)
+      {
+        <form asp-controller="TaiKhoan" asp-action="HuyDonHang" method="post" data-sawade-busy="Đang hủy đơn..." onsubmit="return confirm('Bạn có chắc chắn muốn hủy yêu cầu đặt phòng này?');">
+          @Html.AntiForgeryToken()
+          <input type="hidden" name="datPhongId" value="@Model.DatPhongId" />
+          <button type="submit" class="btn btn-outline-danger rounded-pill">Hủy yêu cầu đặt phòng</button>
+        </form>
+      }
+    </div>
+  </div>
+</div>

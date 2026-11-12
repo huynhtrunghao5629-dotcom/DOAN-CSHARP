@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using QuanLyKhachSanAPI.Models;
 
 namespace QuanLyKhachSanAPI.Controllers;
@@ -99,67 +101,86 @@ public class DatPhongController : ControllerBase
         return Ok(datPhong);
     }
 
-    // POST: api/DatPhong
+    // POST: api/DatPhong (cả Web và WinForms sử dụng cùng hợp đồng)
     [HttpPost]
-    public async Task<IActionResult> Create(TaoDatPhongRequest request)
+    public async Task<IActionResult> Create([FromBody] TaoDatPhongRequest request)
     {
-        if (request.NgayTra <= request.NgayNhan)
-            return BadRequest("Ngày trả phòng phải sau ngày nhận phòng.");
+        if (request.NgayNhan == null || request.NgayTra == null ||
+            request.NgayTra.Value <= request.NgayNhan.Value ||
+            request.NgayNhan.Value.Date < DateTime.Today)
+            return BadRequest("Ngày nhận/trả không hợp lệ hoặc thiếu thông tin.");
 
-        if (request.DanhSachPhongId == null || !request.DanhSachPhongId.Any())
-            return BadRequest("Vui lòng chọn ít nhất một phòng.");
+        var ids = request.DanhSachPhongId?.Distinct().ToList() ?? new List<int>();
+        if (ids.Count == 0 || ids.Any(id => id <= 0) ||
+            ids.Count != (request.DanhSachPhongId?.Count ?? 0))
+            return BadRequest("Danh sách phòng không hợp lệ hoặc có phòng trùng.");
 
-        var khachHang = await _context.KhachHangs.FindAsync(request.KhachHangId);
-        if (khachHang == null)
-            return BadRequest("Khách hàng không tồn tại.");
-
-        var phongs = await _context.Phongs
-            .Include(p => p.LoaiPhong)
-            .Where(p => request.DanhSachPhongId.Contains(p.PhongId))
-            .ToListAsync();
-
-        if (phongs.Count != request.DanhSachPhongId.Count)
-            return BadRequest("Một số phòng chọn không tồn tại.");
-
-        // Tính số ngày thuê
-        // Tính số ngày thuê (Làm tròn lên: ví dụ 1.5 ngày -> tính 2 ngày)
-        TimeSpan thoiGianThue = request.NgayTra.Value - request.NgayNhan.Value;
-        int soNgay = (int)Math.Ceiling(thoiGianThue.TotalDays);
-        if (soNgay <= 0) soNgay = 1; // Đảm bảo tối thiểu tính 1 ngày
-
-        decimal tongTien = phongs.Sum(p => p.LoaiPhong.GiaPhong) * soNgay;
-        var datPhong = new DatPhong
+        // SERIALIZABLE: các yêu cầu đặt trùng lịch không thể cùng vượt qua kiểm tra.
+        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        try
         {
-            KhachHangId = request.KhachHangId,
-            NhanVienId = request.NhanVienId,
-            NgayDat = DateTime.Now,
-            NgayNhan = request.NgayNhan,
-            NgayTra = request.NgayTra,
-            TrangThai = "ChoXacNhan",
-            TongTien = tongTien
-        };
+            if (!await _context.KhachHangs.AnyAsync(k => k.KhachHangId == request.KhachHangId))
+                return BadRequest("Khách hàng không tồn tại.");
+            if (request.NhanVienId.HasValue &&
+                !await _context.NhanViens.AnyAsync(n => n.NhanVienId == request.NhanVienId.Value))
+                return BadRequest("Nhân viên không tồn tại.");
 
-        foreach (var phong in phongs)
-        {
-            datPhong.ChiTietDatPhongs.Add(new ChiTietDatPhong
+            var phongs = await _context.Phongs.Include(p => p.LoaiPhong)
+                .Where(p => ids.Contains(p.PhongId)).ToListAsync();
+            if (phongs.Count != ids.Count)
+                return BadRequest("Một số phòng không tồn tại.");
+            if (phongs.Any(p => p.TrangThai == "DangBaoTri" || p.LoaiPhong == null))
+                return Conflict("Một trong các phòng đang bảo trì hoặc không có giá.");
+
+            var trungLich = await _context.ChiTietDatPhongs.AnyAsync(ct =>
+                ids.Contains(ct.PhongId) &&
+                ct.DatPhong.TrangThai != "DaHuy" &&
+                ct.DatPhong.TrangThai != "DaTraPhong" &&
+                ct.DatPhong.NgayNhan < request.NgayTra.Value &&
+                ct.DatPhong.NgayTra > request.NgayNhan.Value);
+            if (trungLich)
+                return Conflict("Phòng đã có đơn đặt trùng khoảng ngày được chọn.");
+
+            var soNgay = Math.Max(1, (int)Math.Ceiling(
+                (request.NgayTra.Value - request.NgayNhan.Value).TotalDays));
+            var don = new DatPhong
             {
-                PhongId = phong.PhongId,
-                GiaPhong = phong.LoaiPhong.GiaPhong
+                KhachHangId = request.KhachHangId,
+                NhanVienId = request.NhanVienId,
+                NgayDat = DateTime.Now,
+                NgayNhan = request.NgayNhan,
+                NgayTra = request.NgayTra,
+                TrangThai = "ChoXacNhan",
+                TongTien = phongs.Sum(p => p.LoaiPhong.GiaPhong) * soNgay
+            };
+            foreach (var phong in phongs)
+            {
+                don.ChiTietDatPhongs.Add(new ChiTietDatPhong
+                {
+                    PhongId = phong.PhongId, GiaPhong = phong.LoaiPhong.GiaPhong
+                });
+                // Trạng thái phòng chỉ là hiện trạng; lịch trống phải kiểm tra theo ngày.
+                if (phong.TrangThai == "Trong") phong.TrangThai = "DaDat";
+            }
+            _context.DatPhongs.Add(don);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return CreatedAtAction(nameof(GetById), new { id = don.DatPhongId }, new
+            {
+                don.DatPhongId, don.TongTien, don.TrangThai,
+                ThongBao = "Đặt phòng thành công, chờ xác nhận."
             });
-            phong.TrangThai = "DaDat"; // Cập nhật trạng thái phòng
         }
-
-        _context.DatPhongs.Add(datPhong);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetById), new { id = datPhong.DatPhongId }, new
+        catch (DbUpdateException)
         {
-            datPhong.DatPhongId,
-            datPhong.TongTien,
-            datPhong.TrangThai,
-            ThongBao = "Đặt phòng thành công."
-        });
+            return Conflict("Không thể tạo đơn do dữ liệu hoặc lịch phòng đã thay đổi.");
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1205)
+        {
+            return Conflict("Có đơn khác đang được tạo đồng thời. Vui lòng tải lại phòng trống.");
+        }
     }
+
     [HttpGet("tra-cuu")]
     public async Task<IActionResult> TraCuuDon([FromQuery] string sdt)
     {
@@ -197,6 +218,7 @@ public class DatPhongController : ControllerBase
     // PUT: api/DatPhong/5/trang-thai
     // Mã trạng thái khớp CK_DatPhong_TrangThai trong SQL Server.
     // ChoXacNhan -> DaDat -> DaNhanPhong. Check-out được xử lý riêng.
+    [Authorize(Roles = "Admin,NhanVien")]
     [HttpPut("{id:int}/trang-thai")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] CapNhatTrangThaiRequest request)
     {
@@ -278,6 +300,7 @@ public class DatPhongController : ControllerBase
     }
 
     // PUT: api/DatPhong/5
+    [Authorize(Roles = "Admin,NhanVien")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, DatPhong model)
     {
@@ -298,6 +321,7 @@ public class DatPhongController : ControllerBase
     }
 
     // DELETE: api/DatPhong/5
+    [Authorize(Roles = "Admin,NhanVien")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -309,11 +333,19 @@ public class DatPhongController : ControllerBase
 
         if (dp == null) return NotFound("Không tìm thấy đơn đặt phòng.");
 
-        // Chuyển trạng thái các phòng đang được đặt về 'Trong'
+        // Bảo toàn lịch sử tài chính: chỉ cho xóa đơn chưa phát sinh dịch vụ/thanh toán.
+        if (dp.SuDungDichVus.Any() || dp.ThanhToans.Any() ||
+            dp.TrangThai == "DaNhanPhong" || dp.TrangThai == "DaTraPhong")
+            return Conflict("Đơn đang/đã sử dụng hoặc có giao dịch, không được xóa cứng.");
         foreach (var ct in dp.ChiTietDatPhongs)
         {
+            var coDonKhac = await _context.ChiTietDatPhongs.AnyAsync(x =>
+                x.PhongId == ct.PhongId && x.DatPhongId != id &&
+                x.DatPhong.TrangThai != "DaHuy" &&
+                x.DatPhong.TrangThai != "DaTraPhong");
             var phong = await _context.Phongs.FindAsync(ct.PhongId);
-            if (phong != null) phong.TrangThai = "Trong";
+            if (!coDonKhac && phong != null && phong.TrangThai != "DangSuDung")
+                phong.TrangThai = "Trong";
         }
 
         // Cần xóa các bản ghi phụ thuộc trước khi xóa DatPhong

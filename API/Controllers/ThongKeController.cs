@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSanAPI.Models;
 
 namespace QuanLyKhachSanAPI.Controllers;
 
+[Authorize(Roles = "Admin,NhanVien")]
 [ApiController]
 [Route("api/[controller]")]
 public class ThongKeController : ControllerBase
@@ -24,9 +26,9 @@ public class ThongKeController : ControllerBase
         var tongDonDat = await _context.DatPhongs.CountAsync();
         
         // Tính tổng doanh thu từ các đơn đã thanh toán/đã trả phòng
-        var tongDoanhThu = await _context.DatPhongs
-            .Where(d => d.TrangThai == "DaTra" || d.TrangThai == "DaThanhToan")
-            .SumAsync(d => d.TongTien);
+        var tongDoanhThu = await _context.ThanhToans
+            .Where(t => t.DatPhong.TrangThai == "DaTraPhong")
+            .SumAsync(t => (decimal?)t.SoTien) ?? 0m;
 
         // Đếm số phòng đang trống
         var soPhongTrong = await _context.Phongs.CountAsync(p => p.TrangThai == "Trong");
@@ -41,25 +43,27 @@ public class ThongKeController : ControllerBase
         });
     }
 
-    // GET: api/ThongKe/doanh-thu-theo-thang?nam=2026
-    // SoDon = bookings created that month; DoanhThu = bookings paid/completed.
-    // A booked-but-not-paid reservation is NOT recognized as revenue.
+    // Doanh thu theo tháng thanh toán; số đơn theo tháng tạo đơn.
     [HttpGet("doanh-thu-theo-thang")]
     public async Task<IActionResult> GetDoanhThuTheoThang([FromQuery] int nam)
     {
-        var thongKe = await _context.DatPhongs
+        if (nam < 2000 || nam > 2100) return BadRequest("Năm không hợp lệ.");
+        var soDon = await _context.DatPhongs
             .Where(d => d.NgayDat.Year == nam)
             .GroupBy(d => d.NgayDat.Month)
-            .Select(g => new
-            {
-                Thang = g.Key,
-                DoanhThu = g.Sum(d => d.TrangThai == "DaTra" || d.TrangThai == "DaThanhToan"
-                    ? d.TongTien : 0m),
-                SoDon = g.Count()
-            })
-            .OrderBy(x => x.Thang)
+            .Select(g => new { Thang = g.Key, SoDon = g.Count() })
             .ToListAsync();
-
-        return Ok(thongKe);
+        var thuThucTe = await _context.ThanhToans
+            .Where(t => t.DatPhong.TrangThai == "DaTraPhong" && t.NgayThanhToan.Year == nam)
+            .GroupBy(t => t.NgayThanhToan.Month)
+            .Select(g => new { Thang = g.Key, DoanhThu = g.Sum(t => t.SoTien) })
+            .ToListAsync();
+        var result = Enumerable.Range(1, 12).Select(thang => new
+        {
+            Thang = thang,
+            SoDon = soDon.FirstOrDefault(x => x.Thang == thang)?.SoDon ?? 0,
+            DoanhThu = thuThucTe.FirstOrDefault(x => x.Thang == thang)?.DoanhThu ?? 0m
+        });
+        return Ok(result);
     }
 }

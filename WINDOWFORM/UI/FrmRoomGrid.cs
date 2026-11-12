@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Net.Http.Json;
@@ -27,33 +27,63 @@ namespace HotelManager.UI
 
         public async System.Threading.Tasks.Task LoadRoomGridAsync()
         {
-            // Tự động tìm FlowLayoutPanel trên giao diện
-            FlowLayoutPanel? flp = Controls.Find("flpRoomContainer", true).Length > 0
-                ? Controls.Find("flpRoomContainer", true)[0] as FlowLayoutPanel
-                : (Controls.Find("flpSoDoPhong", true).Length > 0 ? Controls.Find("flpSoDoPhong", true)[0] as FlowLayoutPanel : null);
+            // Tên FlowLayoutPanel THỰC TẾ trong FrmRoomGrid.Designer.cs là flpRooms.
+            // Bản cũ tìm nhầm tên rồi return im lặng, khiến sơ đồ luôn trắng.
+            FlowLayoutPanel flp = flpRooms;
 
-            if (flp == null) return;
-
+            List<PhongViewModel>? rooms;
+            try
+            {
+                var client = BaseApiClient.GetClient();
+                rooms = await client.GetFromJsonAsync<List<PhongViewModel>>("Phong");
+                if (rooms == null) throw new InvalidOperationException("API không trả danh sách phòng.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Không tải được sơ đồ phòng: {ex.Message}", "Lỗi API");
+                return;
+            }
+            flp.Dock = DockStyle.None;
+            flp.SetBounds(12, 60, ClientSize.Width - 24, ClientSize.Height - 72);
+            flp.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            flp.AutoScroll = true;
+            flp.BackColor = Color.FromArgb(245, 247, 250);
+            flp.Padding = new Padding(10);
+            pnlLegend.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            pnlMaintenance.BackColor = Color.LightGray;
+            pnlOccupied.BackColor = Color.LightCoral;
+            pnlAvailable.BackColor = Color.LightGreen;
+            var reservedColor = new Panel { Location = new Point(410, 10), Size = new Size(20, 20), BackColor = Color.Khaki };
+            var reservedLabel = new Label { Location = new Point(438, 12), AutoSize = true, Text = "Đã đặt" };
+            if (!pnlLegend.Controls.ContainsKey("reservedLegend"))
+            {
+                reservedColor.Name = "reservedLegend";
+                pnlLegend.Controls.Add(reservedColor);
+                pnlLegend.Controls.Add(reservedLabel);
+            }
+            flp.SuspendLayout();
             flp.Controls.Clear();
-            var client = BaseApiClient.GetClient();
-            var rooms = await client.GetFromJsonAsync<List<PhongViewModel>>("Phong");
-
-            if (rooms == null) return;
-
+            if (rooms.Count == 0)
+            {
+                flp.Controls.Add(new Label { AutoSize = true, Text = "Chưa có phòng để hiển thị.", Padding = new Padding(12) });
+            }
             foreach (var r in rooms)
             {
                 Button btn = new Button
                 {
-                    Width = 115,
-                    Height = 90,
+                    Width = 156,
+                    Height = 106,
                     Text = $"Phòng {r.SoPhong}\n{r.TenLoaiPhong}\n[{TrangThaiTiengViet.Phong(r.TrangThai)}]",
                     Font = new Font("Segoe UI", 9, FontStyle.Bold),
                     Tag = r,
-                    Margin = new Padding(6)
+                    Margin = new Padding(8),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand
                 };
 
                 switch (r.TrangThai)
                 {
+                    case "DangSuDung":
                     case "DaNhanPhong":
                     case "DangO":
                         btn.BackColor = Color.LightCoral;
@@ -70,8 +100,13 @@ namespace HotelManager.UI
                         break;
                 }
 
+                btn.FlatAppearance.BorderColor = Color.FromArgb(210, 216, 220);
+                btn.Click += (_, _) => MessageBox.Show(
+                    $"Phòng {r.SoPhong}\nLoại: {r.TenLoaiPhong}\nGiá/đêm: {r.GiaPhong:N0} VNĐ\nTrạng thái: {TrangThaiTiengViet.Phong(r.TrangThai)}",
+                    "Thông tin phòng", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 flp.Controls.Add(btn);
             }
+            flp.ResumeLayout(true);
         }
     }
 }

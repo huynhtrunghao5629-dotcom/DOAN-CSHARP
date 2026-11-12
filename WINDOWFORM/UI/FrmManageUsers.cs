@@ -35,11 +35,26 @@ namespace HotelManager.UI
 
         private void SetupDataGridView()
         {
-            dgvUsers.AutoGenerateColumns = true;
+            dgvUsers.AutoGenerateColumns = false;
+            dgvUsers.Columns.Clear();
+            dgvUsers.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Id", HeaderText = "Mã", FillWeight = 50 });
+            dgvUsers.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Username", HeaderText = "Tên đăng nhập", FillWeight = 145 });
+            dgvUsers.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Role", HeaderText = "Vai trò", FillWeight = 90 });
+            dgvUsers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvUsers.RowHeadersVisible = false;
+            dgvUsers.AllowUserToAddRows = false;
+            dgvUsers.BackgroundColor = System.Drawing.Color.White;
             dgvUsers.DataBindingComplete += (sender, args) => TieuDeTiengViet.GanCho(dgvUsers);
             dgvUsers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvUsers.MultiSelect = false;
             dgvUsers.ReadOnly = true;
+            txtFullName.Enabled = false; // API TaiKhoan không quản lý tên nhân viên.
+            chkIsActive.Enabled = false; // CSDL không có trường IsActive.
+            txtFullName.Visible = false;
+            chkIsActive.Visible = false;
+            txtPassword.UseSystemPasswordChar = true;
+            foreach (Control c in grpInput.Controls)
+                if (c is Label l && (l.Text.Contains("Họ tên") || l.Text.Contains("Hoạt động"))) l.Visible = false;
             dgvUsers.CellFormatting += (sender, args) =>
             {
                 if (args.RowIndex < 0 || args.ColumnIndex < 0) return;
@@ -49,12 +64,7 @@ namespace HotelManager.UI
                     args.Value = TrangThaiTiengViet.VaiTro(args.Value?.ToString());
                     args.FormattingApplied = true;
                 }
-                else if (column == "IsActive" && args.Value is bool active &&
-                         dgvUsers.Columns[args.ColumnIndex] is DataGridViewTextBoxColumn)
-                {
-                    args.Value = active ? "Đang hoạt động" : "Đã khóa";
-                    args.FormattingApplied = true;
-                }
+
             };
         }
 
@@ -95,11 +105,9 @@ namespace HotelManager.UI
 
             var userDto = new
             {
-                Username = txtUsername.Text.Trim(),
-                Password = txtPassword.Text.Trim(),
-                FullName = txtFullName.Text.Trim(),
-                Role = cboRole.SelectedIndex == 1 ? "Admin" : "Staff",
-                IsActive = chkIsActive.Checked
+                TenDangNhap = txtUsername.Text.Trim(),
+                MatKhau = txtPassword.Text,
+                VaiTro = cboRole.SelectedIndex == 1 ? "Admin" : "NhanVien"
             };
 
             try
@@ -135,12 +143,8 @@ namespace HotelManager.UI
 
             var userDto = new
             {
-                Id = _selectedUserId,
-                Username = txtUsername.Text.Trim(),
-                Password = txtPassword.Text.Trim(), // Có thể để trống nếu không đổi password
-                FullName = txtFullName.Text.Trim(),
-                Role = cboRole.SelectedIndex == 1 ? "Admin" : "Staff",
-                IsActive = chkIsActive.Checked
+                VaiTro = cboRole.SelectedIndex == 1 ? "Admin" : "NhanVien",
+                MatKhau = string.IsNullOrWhiteSpace(txtPassword.Text) ? null : txtPassword.Text
             };
 
             try
@@ -209,7 +213,7 @@ namespace HotelManager.UI
                 {
                     _selectedUserId = user.Id;
                     txtUsername.Text = user.Username;
-                    txtPassword.Text = user.Password;
+                    txtPassword.Clear(); // API không trả mật khẩu; để trống = giữ nguyên mật khẩu.
                     txtFullName.Text = user.FullName;
                     cboRole.SelectedIndex = TrangThaiTiengViet.VaiTro(user.Role) == "Quản lý" ? 1 : 0;
                     chkIsActive.Checked = user.IsActive;
