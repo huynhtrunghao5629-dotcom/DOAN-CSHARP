@@ -1,0 +1,3 @@
+SELECT * FROM DichVu;
+SELECT * FROM SuDungDichVu;
+SELECT * FROM ThanhToan;
