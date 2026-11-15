@@ -10,6 +10,8 @@ namespace QuanLyKhachSanAPI.Controllers
         public string SoPhong { get; set; } = string.Empty;
         public int LoaiPhongId { get; set; }
         public string TrangThai { get; set; } = string.Empty;
+
+        public string? HinhAnh { get; set; } = string.Empty;
     }
 
     // Chuẩn hóa cấu trúc JSON cho tất cả endpoint GET để Web MVC/WinForms

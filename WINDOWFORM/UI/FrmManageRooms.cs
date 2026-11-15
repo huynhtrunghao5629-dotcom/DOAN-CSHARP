@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -12,9 +14,9 @@ namespace HotelManager.UI
     public partial class FrmManageRooms : Form
     {
         private string _selectedPhongId = string.Empty;
-        // Designer cũ chỉ có TextBox hiển thị tên loại phòng, không có ComboBox.
-        // Tạo ComboBox tại đúng vị trí đó để khách sạn có thể CHỌN loại phòng.
         private readonly ComboBox _cboLoaiPhong = new ComboBox();
+        private readonly TextBox _txtHinhAnh = new TextBox();
+        private readonly Button _btnChonAnh = new Button();
 
         public FrmManageRooms()
         {
@@ -25,8 +27,9 @@ namespace HotelManager.UI
         {
             InitStatusComboBox();
             InitLoaiPhongComboBox();
+            InitHinhAnhInput();
             SetupDataGridView();
-            txtGiaPhong.ReadOnly = true; // Giá thuộc loại phòng, không sửa bằng API /Phong.
+            txtGiaPhong.ReadOnly = true;
             txtTenLoaiPhong.ReadOnly = true;
             await LoadLoaiPhongAsync();
             await LoadRoomsAsync();
@@ -38,14 +41,12 @@ namespace HotelManager.UI
             cboTrangThai.DisplayMember = nameof(StatusOption.Nhan);
             cboTrangThai.ValueMember = nameof(StatusOption.Ma);
 
-            // Đồng bộ mã trạng thái phòng chuẩn SQL / API
             cboTrangThai.Items.Add(new StatusOption("Trong", "Trống"));
             cboTrangThai.Items.Add(new StatusOption("DangSuDung", "Đang có khách"));
             cboTrangThai.Items.Add(new StatusOption("DaDat", "Đã đặt"));
             cboTrangThai.Items.Add(new StatusOption("DangBaoTri", "Đang bảo trì"));
             cboTrangThai.SelectedIndex = 0;
         }
-
 
         private void InitLoaiPhongComboBox()
         {
@@ -61,6 +62,89 @@ namespace HotelManager.UI
             _cboLoaiPhong.BringToFront();
         }
 
+        private void InitHinhAnhInput()
+        {
+            // Tự động đặt ô nhập tên file ảnh & nút chọn file ngay bên phải cboTrangThai
+            var lblHinhAnh = new Label
+            {
+                Text = "Hình ảnh:",
+                AutoSize = true,
+                Location = new Point(cboTrangThai.Right + 20, cboTrangThai.Top + 4)
+            };
+
+            _txtHinhAnh.Name = "txtHinhAnh";
+            _txtHinhAnh.Location = new Point(lblHinhAnh.Right + 65, cboTrangThai.Top);
+            _txtHinhAnh.Width = 120;
+            _txtHinhAnh.PlaceholderText = "vd: 101.jpg";
+
+            _btnChonAnh.Name = "btnChonAnh";
+            _btnChonAnh.Text = "...";
+            _btnChonAnh.Location = new Point(_txtHinhAnh.Right + 4, cboTrangThai.Top - 1);
+            _btnChonAnh.Size = new Size(32, _txtHinhAnh.Height + 2);
+            _btnChonAnh.Click += BtnChonAnh_Click;
+
+            grpInput.Controls.Add(lblHinhAnh);
+            grpInput.Controls.Add(_txtHinhAnh);
+            grpInput.Controls.Add(_btnChonAnh);
+        }
+
+        private void BtnChonAnh_Click(object? sender, EventArgs e)
+        {
+            using var dlg = new OpenFileDialog
+            {
+                Title = "Chọn hình ảnh phòng",
+                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.webp"
+            };
+            string imagesFolder = GetImagesFolderPath();
+            if (Directory.Exists(imagesFolder))
+                dlg.InitialDirectory = imagesFolder;
+
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                _txtHinhAnh.Text = Path.GetFileName(dlg.FileName);
+            }
+        }
+
+        private static string GetImagesFolderPath()
+        {
+            // Tự tìm thư mục WEB\wwwroot\images từ thư mục chạy bin\Debug\net8.0-windows
+            DirectoryInfo? dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+            while (dir != null)
+            {
+                string candidate = Path.Combine(dir.FullName, "WEB", "wwwroot", "images");
+                if (Directory.Exists(candidate))
+                    return candidate;
+                dir = dir.Parent;
+            }
+            return @"E:\HotelManager\DOAN-CSHARP\WEB\wwwroot\images";
+        }
+
+        private static Image? LoadRoomImageSafe(string? fileName)
+        {
+            try
+            {
+                string folder = GetImagesFolderPath();
+                string cleanName = Path.GetFileName(fileName ?? string.Empty);
+                string fullPath = Path.Combine(folder, cleanName);
+
+                if (string.IsNullOrWhiteSpace(cleanName) || !File.Exists(fullPath))
+                {
+                    fullPath = Path.Combine(folder, "room-placeholder.jpg");
+                }
+
+                if (!File.Exists(fullPath)) return null;
+
+                // Đọc qua MemoryStream để tránh khóa file ảnh trên ổ cứng
+                byte[] bytes = File.ReadAllBytes(fullPath);
+                using var ms = new MemoryStream(bytes);
+                return Image.FromStream(ms);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private void SetupDataGridView()
         {
             grpInput.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -71,20 +155,42 @@ namespace HotelManager.UI
             dgvRooms.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvRooms.MultiSelect = false;
             dgvRooms.ReadOnly = true;
+            dgvRooms.RowTemplate.Height = 56; // Tăng chiều cao dòng để hiển thị rõ ảnh
             dgvRooms.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-            AddRoomColumn("PhongId", "Mã phòng", 65);
-            AddRoomColumn("SoPhong", "Số phòng", 110);
-            AddRoomColumn("TenLoaiPhong", "Loại phòng", 155);
-            AddRoomColumn("GiaPhong", "Giá / đêm", 120, "N0");
-            AddRoomColumn("TrangThai", "Trạng thái", 140);
-            // LoaiPhongId chỉ dùng nội bộ cho ComboBox, KHÔNG hiển thị cột kỹ thuật.
+            AddRoomColumn("PhongId", "Mã phòng", 60);
+
+            // Cột hiển thị hình ảnh thu nhỏ
+            var imgCol = new DataGridViewImageColumn
+            {
+                Name = "AnhHienThi",
+                HeaderText = "Hình ảnh",
+                ImageLayout = DataGridViewImageCellLayout.Zoom,
+                MinimumWidth = 85,
+                FillWeight = 85,
+                ReadOnly = true
+            };
+            dgvRooms.Columns.Add(imgCol);
+
+            AddRoomColumn("SoPhong", "Số phòng", 95);
+            AddRoomColumn("TenLoaiPhong", "Loại phòng", 145);
+            AddRoomColumn("GiaPhong", "Giá / đêm", 110, "N0");
+            AddRoomColumn("TrangThai", "Trạng thái", 125);
+            AddRoomColumn("HinhAnh", "File ảnh", 100);
+
             dgvRooms.CellFormatting += (sender, args) =>
             {
-                if (args.RowIndex >= 0 && args.ColumnIndex >= 0 &&
-                    dgvRooms.Columns[args.ColumnIndex].DataPropertyName == "TrangThai")
+                if (args.RowIndex < 0 || args.ColumnIndex < 0) return;
+
+                var colName = dgvRooms.Columns[args.ColumnIndex].Name;
+                if (colName == "TrangThai")
                 {
                     args.Value = TrangThaiTiengViet.Phong(args.Value?.ToString());
+                    args.FormattingApplied = true;
+                }
+                else if (colName == "AnhHienThi" && dgvRooms.Rows[args.RowIndex].DataBoundItem is PhongViewModel room)
+                {
+                    args.Value = LoadRoomImageSafe(room.HinhAnh);
                     args.FormattingApplied = true;
                 }
             };
@@ -97,7 +203,7 @@ namespace HotelManager.UI
                 Name = property,
                 DataPropertyName = property,
                 HeaderText = header,
-                MinimumWidth = Math.Min(width, 80),
+                MinimumWidth = Math.Min(width, 75),
                 FillWeight = width,
                 ReadOnly = true
             };
@@ -170,11 +276,15 @@ namespace HotelManager.UI
         {
             if (!ValidateInput()) return;
 
+            string soPhong = txtSoPhong.Text.Trim();
+            string hinhAnh = string.IsNullOrWhiteSpace(_txtHinhAnh.Text) ? $"{soPhong}.jpg" : _txtHinhAnh.Text.Trim();
+
             var roomDto = new
             {
-                SoPhong = txtSoPhong.Text.Trim(),
+                SoPhong = soPhong,
                 LoaiPhongId = GetSelectedLoaiPhongId(),
-                TrangThai = (cboTrangThai.SelectedItem as StatusOption)?.Ma ?? "Trong"
+                TrangThai = (cboTrangThai.SelectedItem as StatusOption)?.Ma ?? "Trong",
+                HinhAnh = hinhAnh
             };
 
             try
@@ -207,12 +317,16 @@ namespace HotelManager.UI
 
             if (!ValidateInput()) return;
 
+            string soPhong = txtSoPhong.Text.Trim();
+            string hinhAnh = string.IsNullOrWhiteSpace(_txtHinhAnh.Text) ? $"{soPhong}.jpg" : _txtHinhAnh.Text.Trim();
+
             var roomDto = new
             {
                 PhongId = int.Parse(_selectedPhongId),
-                SoPhong = txtSoPhong.Text.Trim(),
+                SoPhong = soPhong,
                 LoaiPhongId = GetSelectedLoaiPhongId(),
-                TrangThai = (cboTrangThai.SelectedItem as StatusOption)?.Ma ?? "Trong"
+                TrangThai = (cboTrangThai.SelectedItem as StatusOption)?.Ma ?? "Trong",
+                HinhAnh = hinhAnh
             };
 
             try
@@ -278,6 +392,8 @@ namespace HotelManager.UI
                     txtSoPhong.Text = room.SoPhong;
                     txtTenLoaiPhong.Text = room.TenLoaiPhong;
                     txtGiaPhong.Text = room.GiaPhong.ToString("G0");
+                    _txtHinhAnh.Text = room.HinhAnh ?? string.Empty;
+
                     if (room.LoaiPhongId > 0 && _cboLoaiPhong.DataSource != null)
                         _cboLoaiPhong.SelectedValue = room.LoaiPhongId;
 
@@ -317,6 +433,7 @@ namespace HotelManager.UI
             txtSoPhong.Clear();
             txtTenLoaiPhong.Clear();
             txtGiaPhong.Clear();
+            _txtHinhAnh.Clear();
             _cboLoaiPhong.SelectedIndex = -1;
             if (cboTrangThai.Items.Count > 0) cboTrangThai.SelectedIndex = 0;
         }
