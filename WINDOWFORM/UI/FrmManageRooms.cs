@@ -119,7 +119,7 @@ namespace HotelManager.UI
             return @"E:\HotelManager\DOAN-CSHARP\WEB\wwwroot\images";
         }
 
-        private static Image? LoadRoomImageSafe(string? fileName)
+        private static Image LoadRoomImageSafe(string? fileName)
         {
             try
             {
@@ -132,17 +132,21 @@ namespace HotelManager.UI
                     fullPath = Path.Combine(folder, "room-placeholder.jpg");
                 }
 
-                if (!File.Exists(fullPath)) return null;
-
-                // Đọc qua MemoryStream để tránh khóa file ảnh trên ổ cứng
-                byte[] bytes = File.ReadAllBytes(fullPath);
-                using var ms = new MemoryStream(bytes);
-                return Image.FromStream(ms);
+                if (File.Exists(fullPath))
+                {
+                    byte[] bytes = File.ReadAllBytes(fullPath);
+                    using var ms = new MemoryStream(bytes);
+                    using var tempImg = Image.FromStream(ms);
+                    return new Bitmap(tempImg); // Tạo bản sao Bitmap độc lập để GDI+ không báo lỗi
+                }
             }
             catch
             {
-                return null;
+                // Bỏ qua lỗi đọc file hỏng
             }
+
+            // Trả về ảnh rỗng 1x1 thay vì null để tránh FormatException
+            return new Bitmap(1, 1);
         }
 
         private void SetupDataGridView()
@@ -155,15 +159,19 @@ namespace HotelManager.UI
             dgvRooms.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvRooms.MultiSelect = false;
             dgvRooms.ReadOnly = true;
-            dgvRooms.RowTemplate.Height = 56; // Tăng chiều cao dòng để hiển thị rõ ảnh
+            dgvRooms.RowTemplate.Height = 56;
             dgvRooms.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            // Chặn hộp thoại lỗi mặc định của DataGridView nếu có dữ liệu lạ
+            dgvRooms.DataError += (s, e) => { e.ThrowException = false; };
 
             AddRoomColumn("PhongId", "Mã phòng", 60);
 
-            // Cột hiển thị hình ảnh thu nhỏ
+            // Cột hiển thị hình ảnh thu nhỏ (gắn DataPropertyName = "HinhAnh")
             var imgCol = new DataGridViewImageColumn
             {
                 Name = "AnhHienThi",
+                DataPropertyName = "HinhAnh",
                 HeaderText = "Hình ảnh",
                 ImageLayout = DataGridViewImageCellLayout.Zoom,
                 MinimumWidth = 85,
@@ -188,9 +196,9 @@ namespace HotelManager.UI
                     args.Value = TrangThaiTiengViet.Phong(args.Value?.ToString());
                     args.FormattingApplied = true;
                 }
-                else if (colName == "AnhHienThi" && dgvRooms.Rows[args.RowIndex].DataBoundItem is PhongViewModel room)
+                else if (colName == "AnhHienThi")
                 {
-                    args.Value = LoadRoomImageSafe(room.HinhAnh);
+                    args.Value = LoadRoomImageSafe(args.Value?.ToString());
                     args.FormattingApplied = true;
                 }
             };
