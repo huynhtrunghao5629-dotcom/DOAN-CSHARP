@@ -120,44 +120,34 @@ namespace HotelManager.UI
         }
 
         private static Image LoadRoomImageSafe(string? fileName)
-{
-    string folder = GetImagesFolderPath();
-    string baseName = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
-    string exactName = Path.GetFileName(fileName ?? string.Empty);
-
-    // Danh sách các đường dẫn ưu tiên thử lần lượt
-    var candidates = new List<string>();
-    if (!string.IsNullOrWhiteSpace(exactName))
-        candidates.Add(Path.Combine(folder, exactName));
-
-    if (!string.IsNullOrWhiteSpace(baseName))
-    {
-        candidates.Add(Path.Combine(folder, baseName + ".jpg"));
-        candidates.Add(Path.Combine(folder, baseName + ".jpeg"));
-        candidates.Add(Path.Combine(folder, baseName + ".png"));
-    }
-
-    candidates.Add(Path.Combine(folder, "room-placeholder.jpg"));
-    candidates.Add(Path.Combine(folder, "101.jpg")); // Dự phòng cuối cùng nếu thiếu placeholder
-
-    foreach (var path in candidates)
-    {
-        if (!File.Exists(path)) continue;
-        try
         {
-            byte[] bytes = File.ReadAllBytes(path);
-            using var ms = new MemoryStream(bytes);
-            using var tempImg = Image.FromStream(ms);
-            return new Bitmap(tempImg);
-        }
-        catch
-        {
-            // Bỏ qua nếu file bị sai định dạng (vd: WebP đội lốt .jpg) để thử file kế tiếp
-        }
-    }
+            try
+            {
+                string folder = GetImagesFolderPath();
+                string cleanName = Path.GetFileName(fileName ?? string.Empty);
+                string fullPath = Path.Combine(folder, cleanName);
 
-    return new Bitmap(60, 40);
-}
+                if (string.IsNullOrWhiteSpace(cleanName) || !File.Exists(fullPath))
+                {
+                    fullPath = Path.Combine(folder, "room-placeholder.jpg");
+                }
+
+                if (File.Exists(fullPath))
+                {
+                    byte[] bytes = File.ReadAllBytes(fullPath);
+                    using var ms = new MemoryStream(bytes);
+                    using var tempImg = Image.FromStream(ms);
+                    return new Bitmap(tempImg); // Tạo bản sao Bitmap độc lập để GDI+ không báo lỗi
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi đọc file hỏng
+            }
+
+            // Trả về ảnh rỗng 1x1 thay vì null để tránh FormatException
+            return new Bitmap(1, 1);
+        }
 
         private void SetupDataGridView()
         {
