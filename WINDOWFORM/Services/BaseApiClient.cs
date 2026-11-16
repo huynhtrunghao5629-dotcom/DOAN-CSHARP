@@ -9,7 +9,7 @@ namespace HotelManager.Services
     {
         private static readonly HttpClient _client = new HttpClient
         {
-            BaseAddress = new Uri("http://localhost:5000/api/"),
+            BaseAddress = new Uri("http://localhost:5050/api/"),
             Timeout = TimeSpan.FromSeconds(30)
         };
 
