@@ -107,7 +107,12 @@ namespace HotelManager.UI
 
         private static string GetImagesFolderPath()
         {
-            // Tự tìm thư mục WEB\wwwroot\images từ thư mục chạy bin\Debug\net8.0-windows
+            // 1. Ưu tiên thư mục "images" nằm ngay cạnh file HotelManager.exe (chạy được trên mọi máy sau khi build/đóng gói)
+            string localExeImages = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images");
+            if (Directory.Exists(localExeImages))
+                return localExeImages;
+
+            // 2. Nếu chạy ở môi trường Dev từ thư mục clone Git bất kỳ, tự tìm ngược lên WEB\wwwroot\images
             DirectoryInfo? dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
             while (dir != null)
             {
@@ -116,38 +121,51 @@ namespace HotelManager.UI
                     return candidate;
                 dir = dir.Parent;
             }
-            return @"E:\HotelManager\DOAN-CSHARP\WEB\wwwroot\images";
+
+            // 3. Fallback an toàn: tự tạo thư mục images cạnh file .exe nếu máy trắng hoàn toàn
+            Directory.CreateDirectory(localExeImages);
+            return localExeImages;
         }
 
         private static Image LoadRoomImageSafe(string? fileName)
+{
+    string folder = GetImagesFolderPath();
+    string baseName = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
+    string exactName = Path.GetFileName(fileName ?? string.Empty);
+
+    // Danh sách các đường dẫn ưu tiên thử lần lượt
+    var candidates = new List<string>();
+    if (!string.IsNullOrWhiteSpace(exactName))
+        candidates.Add(Path.Combine(folder, exactName));
+
+    if (!string.IsNullOrWhiteSpace(baseName))
+    {
+        candidates.Add(Path.Combine(folder, baseName + ".jpg"));
+        candidates.Add(Path.Combine(folder, baseName + ".jpeg"));
+        candidates.Add(Path.Combine(folder, baseName + ".png"));
+    }
+
+    candidates.Add(Path.Combine(folder, "room-placeholder.jpg"));
+    candidates.Add(Path.Combine(folder, "101.jpg")); // Dự phòng cuối cùng nếu thiếu placeholder
+
+    foreach (var path in candidates)
+    {
+        if (!File.Exists(path)) continue;
+        try
         {
-            try
-            {
-                string folder = GetImagesFolderPath();
-                string cleanName = Path.GetFileName(fileName ?? string.Empty);
-                string fullPath = Path.Combine(folder, cleanName);
-
-                if (string.IsNullOrWhiteSpace(cleanName) || !File.Exists(fullPath))
-                {
-                    fullPath = Path.Combine(folder, "room-placeholder.jpg");
-                }
-
-                if (File.Exists(fullPath))
-                {
-                    byte[] bytes = File.ReadAllBytes(fullPath);
-                    using var ms = new MemoryStream(bytes);
-                    using var tempImg = Image.FromStream(ms);
-                    return new Bitmap(tempImg); // Tạo bản sao Bitmap độc lập để GDI+ không báo lỗi
-                }
-            }
-            catch
-            {
-                // Bỏ qua lỗi đọc file hỏng
-            }
-
-            // Trả về ảnh rỗng 1x1 thay vì null để tránh FormatException
-            return new Bitmap(1, 1);
+            byte[] bytes = File.ReadAllBytes(path);
+            using var ms = new MemoryStream(bytes);
+            using var tempImg = Image.FromStream(ms);
+            return new Bitmap(tempImg);
         }
+        catch
+        {
+            // Bỏ qua nếu file bị sai định dạng (vd: WebP đội lốt .jpg) để thử file kế tiếp
+        }
+    }
+
+    return new Bitmap(60, 40);
+}
 
         private void SetupDataGridView()
         {
