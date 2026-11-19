@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Hướng dẫn đặt phòng";
+    ViewData["NavbarOverlay"] = false;
+}
+<div class="container py-5" style="max-width:900px">
+    <p class="text-uppercase small fw-bold" style="letter-spacing:2px;color:#987447">TRỢ GIÚP KHÁCH HÀNG</p>
+    <h1 class="fw-bold mb-3" style="font-family:Georgia,serif;color:#24392f">Hướng dẫn đặt phòng SAWADE</h1>
+    <p class="text-muted mb-5">Những bước cơ bản để bạn tìm phòng và quản lý kỳ nghỉ trên website.</p>
+    <div class="row g-3 mb-5">
+        <div class="col-md-4"><div class="bg-white rounded-4 shadow-sm h-100 p-4"><span class="badge bg-success mb-3">Bước 1</span><h2 class="h5">Tìm phòng</h2><p class="text-muted small">Chọn ngày nhận, ngày trả, số khách và áp dụng bộ lọc phù hợp.</p></div></div>
+        <div class="col-md-4"><div class="bg-white rounded-4 shadow-sm h-100 p-4"><span class="badge bg-success mb-3">Bước 2</span><h2 class="h5">Đặt phòng</h2><p class="text-muted small">Đăng nhập, xem chi tiết, chọn thời gian và gửi yêu cầu đặt phòng.</p></div></div>
+        <div class="col-md-4"><div class="bg-white rounded-4 shadow-sm h-100 p-4"><span class="badge bg-success mb-3">Bước 3</span><h2 class="h5">Theo dõi đơn</h2><p class="text-muted small">Kiểm tra trạng thái và mã đơn tại mục Hồ sơ cá nhân.</p></div></div>
+    </div>
+    <h2 class="h4 fw-bold mb-3">Câu hỏi thường gặp</h2>
+    <div class="accordion" id="sawadeFaq">
+        <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">Làm sao biết đơn đã được xác nhận?</button></h3><div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#sawadeFaq"><div class="accordion-body">Đơn mới có trạng thái <strong>Chờ xác nhận</strong>. Khi lễ tân xử lý thành công, trạng thái chuyển thành <strong>Đã đặt (đã xác nhận)</strong>.</div></div></div>
+        <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">Tôi có thể hủy đơn không?</button></h3><div id="faq2" class="accordion-collapse collapse" data-bs-parent="#sawadeFaq"><div class="accordion-body">Trên Web, nút tự hủy chỉ hiển thị với đơn <strong>Chờ xác nhận</strong>. Các trường hợp khác cần liên hệ lễ tân và phụ thuộc quy định của hệ thống.</div></div></div>
+        <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">Tổng tiền hiển thị ở trang phòng là gì?</button></h3><div id="faq3" class="accordion-collapse collapse" data-bs-parent="#sawadeFaq"><div class="accordion-body">Đó là tiền phòng <strong>tạm tính</strong> dựa trên đơn giá và số đêm. Giá trị đơn chính thức do API trả về sau khi đặt; phí dịch vụ phát sinh có thể tính riêng.</div></div></div>
+        <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">Tôi không thấy phòng trống theo ngày đã chọn?</button></h3><div id="faq4" class="accordion-collapse collapse" data-bs-parent="#sawadeFaq"><div class="accordion-body">Thử thay đổi ngày lưu trú, số khách hoặc xóa bộ lọc. Nếu vẫn không có phòng, có thể phòng đã kín lịch hoặc hệ thống đang cập nhật dữ liệu.</div></div></div>
+    </div>
+    <div class="text-center mt-5"><a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade rounded-pill px-4 py-2">Bắt đầu tìm phòng</a></div>
+</div>

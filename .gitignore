@@ -363,3 +363,12 @@ MigrationBackup/
 FodyWeavers.xsdbin/
 obj/
 .vs/
+# File ZIP và bản sao lưu
+*.zip
+*.rar
+*.7z
+
+# File chứa thông tin bí mật
+.env
+.env.*
+**/secrets.json
