@@ -318,7 +318,10 @@
                         @foreach (var room in rooms)
                         {
                             var roomNumber = (room.SoPhong ?? string.Empty).Trim();
-                            var localImage = Url.Content("~/images/" + roomNumber + ".jpg");
+                            var storedImage = (room.HinhAnh ?? string.Empty).Trim();
+                            var localImage = string.IsNullOrWhiteSpace(storedImage)
+                                ? Url.Content("~/images/" + roomNumber + ".jpg")
+                                : (storedImage.StartsWith("/") ? Url.Content("~" + storedImage) : Url.Content("~/images/" + storedImage));
                             var fallbackIndex = (int)(Math.Abs((long)room.PhongId) % fallbackImgs.Length);
                             var fallback = fallbackImgs[fallbackIndex];
 
@@ -333,7 +336,6 @@
                                         <img src="@localImage"
                                              alt="Ảnh phòng @room.SoPhong"
                                              loading="lazy" decoding="async"
-                                             decoding="async"
                                              onerror="this.onerror=null;this.src='@fallback';" />
                                         <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-white text-dark px-3 py-2 shadow-sm">@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
                                     </div>

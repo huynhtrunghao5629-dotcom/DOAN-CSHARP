@@ -4,9 +4,12 @@
     ViewData["Title"] = "Chi tiết phòng " + Model.SoPhong;
     ViewData["NavbarOverlay"] = false;
 
-    // CHỈ LẤY ẢNH TỪ WWWROOT/IMAGES CHO CHI TIẾT
+    // Ưu tiên đúng đường dẫn ảnh lưu trong database; nếu thiếu mới dùng tên theo số phòng.
     var roomNumber = (Model.SoPhong ?? string.Empty).Trim();
-    var localDetailImage = Url.Content("~/images/" + roomNumber + ".jpg");
+    var storedImage = (Model.HinhAnh ?? string.Empty).Trim();
+    var localDetailImage = string.IsNullOrWhiteSpace(storedImage)
+        ? Url.Content("~/images/" + roomNumber + ".jpg")
+        : (storedImage.StartsWith("/") ? Url.Content("~" + storedImage) : Url.Content("~/images/" + storedImage));
 
     var fallbackImgs = new[]
     {

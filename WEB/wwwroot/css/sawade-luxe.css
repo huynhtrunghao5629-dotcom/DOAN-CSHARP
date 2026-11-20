@@ -1,0 +1,490 @@
+/* SAWADE LUXE UI V3
+   Lớp giao diện bổ sung, không thay đổi API/Controller/nghiệp vụ. */
+:root {
+    --lux-forest: #19342b;
+    --lux-forest-2: #27483a;
+    --lux-forest-3: #315c49;
+    --lux-champagne: #c8a56a;
+    --lux-champagne-soft: #ead9b9;
+    --lux-ivory: #f7f3eb;
+    --lux-paper: #fffdf8;
+    --lux-ink: #202820;
+    --lux-muted: #6e776f;
+    --lux-line: rgba(25, 52, 43, .12);
+    --lux-shadow: 0 22px 60px rgba(21, 43, 35, .10);
+    --lux-shadow-soft: 0 12px 34px rgba(21, 43, 35, .07);
+    --lux-radius-xl: 28px;
+    --lux-radius-lg: 20px;
+    --lux-radius-md: 15px;
+}
+
+body {
+    background:
+        radial-gradient(circle at 10% 0%, rgba(200,165,106,.08), transparent 25rem),
+        var(--lux-ivory);
+    color: var(--lux-ink);
+    letter-spacing: .002em;
+}
+
+main { overflow: clip; }
+
+::selection { background: rgba(200,165,106,.30); color: var(--lux-forest); }
+
+/* ---------------- NAVBAR ---------------- */
+.navbar-sawade {
+    min-height: 86px;
+    padding-top: .8rem !important;
+    padding-bottom: .8rem !important;
+    background: rgba(255,253,248,.93);
+    backdrop-filter: blur(16px) saturate(125%);
+    -webkit-backdrop-filter: blur(16px) saturate(125%);
+    border-bottom: 1px solid var(--lux-line);
+    box-shadow: 0 7px 30px rgba(20,40,32,.05);
+}
+
+.navbar-overlay {
+    background: linear-gradient(180deg, rgba(10,22,17,.64) 0%, rgba(10,22,17,.18) 70%, transparent 100%);
+    border-bottom-color: rgba(255,255,255,.16);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.brand-emblem {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(200,165,106,.55);
+    color: var(--lux-champagne);
+    background: rgba(255,255,255,.06);
+    flex: 0 0 auto;
+}
+
+.brand-name {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.32rem;
+    letter-spacing: .20em;
+    font-weight: 700;
+}
+
+.brand-subtitle { letter-spacing: .13em; font-size: .59rem; opacity: .72; }
+
+.navbar-sawade .nav-link {
+    font-size: .72rem;
+    font-weight: 760;
+    letter-spacing: .105em;
+    padding-inline: .5rem;
+}
+
+.sawade-nav-actions .btn { min-height: 42px; }
+
+.btn-sawade-primary,
+.btn-sawade {
+    background: linear-gradient(135deg, var(--lux-forest), var(--lux-forest-2));
+    border-color: var(--lux-forest);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(25,52,43,.14);
+}
+.btn-sawade-primary:hover,
+.btn-sawade:hover {
+    background: linear-gradient(135deg, var(--lux-forest-2), var(--lux-forest-3));
+    border-color: var(--lux-forest-2);
+    color: #fff;
+}
+
+.btn-sawade-light {
+    background: rgba(255,255,255,.84);
+    border: 1px solid rgba(25,52,43,.12);
+    color: var(--lux-forest);
+}
+.btn-sawade-light:hover { background:#fff; border-color:rgba(200,165,106,.60); color:var(--lux-forest); }
+
+.navbar-overlay .btn-sawade-light {
+    color:#fff;
+    background:rgba(255,255,255,.10);
+    border-color:rgba(255,255,255,.34);
+}
+.navbar-overlay .btn-sawade-light:hover { background:rgba(255,255,255,.18); color:#fff; }
+.navbar-overlay .btn-sawade-primary {
+    background: rgba(200,165,106,.94);
+    border-color: rgba(200,165,106,.94);
+    color:#17271f;
+    box-shadow:none;
+}
+.navbar-overlay .btn-sawade-primary:hover { background:#d8b87f; color:#17271f; }
+
+/* ---------------- HERO ---------------- */
+.hero-banner {
+    min-height: 700px;
+    height: min(88vh, 840px);
+    background-position: center 54%;
+}
+.hero-banner::before {
+    background:
+        linear-gradient(90deg, rgba(10,23,17,.84) 0%, rgba(10,23,17,.58) 43%, rgba(10,23,17,.20) 73%, rgba(10,23,17,.10) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.25));
+}
+.hero-banner::after {
+    content:"";
+    position:absolute;
+    inset:auto 0 0;
+    height:120px;
+    background:linear-gradient(180deg, transparent, rgba(16,30,23,.30));
+    pointer-events:none;
+}
+.hero-content { padding-top: 112px !important; }
+.hero-eyebrow { color: var(--lux-champagne-soft); letter-spacing:.24em; }
+.hero-title {
+    max-width: 810px;
+    font-size: clamp(3rem, 6vw, 5.35rem);
+    line-height: .99;
+    letter-spacing: -.025em;
+    text-wrap: balance;
+}
+.hero-description { max-width: 600px; font-size: 1.05rem; line-height:1.85; }
+.hero-actions { display:flex; flex-wrap:wrap; gap:.8rem; align-items:center; }
+.hero-cta-primary,
+.hero-cta-secondary {
+    min-height:48px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    padding:.75rem 1.25rem;
+    text-decoration:none;
+    font-weight:700;
+}
+.hero-cta-primary { background:var(--lux-champagne); color:#183126; border:1px solid var(--lux-champagne); }
+.hero-cta-primary:hover { background:#d8b77d; color:#183126; }
+.hero-cta-secondary { color:#fff; border:1px solid rgba(255,255,255,.36); background:rgba(255,255,255,.07); }
+.hero-cta-secondary:hover { color:#fff; background:rgba(255,255,255,.14); }
+
+.hero-signature {
+    display:flex;
+    gap:1rem;
+    flex-wrap:wrap;
+    margin-top:1.4rem;
+    color:rgba(255,255,255,.72);
+    font-size:.82rem;
+}
+.hero-signature span { display:inline-flex; align-items:center; gap:.42rem; }
+.hero-signature i { color:var(--lux-champagne-soft); }
+
+.floating-search-bar {
+    bottom: -48px;
+    width:min(94%, 1160px);
+    border-radius:26px;
+    padding:14px 18px;
+    background:rgba(255,253,248,.98);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 25px 65px rgba(12,31,23,.22);
+}
+.floating-search-bar label { letter-spacing:.02em; }
+.search-input { min-height:46px; }
+
+/* ---------------- SHARED EDITORIAL ---------------- */
+.section-eyebrow { color:#9b743d; letter-spacing:.20em; }
+.section-heading { font-size:clamp(2rem,3.7vw,3.05rem); line-height:1.08; letter-spacing:-.025em; }
+
+.luxe-kicker {
+    text-transform:uppercase;
+    letter-spacing:.20em;
+    font-size:.72rem;
+    font-weight:800;
+    color:#9b743d;
+}
+.luxe-title {
+    font-family:Georgia,"Times New Roman",serif;
+    color:var(--lux-forest);
+    letter-spacing:-.025em;
+    line-height:1.08;
+}
+.luxe-lead { color:var(--lux-muted); line-height:1.75; }
+
+.trust-strip {
+    padding: 1rem 0 2.4rem;
+    border-bottom-color:var(--lux-line) !important;
+}
+.trust-strip > div { position:relative; }
+.trust-strip > div:not(:last-child)::after {
+    content:"";
+    position:absolute;
+    right:0;
+    top:12%;
+    width:1px;
+    height:76%;
+    background:var(--lux-line);
+}
+.trust-strip .trust-icon {
+    width:44px;
+    height:44px;
+    margin-inline:auto;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:#efe6d5;
+    color:#8b6939;
+    font-size:1.15rem;
+}
+
+/* ---------------- ROOM CARDS ---------------- */
+.room-card,
+.rooms-page .room-card {
+    border-radius:22px !important;
+    border:1px solid rgba(25,52,43,.10) !important;
+    background:var(--lux-paper) !important;
+    box-shadow:0 8px 26px rgba(24,49,39,.055);
+}
+.room-image-wrapper { background:#e8e2d7; }
+.room-card .room-image-wrapper { border-bottom:1px solid rgba(25,52,43,.06); }
+.category-overlay { padding:50px 20px 20px; background:linear-gradient(0deg,rgba(11,28,20,.88),rgba(11,28,20,.04)); }
+.room-price { color:#8f6834; }
+.room-btn {
+    background:var(--lux-forest) !important;
+    border-color:var(--lux-forest) !important;
+    padding:10px 18px !important;
+    font-weight:700;
+    box-shadow:0 7px 18px rgba(25,52,43,.12);
+}
+.room-btn:hover { background:var(--lux-forest-2) !important; }
+
+.horizontal-scroll-wrapper { gap:1.5rem; padding-bottom:28px; }
+.horizontal-scroll-item { width:310px; }
+
+/* ---------------- ROOM LIST ---------------- */
+.rooms-page {
+    background:
+      linear-gradient(180deg, rgba(255,253,248,.82), rgba(247,243,235,.95)),
+      var(--lux-ivory) !important;
+    padding-top:54px !important;
+}
+.rooms-filter {
+    border-radius:22px !important;
+    border:1px solid rgba(25,52,43,.10) !important;
+    box-shadow:var(--lux-shadow-soft) !important;
+    background:rgba(255,253,248,.96) !important;
+}
+.rooms-filter::before {
+    content:"";
+    display:block;
+    width:42px;
+    height:3px;
+    margin-bottom:18px;
+    border-radius:999px;
+    background:var(--lux-champagne);
+}
+.rooms-page .form-control,
+.rooms-page .form-select {
+    min-height:44px;
+    background:#fff;
+    border-color:rgba(25,52,43,.14);
+}
+.rooms-page .form-range::-webkit-slider-thumb { background:var(--lux-forest); }
+.rooms-page .custom-pagination .page-link { background:#fffdf8; }
+
+/* ---------------- ROOM DETAIL ---------------- */
+.detail-room-image {
+    border-radius:26px !important;
+    box-shadow:0 22px 55px rgba(21,43,35,.14) !important;
+}
+.detail-feature {
+    min-height:96px;
+    border-radius:16px !important;
+    background:#fffdf8;
+    border-color:rgba(25,52,43,.10) !important;
+}
+.detail-type-badge { background:#efe4d2 !important; color:#765629 !important; }
+.booking-panel {
+    border-radius:22px !important;
+    background:linear-gradient(180deg,#fffdf9,#f8f3ea) !important;
+    border:1px solid rgba(25,52,43,.12) !important;
+    box-shadow:0 18px 42px rgba(21,43,35,.07);
+}
+
+/* ---------------- AUTH ---------------- */
+.auth-page {
+    min-height:72vh;
+    padding:64px 0 86px;
+    background:
+      radial-gradient(circle at 15% 15%, rgba(200,165,106,.18), transparent 22rem),
+      linear-gradient(135deg,#f8f4ec 0%,#f2eee5 100%);
+}
+.auth-shell { max-width:1060px; margin:0 auto; }
+.auth-visual {
+    height:100%;
+    min-height:540px;
+    border-radius:28px;
+    padding:38px;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    color:#fff;
+    position:relative;
+    overflow:hidden;
+    background:
+      linear-gradient(180deg,rgba(12,29,21,.08),rgba(12,29,21,.82)),
+      url('/images/101.jpg') center/cover no-repeat;
+    box-shadow:var(--lux-shadow);
+}
+.auth-visual::after {
+    content:"SAWADE";
+    position:absolute;
+    top:28px;
+    left:34px;
+    letter-spacing:.25em;
+    font-weight:800;
+    font-size:.78rem;
+    color:rgba(255,255,255,.78);
+}
+.auth-visual h2 { font-family:Georgia,"Times New Roman",serif; font-size:2.35rem; line-height:1.08; max-width:420px; }
+.auth-visual p { max-width:430px; color:rgba(255,255,255,.78); line-height:1.7; }
+.auth-card {
+    height:100%;
+    border:1px solid rgba(25,52,43,.10) !important;
+    border-radius:28px !important;
+    background:rgba(255,253,248,.98) !important;
+    box-shadow:var(--lux-shadow-soft) !important;
+}
+.auth-card .input-group-text,
+.auth-card .form-control { border-color:rgba(25,52,43,.14); }
+.auth-card .input-group:focus-within .input-group-text { border-color:#789682; }
+.auth-link { color:#8c6937 !important; }
+
+/* ---------------- SERVICES / GUIDE / CONFIRM ---------------- */
+.luxe-page { padding:64px 0 84px; min-height:70vh; }
+.luxe-page-head { max-width:760px; margin:0 auto 44px; text-align:center; }
+.service-luxe-card {
+    height:100%;
+    padding:28px;
+    border-radius:22px;
+    border:1px solid rgba(25,52,43,.10);
+    background:var(--lux-paper);
+    box-shadow:0 9px 28px rgba(21,43,35,.055);
+}
+.service-luxe-icon {
+    width:58px;
+    height:58px;
+    display:grid;
+    place-items:center;
+    border-radius:18px;
+    background:linear-gradient(135deg,#e8efe9,#f3eadb);
+    color:var(--lux-forest-2);
+    font-size:1.55rem;
+}
+.guide-step {
+    height:100%;
+    padding:28px;
+    border-radius:22px;
+    background:var(--lux-paper);
+    border:1px solid rgba(25,52,43,.10);
+    box-shadow:0 9px 26px rgba(21,43,35,.05);
+}
+.guide-step-number {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:42px;
+    height:42px;
+    margin-bottom:18px;
+    border-radius:50%;
+    background:var(--lux-forest);
+    color:#fff;
+    font-weight:800;
+}
+.accordion-item { border-color:rgba(25,52,43,.10) !important; background:var(--lux-paper); }
+.accordion-button { background:var(--lux-paper); color:var(--lux-forest); font-weight:700; }
+.accordion-button:not(.collapsed) { background:#f0eadf; color:var(--lux-forest); box-shadow:none; }
+.accordion-button:focus { box-shadow:0 0 0 .2rem rgba(25,52,43,.10); }
+
+.confirm-card {
+    max-width:760px;
+    margin:auto;
+    padding:50px;
+    border-radius:28px;
+    border:1px solid rgba(25,52,43,.10);
+    background:var(--lux-paper);
+    box-shadow:var(--lux-shadow);
+}
+.confirm-icon {
+    width:78px;
+    height:78px;
+    margin:0 auto 20px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:#e7f2e9;
+    color:#2a6946;
+    font-size:2.15rem;
+}
+.confirm-code {
+    padding:18px;
+    border-radius:18px;
+    background:#f1ece2;
+    border:1px dashed rgba(25,52,43,.18);
+}
+
+/* ---------------- MODAL ---------------- */
+#searchRoomModal .modal-content {
+    border-radius:24px !important;
+    background:#fffdf8;
+}
+#searchRoomModal .modal-header { border-bottom-color:rgba(25,52,43,.08); }
+
+/* ---------------- FOOTER ---------------- */
+.site-footer {
+    margin-top:0 !important;
+    padding:0 !important;
+    background:
+      radial-gradient(circle at 75% 20%, rgba(200,165,106,.10), transparent 25rem),
+      #13271f;
+    text-align:left !important;
+}
+.footer-main { padding:58px 0 38px; }
+.footer-brand-copy { max-width:390px; color:rgba(255,255,255,.60); line-height:1.75; }
+.footer-heading { color:#e8d3ad; font-size:.75rem; letter-spacing:.18em; text-transform:uppercase; font-weight:800; margin-bottom:1rem; }
+.footer-link { display:block; color:rgba(255,255,255,.68); text-decoration:none; margin-bottom:.7rem; }
+.footer-link:hover { color:#fff; transform:translateX(2px); }
+.footer-bottom { border-top:1px solid rgba(255,255,255,.10); padding:18px 0; color:rgba(255,255,255,.48); font-size:.82rem; }
+.footer-mark { font-family:Georgia,"Times New Roman",serif; font-size:1.55rem; letter-spacing:.20em; }
+
+/* ---------------- RESPONSIVE ---------------- */
+@media (max-width: 991.98px) {
+    .navbar-sawade { min-height:74px; }
+    .navbar-sawade .navbar-collapse {
+        margin-top:.8rem;
+        padding:1rem;
+        border-radius:18px;
+        background:#fffdf8;
+        border:1px solid rgba(25,52,43,.10);
+        box-shadow:var(--lux-shadow-soft);
+    }
+    .navbar-overlay .navbar-collapse { background:rgba(17,37,28,.98); }
+    .sawade-nav-actions { margin-top:.8rem; width:100%; flex-wrap:wrap; }
+    .sawade-nav-actions > * { flex:1 1 auto; }
+    .hero-banner { min-height:720px; }
+    .trust-strip > div:nth-child(2)::after { display:none; }
+    .auth-visual { min-height:360px; }
+}
+
+@media (max-width: 767.98px) {
+    .hero-banner { min-height:660px; padding-bottom:20px; }
+    .hero-title { font-size:clamp(2.6rem,12vw,4rem); }
+    .hero-content { padding-top:76px !important; }
+    .floating-search-bar { margin-top:-28px !important; border-radius:22px; }
+    .trust-strip > div::after { display:none !important; }
+    .horizontal-scroll-item { width:82vw; max-width:330px; }
+    .section-heading { font-size:2rem; }
+    .auth-page { padding:30px 0 56px; }
+    .auth-visual { display:none; }
+    .auth-card { border-radius:22px !important; }
+    .confirm-card { padding:30px 20px; border-radius:22px; }
+    .footer-main { padding-top:44px; }
+}
+
+@media (max-width: 575.98px) {
+    .brand-subtitle { display:none !important; }
+    .brand-emblem { width:38px; height:38px; }
+    .hero-actions > * { width:100%; }
+    .rooms-page { padding-top:36px !important; }
+}

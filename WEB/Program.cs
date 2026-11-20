@@ -14,7 +14,7 @@ namespace QuanLyKhachSan.Web
             });
             builder.Services.AddHttpClient("HotelApi", client =>
             {
-                var apiUrl = builder.Configuration["HotelApi:BaseUrl"] ?? "https://localhost:7203/";
+                var apiUrl = builder.Configuration["HotelApi:BaseUrl"] ?? "http://localhost:5050/";
                 client.BaseAddress = new Uri(apiUrl.TrimEnd('/') + "/");
                 client.Timeout = TimeSpan.FromSeconds(20);
             });
