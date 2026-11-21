@@ -6,35 +6,95 @@
     var donHangs = Model ?? new List<QuanLyKhachSan.Web.Models.LichSuDatPhongViewModel>();
 }
 
-<style>
-.luxe-lookup{max-width:1050px}.luxe-lookup .lookup-kicker{letter-spacing:.18em;font-size:.75rem;font-weight:700;color:#866438}.luxe-lookup h1{font-size:clamp(2rem,4vw,3rem);font-weight:500!important}.luxe-lookup .card{border:1px solid #e5dfd3!important;box-shadow:0 12px 35px #19342b0b!important}.luxe-lookup .card-header{background:#fdfbf6!important}.luxe-lookup .lookup-accent{color:#866438}.luxe-lookup .lookup-date{color:#19342b}.luxe-lookup .badge{padding:8px 12px;border-radius:20px}.luxe-lookup .btn-dark{background:#19342b!important}.luxe-lookup .input-group{border-color:#dcd4c5!important}.luxe-lookup .card-body img{height:150px!important}.luxe-lookup .card-footer{padding:16px 24px!important}
-@@media(max-width:575.98px){.luxe-lookup .input-group{border-radius:14px!important}.luxe-lookup .card-body img{height:190px!important}.luxe-lookup .card-body,.luxe-lookup .card-header{padding:16px!important}.luxe-lookup .input-group .btn{padding-inline:12px!important}}
-</style>
-<div class="container luxe-lookup py-5 mb-5">
-    <div class="row justify-content-center mb-5">
-        <div class="col-md-8 col-lg-6 text-center">
-            <p class="lookup-kicker">SAWADE · KỲ NGHỈ CỦA BẠN</p>
-            <h1 class="fw-bold mb-3" style="color: #24392f; font-family: Georgia, serif;">Tra cứu đặt phòng</h1>
-            <p class="text-muted">Xem mã đơn, thời gian lưu trú và trạng thái những đơn đặt phòng thuộc tài khoản của bạn.</p>
+@section Styles {
+    <style>
+        .lookup-search-bar {
+            max-width: 540px;
+            margin: 0 auto;
+        }
 
-            <form asp-controller="TraCuuDon" asp-action="Index" method="post" class="mt-4" data-sawade-busy="Đang tải đơn...">
-                @Html.AntiForgeryToken()
-                <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
-                    <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-telephone text-muted"></i></span>
-                    <input type="tel" name="soDienThoai" value="@sdt" class="form-control border-0 px-3 bg-light" readonly aria-label="Số điện thoại tài khoản">
-                    <button class="btn btn-dark px-4 fw-bold" type="submit" style="background-color: #24392f;">
-                        Làm mới
-                    </button>
-                </div>
-            </form>
+        .lookup-search-bar .input-group {
+            padding: 5px;
+            background: #fff;
+            border: 1px solid var(--sawade-line-strong);
+            border-radius: 999px;
+            box-shadow: var(--sawade-shadow-sm);
+        }
 
-        </div>
+        .lookup-search-bar .input-group-text,
+        .lookup-search-bar .form-control {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            min-height: 44px;
+        }
+
+        .lookup-date-box {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: var(--sawade-ivory-100);
+            border: 1px solid var(--sawade-line);
+        }
+
+        .lookup-date {
+            color: var(--sawade-forest-950);
+            font-size: 0.92rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .luxe-lookup .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .lookup-price {
+            color: var(--sawade-gold-600);
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @@media (max-width: 575.98px) {
+            .lookup-search-bar .input-group {
+                border-radius: 18px;
+            }
+        }
+    </style>
+}
+
+<div class="container luxe-lookup">
+    <div class="text-center mb-5">
+        <p class="lookup-kicker mb-2">SAWADE &middot; KỲ NGHỈ CỦA BẠN</p>
+        <h1 class="mb-3">Tra cứu đặt phòng</h1>
+        <p class="luxe-lead mx-auto mb-4" style="max-width: 560px;">
+            Xem mã đơn, thời gian nhận trả phòng và trạng thái xử lý mới nhất của những đơn đặt phòng thuộc tài khoản của bạn.
+        </p>
+
+        <form asp-controller="TraCuuDon" asp-action="Index" method="post" class="lookup-search-bar" data-sawade-busy="Đang tải đơn...">
+            @Html.AntiForgeryToken()
+            <div class="input-group">
+                <span class="input-group-text ps-3"><i class="bi bi-telephone text-gold" aria-hidden="true"></i></span>
+                <input type="tel" name="soDienThoai" value="@sdt" class="form-control fw-semibold" readonly aria-label="Số điện thoại tài khoản" />
+                <button class="btn btn-sawade-primary rounded-pill px-4" type="submit">
+                    <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Làm mới
+                </button>
+            </div>
+        </form>
     </div>
 
-    <!-- KHU VỰC HIỂN THỊ KẾT QUẢ TỪ DATABASE -->
     @if (!string.IsNullOrEmpty(sdt) && donHangs.Any())
     {
-        <h5 class="fw-bold mb-4">Đang có <span class="lookup-accent">@donHangs.Count</span> đơn đặt phòng của tài khoản: <span class="lookup-accent">@sdt</span></h5>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <h2 class="h5 fw-bold mb-0" style="color: var(--sawade-forest-950);">
+                Đang có <span class="lookup-accent">@donHangs.Count</span> đơn đặt phòng của tài khoản <span class="lookup-accent">@sdt</span>
+            </h2>
+            <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="small fw-semibold text-decoration-none">
+                <i class="bi bi-person-lines-fill me-1" aria-hidden="true"></i>Về hồ sơ cá nhân
+            </a>
+        </div>
+
         <div class="row g-4">
             @foreach (var don in donHangs)
             {
@@ -42,49 +102,65 @@
                 var statusText = TrangThaiDatPhong.HienThi(don.TrangThai);
 
                 <div class="col-12">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="card">
+                        <div class="card-header p-3 p-md-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
                             <div>
-                                <span class="badge @badgeClass mb-1">@statusText</span>
-                                <h6 class="mb-0 fw-bold">Mã đơn: @don.MaDon</h6>
+                                <span class="badge @badgeClass mb-2">@statusText</span>
+                                <h3 class="h6 mb-0 fw-bold" style="color: var(--sawade-forest-950);">Mã đơn: @don.MaDon</h3>
                             </div>
-                            <div class="text-end">
+                            <div class="text-sm-end">
                                 <small class="text-muted d-block">Ngày tạo: @(don.NgayDat?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</small>
-                                <strong class="lookup-accent fs-5">@don.TongTien.ToString("#,##0") đ</strong>
+                                <div class="lookup-price">@don.TongTien.ToString("#,##0") đ</div>
                             </div>
                         </div>
-                        <div class="card-body p-4">
-                            <div class="row align-items-center">
+
+                        <div class="card-body p-3 p-md-4">
+                            <div class="row align-items-center g-4">
                                 @if (don.Phong != null)
                                 {
                                     var imgPath = Url.Content($"~/images/{don.Phong.SoPhong.Trim()}.jpg");
-                                    <div class="col-md-3 mb-3 mb-md-0">
-                                        <img src="@imgPath" class="w-100 rounded-3 object-fit-cover" style="height: 120px;" alt="Phòng @don.Phong.SoPhong" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='@Url.Content("~/images/room-placeholder.svg")';">
+                                    <div class="col-md-3">
+                                        <img src="@imgPath"
+                                             class="w-100"
+                                             alt="Phòng @don.Phong.SoPhong"
+                                             loading="lazy" decoding="async"
+                                             onerror="this.onerror=null;this.src='@Url.Content("~/images/room-placeholder.svg")';" />
                                     </div>
                                     <div class="col-md-9">
-                                        <h5 class="fw-bold mb-2">@HienThiPhong.TenLoai(don.Phong.TenLoaiPhong) (@don.Phong.SoPhong)</h5>
+                                        <h4 class="h5 fw-bold mb-3" style="color: var(--sawade-forest-950);">
+                                            @HienThiPhong.TenLoai(don.Phong.TenLoaiPhong) &mdash; Phòng @don.Phong.SoPhong
+                                        </h4>
                                         <div class="row g-3">
                                             <div class="col-sm-6">
-                                                <p class="mb-1 small text-muted"><i class="bi bi-box-arrow-in-right me-1"></i> Nhận phòng:</p>
-                                                <!-- Đã lấy GIỜ THẬT từ Database (định dạng: Ngày/Tháng/Năm - Giờ:Phút) -->
-                                                <strong class="d-block lookup-date">@(don.NgayNhan?.ToString("dd/MM/yyyy - HH:mm") ?? "Chưa cập nhật")</strong>
+                                                <div class="lookup-date-box">
+                                                    <div class="small text-muted mb-1">
+                                                        <i class="bi bi-box-arrow-in-right me-1 text-gold" aria-hidden="true"></i>Nhận phòng
+                                                    </div>
+                                                    <strong class="d-block lookup-date">@(don.NgayNhan?.ToString("dd/MM/yyyy - HH:mm") ?? "Chưa cập nhật")</strong>
+                                                </div>
                                             </div>
                                             <div class="col-sm-6">
-                                                <p class="mb-1 small text-muted"><i class="bi bi-box-arrow-right me-1"></i> Trả phòng:</p>
-                                                <!-- Đã lấy GIỜ THẬT từ Database -->
-                                                <strong class="d-block lookup-date">@(don.NgayTra?.ToString("dd/MM/yyyy - HH:mm") ?? "Chưa cập nhật")</strong>
+                                                <div class="lookup-date-box">
+                                                    <div class="small text-muted mb-1">
+                                                        <i class="bi bi-box-arrow-right me-1 text-gold" aria-hidden="true"></i>Trả phòng
+                                                    </div>
+                                                    <strong class="d-block lookup-date">@(don.NgayTra?.ToString("dd/MM/yyyy - HH:mm") ?? "Chưa cập nhật")</strong>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 }
                                 else
                                 {
-                                    <div class="col-12 text-muted fst-italic">Đơn hàng không có chi tiết phòng.</div>
+                                    <div class="col-12 text-muted fst-italic">Đơn hàng hiện chưa có chi tiết phòng đi kèm.</div>
                                 }
                             </div>
                         </div>
-                        <div class="card-footer bg-white border-top p-3 text-end">
-                            <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@don.DatPhongId" class="btn btn-outline-dark btn-sm rounded-pill px-4"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Xem chi tiết đơn</a>
+
+                        <div class="card-footer p-3 px-md-4 d-flex justify-content-end">
+                            <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@don.DatPhongId" class="btn btn-outline-dark btn-sm rounded-pill px-4">
+                                <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Xem chi tiết đơn
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -93,20 +169,24 @@
     }
     else if (ViewBag.LoiTaiLichSu != true)
     {
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
-            <i class="bi bi-calendar2-x fs-1 text-muted" aria-hidden="true"></i>
-            <h3 class="h5 mt-3">Chưa có đơn đặt phòng</h3>
-            <p class="text-muted">Bạn có thể tìm phòng và gửi yêu cầu đặt phòng ngay trên website.</p>
-            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade rounded-pill px-4 mx-auto">Tìm phòng</a>
+        <div class="card p-5 text-center mx-auto" style="max-width: 640px;">
+            <div class="sawade-empty-icon mb-3"><i class="bi bi-calendar2-x" aria-hidden="true"></i></div>
+            <h2 class="h5 fw-bold">Chưa có đơn đặt phòng</h2>
+            <p class="text-muted mb-4">Bạn có thể tìm kiếm phòng trống và gửi yêu cầu đặt phòng trực tiếp trên website.</p>
+            <div>
+                <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary rounded-pill px-4 py-2.5">Tìm phòng ngay</a>
+            </div>
         </div>
     }
     else
     {
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center" role="alert">
-            <i class="bi bi-wifi-off fs-1 text-muted" aria-hidden="true"></i>
-            <h3 class="h5 mt-3">Chưa thể tải lịch sử đặt phòng</h3>
-            <p class="text-muted">Không kết nối được với hệ thống. Vui lòng thử lại sau.</p>
-            <a asp-controller="TraCuuDon" asp-action="Index" class="btn btn-sawade rounded-pill px-4 mx-auto">Thử tải lại</a>
+        <div class="card p-5 text-center mx-auto" style="max-width: 640px;" role="alert">
+            <div class="sawade-empty-icon mb-3"><i class="bi bi-wifi-off" aria-hidden="true"></i></div>
+            <h2 class="h5 fw-bold">Chưa thể tải lịch sử đặt phòng</h2>
+            <p class="text-muted mb-4">Không kết nối được với hệ thống máy chủ. Vui lòng thử lại sau ít phút.</p>
+            <div>
+                <a asp-controller="TraCuuDon" asp-action="Index" class="btn btn-sawade-primary rounded-pill px-4 py-2.5">Thử tải lại</a>
+            </div>
         </div>
     }
 </div>

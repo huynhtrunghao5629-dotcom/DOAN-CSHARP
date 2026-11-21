@@ -359,8 +359,9 @@ namespace QuanLyKhachSan.Web.Controllers
                 var bookingPayload = new
                 {
                     KhachHangId = khachHangId,
-                    NgayNhan = NgayNhan.Value, 
-                    NgayTra = NgayTra.Value,   
+                    NgayNhan = NgayNhan.Value,
+                    NgayTra = NgayTra.Value,
+                    SoKhach = SoKhach,
                     DanhSachPhongId = new List<int> { PhongId }
                 };
 

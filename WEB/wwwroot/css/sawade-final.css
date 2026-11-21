@@ -1,68 +1,27 @@
-/* ============================================================
-   SAWADE FINAL UI — QUIET LUXURY RESORT
-   Typography: Cormorant Garamond + Manrope
-   Purpose: final visual layer only. No API/business logic change.
-   ============================================================ */
+/* ============================================================================
+   SAWADE DESIGN SYSTEM — LAYER 3: HARMONIZATION OVERLAY (sawade-final.css)
+   Loaded after @RenderSection("Styles") so page-specific <style> blocks
+   automatically adopt the unified Vietnamese typography, palette & spacing.
+   ============================================================================ */
 
-:root {
-    --sf-forest-950: #10251d;
-    --sf-forest-900: #173127;
-    --sf-forest-800: #214638;
-    --sf-forest-700: #2d5a48;
-
-    --sf-ivory-50:  #fffdf9;
-    --sf-ivory-100: #fbf8f1;
-    --sf-ivory-200: #f3ede2;
-    --sf-ivory-300: #e8dece;
-
-    --sf-gold-500: #b98b4e;
-    --sf-gold-400: #cda768;
-    --sf-gold-300: #e4c998;
-
-    --sf-ink: #202a25;
-    --sf-muted: #707a74;
-    --sf-line: rgba(16, 37, 29, .10);
-    --sf-line-strong: rgba(16, 37, 29, .16);
-
-    --sf-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-    --sf-body: "Manrope", "Segoe UI", Arial, sans-serif;
-
-    --sf-radius-sm: 12px;
-    --sf-radius-md: 16px;
-    --sf-radius-lg: 22px;
-    --sf-radius-xl: 30px;
-
-    --sf-shadow-xs: 0 4px 16px rgba(16, 37, 29, .045);
-    --sf-shadow-sm: 0 10px 30px rgba(16, 37, 29, .065);
-    --sf-shadow-md: 0 20px 50px rgba(16, 37, 29, .09);
-    --sf-shadow-lg: 0 30px 80px rgba(16, 37, 29, .13);
-
-    --sf-ease: cubic-bezier(.2, .72, .24, 1);
+/* Đảm bảo font chữ đồng nhất ngay cả khi View con có khai báo font riêng */
+body,
+p,
+li,
+label,
+input,
+select,
+textarea,
+button,
+.btn,
+.nav-link,
+.dropdown-item,
+.form-control,
+.form-select,
+.badge,
+.table {
+    font-family: var(--sawade-font-sans) !important;
 }
-
-/* ---------- GLOBAL TYPOGRAPHY ---------- */
-html { background: var(--sf-ivory-100); }
-
-body {
-    font-family: var(--sf-body) !important;
-    color: var(--sf-ink);
-    background:
-        radial-gradient(circle at 11% -5%, rgba(205,167,104,.11), transparent 30rem),
-        var(--sf-ivory-100) !important;
-    font-size: 15.5px;
-    line-height: 1.65;
-    font-optical-sizing: auto;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-}
-
-main { background: transparent; }
-
-p, label, input, select, textarea, button, .btn, .nav-link, .dropdown-item, .form-control, .form-select {
-    font-family: var(--sf-body) !important;
-}
-
-.text-muted, .profile-muted, .luxe-lead { color: var(--sf-muted) !important; }
 
 .hero-title,
 .section-heading,
@@ -72,1083 +31,97 @@ p, label, input, select, textarea, button, .btn, .nav-link, .dropdown-item, .for
 .footer-mark,
 .rooms-page #roomsHeading,
 .luxe-account h1,
-.luxe-account .h4,
 .luxe-lookup h1,
 .booking-detail-head h1,
 .booking-detail-body h2,
 .detail-page-title,
-main .display-6 {
-    font-family: var(--sf-display) !important;
-    font-weight: 600 !important;
-    letter-spacing: -.025em !important;
+main .display-6,
+.modal-title {
+    font-family: var(--sawade-font-display) !important;
+    letter-spacing: -0.01em !important;
 }
 
-.luxe-kicker,
-.section-eyebrow,
-.lookup-kicker {
-    font-family: var(--sf-body) !important;
-    color: var(--sf-gold-500) !important;
-    font-size: .71rem !important;
-    line-height: 1.2;
-    letter-spacing: .19em !important;
-    font-weight: 800 !important;
-}
-
-a { color: var(--sf-forest-800); }
-a:hover { color: var(--sf-gold-500); }
-
-/* ---------- NAVBAR ---------- */
-.navbar-sawade {
-    min-height: 84px !important;
-    padding: 12px 0 !important;
-    background: rgba(255,253,249,.94) !important;
-    border-bottom: 1px solid var(--sf-line) !important;
-    box-shadow: 0 5px 24px rgba(16,37,29,.035) !important;
-    backdrop-filter: blur(18px) saturate(130%);
-    -webkit-backdrop-filter: blur(18px) saturate(130%);
-}
-
-.navbar-overlay {
-    position: absolute !important;
-    background: linear-gradient(180deg, rgba(10,26,19,.72), rgba(10,26,19,.16) 72%, transparent) !important;
-    border-bottom-color: rgba(255,255,255,.14) !important;
-    box-shadow: none !important;
-    backdrop-filter: none;
-}
-
-.navbar-sawade .container { max-width: 1580px; }
-
-.brand-emblem {
-    width: 46px !important;
-    height: 46px !important;
-    border-color: rgba(185,139,78,.55) !important;
-    color: var(--sf-gold-400) !important;
-    background: rgba(255,255,255,.03) !important;
-}
-
-.brand-name {
-    font-size: 1.52rem !important;
-    line-height: .92 !important;
-    letter-spacing: .17em !important;
-    text-transform: uppercase;
-}
-
-.brand-subtitle {
-    margin-top: 5px !important;
-    font-family: var(--sf-body) !important;
-    font-size: .58rem !important;
-    letter-spacing: .11em !important;
-    font-weight: 600;
-    opacity: .64;
-}
-
-.navbar-sawade .nav-link {
-    position: relative;
-    padding: .7rem .58rem !important;
-    color: var(--sf-forest-900) !important;
-    font-size: .69rem !important;
-    font-weight: 800 !important;
-    letter-spacing: .13em !important;
-    text-transform: uppercase;
-}
-
-.navbar-overlay .nav-link,
-.navbar-overlay .navbar-brand { color: #fff !important; }
-
-.navbar-sawade .nav-link::after {
-    bottom: .3rem !important;
-    left: .58rem !important;
-    right: .58rem !important;
-    height: 1px !important;
-    background: var(--sf-gold-400) !important;
-}
-
-.navbar-sawade .nav-link.active::after { transform: scaleX(1); }
-
-.sawade-nav-actions .btn {
-    min-height: 44px !important;
-    padding: .65rem 1rem !important;
-    border-radius: 999px !important;
-    font-size: .88rem;
-    font-weight: 650 !important;
-}
-
-.btn-sawade-primary,
-.btn-sawade,
-.profile-btn {
-    color: #fff !important;
-    border-color: var(--sf-forest-900) !important;
-    background: var(--sf-forest-900) !important;
-    box-shadow: none !important;
-}
-
-.btn-sawade-primary:hover,
-.btn-sawade:hover,
-.profile-btn:hover {
-    color: #fff !important;
-    border-color: var(--sf-forest-800) !important;
-    background: var(--sf-forest-800) !important;
-}
-
-.btn-sawade-light {
-    color: var(--sf-forest-900) !important;
-    border-color: var(--sf-line-strong) !important;
-    background: rgba(255,255,255,.76) !important;
-}
-
-.navbar-overlay .btn-sawade-primary {
-    color: var(--sf-forest-950) !important;
-    border-color: var(--sf-gold-400) !important;
-    background: var(--sf-gold-400) !important;
-}
-
-.navbar-overlay .btn-sawade-light {
-    color: #fff !important;
-    border-color: rgba(255,255,255,.35) !important;
-    background: rgba(255,255,255,.08) !important;
-}
-
-.dropdown-menu {
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 18px !important;
-    background: rgba(255,253,249,.98) !important;
-    box-shadow: var(--sf-shadow-md) !important;
-}
-
-.dropdown-item { border-radius: 11px !important; }
-.dropdown-item:hover { background: var(--sf-ivory-200) !important; color: var(--sf-forest-900) !important; }
-
-/* ---------- BUTTONS / FORMS ---------- */
-.btn {
-    border-radius: 999px;
-    font-weight: 650;
-    letter-spacing: -.005em;
-}
-
-.btn-dark {
-    background: var(--sf-forest-900) !important;
-    border-color: var(--sf-forest-900) !important;
-}
-
-.btn-dark:hover {
-    background: var(--sf-forest-800) !important;
-    border-color: var(--sf-forest-800) !important;
-}
-
-.btn-outline-dark {
-    color: var(--sf-forest-900) !important;
-    border-color: rgba(16,37,29,.26) !important;
-}
-
-.btn-outline-dark:hover {
-    color: #fff !important;
-    background: var(--sf-forest-900) !important;
-    border-color: var(--sf-forest-900) !important;
-}
-
-.form-control,
-.form-select,
-.input-group-text {
-    min-height: 46px;
-    border-color: rgba(16,37,29,.13) !important;
-    border-radius: 13px !important;
-    color: var(--sf-ink);
-    background-color: rgba(255,255,255,.88) !important;
-}
-
-.form-control::placeholder { color: #9ca39f; }
-
-.form-control:focus,
-.form-select:focus {
-    border-color: rgba(45,90,72,.56) !important;
-    box-shadow: 0 0 0 .22rem rgba(45,90,72,.09) !important;
-}
-
-.input-group .input-group-text:first-child {
-    border-radius: 13px 0 0 13px !important;
-}
-.input-group .form-control:last-child {
-    border-radius: 0 13px 13px 0 !important;
-}
-
-.form-label {
-    margin-bottom: .55rem;
-    color: #4e5953;
-    font-size: .82rem;
-    font-weight: 700 !important;
-}
-
-.badge {
-    font-family: var(--sf-body);
-    font-weight: 700 !important;
-    letter-spacing: .005em;
-}
-
-/* ---------- HOME HERO ---------- */
-.hero-banner {
-    min-height: 730px !important;
-    padding: 112px 0 92px !important;
-    background-position: center 54% !important;
-}
-
-.hero-banner::before {
-    background:
-        linear-gradient(90deg, rgba(9,25,18,.88) 0%, rgba(9,25,18,.64) 42%, rgba(9,25,18,.27) 72%, rgba(9,25,18,.10) 100%) !important;
-}
-
-.hero-copy { padding-top: 34px !important; }
-
-.hero-eyebrow {
-    font-family: var(--sf-body) !important;
-    color: var(--sf-gold-300) !important;
-    font-size: .74rem !important;
-    letter-spacing: .23em !important;
-    font-weight: 800 !important;
-}
-
-.hero-title {
-    max-width: 760px !important;
-    margin-top: 18px;
-    font-size: clamp(4rem, 6vw, 6.1rem) !important;
-    line-height: .88 !important;
-    color: #fff;
-    text-wrap: balance;
-}
-
-.hero-description {
-    max-width: 620px !important;
-    margin-top: 28px !important;
-    color: rgba(255,255,255,.82) !important;
-    font-size: 1rem !important;
-    line-height: 1.85 !important;
-}
-
-.hero-actions { margin-top: 28px; gap: 12px !important; }
-
-.hero-cta-primary,
-.hero-cta-secondary {
-    min-height: 52px !important;
-    padding: .82rem 1.35rem !important;
-    font-family: var(--sf-body);
-    font-size: .92rem;
-    font-weight: 750 !important;
-}
-
-.hero-cta-primary {
-    color: var(--sf-forest-950) !important;
-    border-color: var(--sf-gold-400) !important;
-    background: var(--sf-gold-400) !important;
-}
-
-.hero-cta-primary:hover { background: #d9b679 !important; }
-
-.hero-cta-secondary {
-    color: #fff !important;
-    border-color: rgba(255,255,255,.34) !important;
-    background: rgba(255,255,255,.05) !important;
-}
-
-.hero-signature { display: none !important; }
-
-.search-shell {
-    max-width: 1520px;
-    margin-top: -46px !important;
-}
-
-.floating-search-bar {
-    max-width: 1440px !important;
-    padding: 20px 26px !important;
-    border: 1px solid rgba(255,255,255,.82) !important;
-    border-radius: 28px !important;
-    background: rgba(255,253,249,.985) !important;
-    box-shadow: 0 26px 70px rgba(16,37,29,.17) !important;
-}
-
-.floating-search-bar label {
-    color: #44524b;
-    font-size: .79rem;
-    font-weight: 750 !important;
-}
-
-.search-input {
-    min-height: 42px !important;
-    font-size: .96rem;
-}
-
-.home-content-wrap { margin-top: 74px !important; }
-
-/* ---------- TRUST STRIP ---------- */
-.trust-strip {
-    padding: 1rem 0 2.8rem !important;
-    border-bottom: 1px solid var(--sf-line) !important;
-}
-
-.trust-strip .trust-icon {
-    width: 50px !important;
-    height: 50px !important;
-    background: linear-gradient(145deg, #f2e8d7, #ece1cf) !important;
-    color: var(--sf-gold-500) !important;
-    box-shadow: inset 0 0 0 1px rgba(185,139,78,.08);
-}
-
-.trust-strip .fw-semibold {
-    color: var(--sf-forest-950);
-    font-weight: 800 !important;
-}
-
-.trust-strip .text-muted { font-size: .86rem; }
-
-/* ---------- EDITORIAL HEADINGS ---------- */
+/* Khắc phục tình trạng cắt dấu tiếng Việt ở tiêu đề lớn trong các View con */
+.hero-title,
 .section-heading,
-.luxe-title {
-    color: var(--sf-forest-950) !important;
-    font-size: clamp(2.7rem, 4vw, 4rem) !important;
-    line-height: .97 !important;
+.luxe-title,
+.rooms-page #roomsHeading,
+.luxe-account h1,
+.luxe-lookup h1,
+.detail-page-title,
+main .display-6 {
+    line-height: 1.16 !important;
 }
 
-.luxe-page-head {
-    max-width: 850px !important;
-    margin-bottom: 54px !important;
-}
-
-.luxe-page-head .luxe-lead {
-    max-width: 690px;
-    margin-left: auto;
-    margin-right: auto;
-    font-size: .98rem;
-}
-
-.section-eyebrow { color: var(--sf-gold-500) !important; }
-
-/* ---------- HOME CATEGORY CARDS ---------- */
-.horizontal-scroll-wrapper { gap: 1.65rem !important; }
-
-.horizontal-scroll-item {
-    width: 330px !important;
-}
-
-.room-card,
-.rooms-page .room-card {
-    overflow: hidden;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 24px !important;
-    background: var(--sf-ivory-50) !important;
-    box-shadow: var(--sf-shadow-xs) !important;
-}
-
-.room-card:hover,
-.rooms-page .room-card:hover {
-    border-color: rgba(185,139,78,.32) !important;
-    box-shadow: var(--sf-shadow-md) !important;
-}
-
-.room-image-wrapper {
-    background: #eae4da !important;
-}
-
-.category-overlay {
-    padding: 56px 22px 22px !important;
-    background: linear-gradient(0deg, rgba(8,24,17,.92), rgba(8,24,17,.02)) !important;
-}
-
-.category-overlay h3 {
-    font-family: var(--sf-display);
-    font-size: 1.7rem;
-    font-weight: 600 !important;
-}
-
-.room-price {
-    color: var(--sf-gold-500) !important;
-    font-size: 1.12rem !important;
-    font-weight: 800 !important;
-}
-
-.room-btn {
-    padding: 10px 18px !important;
+/* Đồng bộ nút chính & bảng trong các View con (DanhSachPhong, ChiTietPhong, HoSoCaNhan, TraCuuDon) */
+.rooms-page .room-btn,
+.luxe-account .profile-btn,
+.luxe-lookup .btn-sawade,
+.booking-panel .btn-sawade,
+.booking-panel .btn-sawade-primary {
     border-radius: 999px !important;
-    box-shadow: none !important;
-}
-
-/* ---------- ROOM LIST ---------- */
-.rooms-page {
-    padding: 62px 0 88px !important;
-    background:
-      radial-gradient(circle at 75% -10%, rgba(205,167,104,.11), transparent 28rem),
-      var(--sf-ivory-100) !important;
-}
-
-.rooms-page > .container { max-width: 1580px; }
-
-.rooms-filter {
-    padding: 24px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 24px !important;
-    background: rgba(255,253,249,.96) !important;
-    box-shadow: var(--sf-shadow-sm) !important;
-}
-
-.rooms-filter::before {
-    width: 46px !important;
-    height: 2px !important;
-    background: var(--sf-gold-400) !important;
-}
-
-.rooms-filter h5 {
-    color: var(--sf-forest-950);
-    font-size: 1.05rem;
-    font-weight: 800 !important;
-}
-
-.rooms-page #roomsHeading {
-    color: var(--sf-forest-950) !important;
-    font-size: clamp(3rem, 4.3vw, 4.5rem) !important;
-    line-height: .95 !important;
-}
-
-.rooms-page .room-card .room-content { padding: 21px 22px 22px !important; }
-
-.rooms-page .room-card h2 {
-    color: var(--sf-forest-950);
-    font-size: 1.18rem;
-    font-weight: 800 !important;
-}
-
-.room-status {
-    padding: 6px 10px !important;
-    font-size: .72rem !important;
-    font-weight: 800 !important;
-}
-
-.custom-pagination .page-link {
-    border-color: var(--sf-line) !important;
-    color: var(--sf-forest-800) !important;
-    background: rgba(255,253,249,.9) !important;
-}
-
-.custom-pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--sawade-forest-900), var(--sawade-forest-800)) !important;
+    border-color: var(--sawade-forest-900) !important;
     color: #fff !important;
-    border-color: var(--sf-forest-900) !important;
-    background: var(--sf-forest-900) !important;
 }
 
-/* ---------- ROOM DETAIL ---------- */
-.detail-room-image {
-    overflow: hidden;
-    border-radius: 30px !important;
-    background: #ece7dd;
-    box-shadow: var(--sf-shadow-md) !important;
+.rooms-page .room-btn:hover,
+.luxe-account .profile-btn:hover,
+.luxe-lookup .btn-sawade:hover,
+.booking-panel .btn-sawade:hover,
+.booking-panel .btn-sawade-primary:hover {
+    background: linear-gradient(135deg, var(--sawade-forest-800), var(--sawade-forest-700)) !important;
+    border-color: var(--sawade-forest-800) !important;
 }
 
-.detail-feature {
-    min-height: 98px !important;
-    padding: 18px 16px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 18px !important;
-    background: rgba(255,253,249,.94) !important;
-    box-shadow: var(--sf-shadow-xs);
+/* Đồng bộ khung lọc phòng trên trang DanhSachPhong */
+.rooms-page {
+    background:
+        radial-gradient(circle at 82% -6%, rgba(207, 166, 107, 0.11), transparent 28rem),
+        var(--sawade-ivory-100) !important;
 }
 
-.detail-feature i { color: var(--sf-gold-500) !important; }
-
-.detail-type-badge {
-    padding: 8px 12px !important;
-    border-radius: 999px !important;
-    color: #745428 !important;
-    background: #f0e4d2 !important;
-}
-
-main .container > .row.bg-white.rounded-4 {
-    border: 1px solid var(--sf-line);
-    border-radius: 30px !important;
-    background: rgba(255,253,249,.94) !important;
-    box-shadow: var(--sf-shadow-md) !important;
-}
-
-main .container > .row.bg-white.rounded-4 h1.display-6 {
-    color: var(--sf-forest-950);
-    font-size: clamp(3rem, 4vw, 4.4rem) !important;
-    line-height: .92;
-}
-
-.detail-price span {
-    color: var(--sf-forest-950) !important;
-    font-family: var(--sf-display);
-    font-size: 2.3rem !important;
-    font-weight: 700 !important;
-}
-
-.booking-panel {
-    padding: 24px !important;
-    border: 1px solid var(--sf-line) !important;
+.rooms-page .rooms-filter {
+    border: 1px solid var(--sawade-line) !important;
     border-radius: 22px !important;
-    background: linear-gradient(180deg, #fffdf9, #f7f1e7) !important;
-    box-shadow: none !important;
+    background: rgba(255, 253, 249, 0.97) !important;
+    box-shadow: var(--sawade-shadow-sm) !important;
 }
 
-.booking-panel h2 {
-    color: var(--sf-forest-950);
-    font-size: 1.08rem;
-}
-
-.booking-panel .rounded-3[style] {
-    background: #f0e9dd !important;
-    border: 1px solid rgba(16,37,29,.07);
-}
-
-/* ---------- SERVICES ---------- */
-.luxe-page {
-    padding: 78px 0 96px !important;
-    background:
-        radial-gradient(circle at 88% 4%, rgba(205,167,104,.10), transparent 28rem),
-        var(--sf-ivory-100);
-}
-
-.service-luxe-card {
-    position: relative;
-    overflow: hidden;
-    padding: 30px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 24px !important;
-    background: rgba(255,253,249,.94) !important;
-    box-shadow: var(--sf-shadow-xs) !important;
-}
-
-.service-luxe-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 30px;
-    right: 30px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--sf-gold-400), transparent);
-    opacity: .72;
-}
-
-.service-luxe-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(185,139,78,.28) !important;
-    box-shadow: var(--sf-shadow-sm) !important;
-}
-
-.service-luxe-icon {
-    width: 62px !important;
-    height: 62px !important;
-    border-radius: 18px !important;
-    color: var(--sf-forest-800) !important;
-    background: linear-gradient(145deg, #edf1ec, #f2e8d7) !important;
-}
-
-.service-luxe-card h2 {
-    color: var(--sf-forest-950);
-    font-size: 1.28rem;
-    font-weight: 800 !important;
-}
-
-/* ---------- GUIDE / FAQ ---------- */
-.guide-step {
-    position: relative;
-    overflow: hidden;
-    padding: 30px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 24px !important;
-    background: rgba(255,253,249,.94) !important;
-    box-shadow: var(--sf-shadow-xs) !important;
-}
-
-.guide-step-number {
-    width: 48px !important;
-    height: 48px !important;
-    color: var(--sf-forest-900) !important;
-    border: 1px solid rgba(185,139,78,.35);
-    background: #f1e6d5 !important;
-    font-family: var(--sf-display);
-    font-size: 1.12rem;
-    font-weight: 700 !important;
-}
-
-.guide-step h2 {
-    color: var(--sf-forest-950);
-    font-size: 1.18rem;
-    font-weight: 800 !important;
-}
-
-.accordion {
-    border: 1px solid var(--sf-line);
+.rooms-page .room-card {
+    border: 1px solid var(--sawade-line) !important;
     border-radius: 22px !important;
-    background: var(--sf-ivory-50);
-    box-shadow: var(--sf-shadow-xs) !important;
+    background: var(--sawade-ivory-50) !important;
 }
 
-.accordion-item { background: transparent !important; }
-.accordion-button {
-    padding: 1.15rem 1.35rem !important;
-    color: var(--sf-forest-950) !important;
-    background: transparent !important;
-    font-size: .94rem;
-    font-weight: 750 !important;
-}
-.accordion-button:not(.collapsed) {
-    color: var(--sf-forest-950) !important;
-    background: #f2eadf !important;
-}
-
-/* ---------- AUTH ---------- */
-.auth-page {
-    padding: 72px 0 94px !important;
-    background:
-        radial-gradient(circle at 15% 18%, rgba(205,167,104,.14), transparent 25rem),
-        linear-gradient(135deg, #f9f5ed, #f3eee4) !important;
-}
-
-.auth-shell { max-width: 1120px !important; }
-
-.auth-visual {
-    min-height: 570px !important;
-    border-radius: 30px !important;
-    box-shadow: var(--sf-shadow-lg) !important;
-}
-
-.auth-visual::after {
-    color: rgba(255,255,255,.72) !important;
-    font-family: var(--sf-body);
-    font-size: .72rem !important;
-}
-
-.auth-visual h2 {
-    font-size: 3rem !important;
-    line-height: .94 !important;
-}
-
-.auth-card {
-    padding: 46px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 30px !important;
-    background: rgba(255,253,249,.97) !important;
-    box-shadow: var(--sf-shadow-sm) !important;
-}
-
-.auth-card .luxe-title {
-    font-size: 3.1rem !important;
-    line-height: .95 !important;
-}
-
-/* ---------- PROFILE ---------- */
-.luxe-account {
-    padding: 70px 0 96px !important;
-    background:
-        radial-gradient(circle at 85% 0%, rgba(205,167,104,.10), transparent 26rem),
-        var(--sf-ivory-100) !important;
-}
-
-.luxe-account > .container { max-width: 1420px; }
-
-.luxe-account h1 {
-    color: var(--sf-forest-950) !important;
-    font-size: clamp(3rem, 4.6vw, 4.4rem) !important;
-    line-height: .94 !important;
-}
-
-.luxe-account .profile-card,
-.luxe-account .profile-order,
-.luxe-account .profile-sum {
-    border: 1px solid var(--sf-line) !important;
-    background: rgba(255,253,249,.95) !important;
-    box-shadow: var(--sf-shadow-xs) !important;
-}
-
-.luxe-account .profile-card { border-radius: 24px !important; }
-.luxe-account .profile-order {
-    padding: 24px !important;
-    border-radius: 20px !important;
-}
-.luxe-account .profile-order:hover {
-    border-color: rgba(185,139,78,.25) !important;
-    box-shadow: var(--sf-shadow-sm) !important;
-}
-
-.luxe-account .profile-head {
-    padding: 26px !important;
-    border-radius: 20px !important;
-    background:
-        radial-gradient(circle at 90% 10%, rgba(205,167,104,.16), transparent 12rem),
-        var(--sf-forest-900) !important;
-}
-
-.profile-avatar {
-    width: 64px !important;
-    height: 64px !important;
-    color: var(--sf-forest-900) !important;
-    background: #e9efe9 !important;
-}
-
-.profile-detail { padding: 15px 0 !important; }
-.profile-detail i { color: var(--sf-gold-500) !important; }
-
-.luxe-account .profile-sum {
-    position: relative;
-    overflow: hidden;
-    min-height: 118px;
-    padding: 22px !important;
-    border-radius: 18px !important;
-}
-.luxe-account .profile-sum::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 18px;
-    bottom: 18px;
-    width: 3px;
-    background: var(--sf-gold-400);
-    border-radius: 99px;
-}
-.luxe-account .profile-sum .h3 {
-    margin-top: 8px;
-    color: var(--sf-forest-950) !important;
-    font-family: var(--sf-display) !important;
-    font-size: 2rem;
-}
-
-.luxe-account .profile-order h3 { color: var(--sf-forest-950) !important; }
-
-.luxe-account .profile-order strong[style],
-.luxe-account i[style] {
-    color: var(--sf-gold-500) !important;
-}
-
-/* ---------- LOOKUP ---------- */
-.luxe-lookup {
-    max-width: 1260px !important;
-    padding-top: 74px !important;
-    padding-bottom: 96px !important;
-}
-
-.luxe-lookup h1 {
-    color: var(--sf-forest-950) !important;
-    font-size: clamp(3.4rem, 5vw, 4.8rem) !important;
-    line-height: .92 !important;
-}
-
-.luxe-lookup .input-group {
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 999px !important;
-    background: #fff;
-    box-shadow: var(--sf-shadow-xs) !important;
-}
-
-.luxe-lookup .input-group .form-control {
-    background: #fff !important;
-}
-
-.luxe-lookup .card {
-    overflow: hidden;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 24px !important;
-    background: rgba(255,253,249,.96) !important;
-    box-shadow: var(--sf-shadow-xs) !important;
-}
-
-.luxe-lookup .card-header,
-.luxe-lookup .card-footer {
-    background: rgba(255,253,249,.96) !important;
-    border-color: var(--sf-line) !important;
-}
-
-.luxe-lookup .card-body { background: #fff; }
-
-.luxe-lookup .card-body img {
-    height: 165px !important;
-    border-radius: 18px !important;
-    box-shadow: var(--sf-shadow-xs);
-}
-
-.luxe-lookup .lookup-accent { color: var(--sf-gold-500) !important; }
-
-/* ---------- BOOKING DETAIL ---------- */
-.booking-detail-page {
-    padding: 66px 0 92px !important;
-    background:
-        radial-gradient(circle at 80% 0%, rgba(205,167,104,.10), transparent 24rem),
-        var(--sf-ivory-100) !important;
-}
-
-.booking-detail-sheet {
-    max-width: 980px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 28px !important;
-    background: rgba(255,253,249,.97) !important;
-    box-shadow: var(--sf-shadow-md) !important;
-}
-
-.booking-detail-head {
-    padding: 38px !important;
-    background:
-        radial-gradient(circle at 88% 18%, rgba(205,167,104,.16), transparent 15rem),
-        var(--sf-forest-900) !important;
-}
-
-.booking-detail-head h1 {
-    font-size: 2.65rem !important;
-    line-height: .95 !important;
-}
-
-.booking-detail-body { padding: 34px 38px !important; }
-
-.booking-detail-body h2 {
-    color: var(--sf-forest-950) !important;
-    font-size: 1.5rem !important;
-}
-
-.booking-detail-box {
-    padding: 18px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 16px !important;
-    background: #fff !important;
-}
-
+.rooms-page .room-price,
+.luxe-lookup .lookup-accent,
 .booking-detail-money {
-    color: var(--sf-gold-500) !important;
-    font-size: 1.55rem !important;
+    color: var(--sawade-gold-600) !important;
 }
 
-/* ---------- CONFIRM ---------- */
-.confirm-card {
-    max-width: 780px !important;
-    padding: 56px !important;
-    border: 1px solid var(--sf-line) !important;
-    border-radius: 30px !important;
-    background: rgba(255,253,249,.97) !important;
-    box-shadow: var(--sf-shadow-md) !important;
+/* Đảm bảo Trust Strip trên trang chủ không bị Bootstrap .row/.col phá lưới */
+.trust-strip {
+    display: grid !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
-.confirm-icon {
-    width: 84px !important;
-    height: 84px !important;
-    color: var(--sf-forest-800) !important;
-    background: #e8f0e9 !important;
+.trust-strip > [class*="col-"] {
+    width: auto !important;
+    max-width: none !important;
+    flex: none !important;
 }
 
-.confirm-code {
-    border-color: rgba(185,139,78,.28) !important;
-    background: #f3eadf !important;
-}
-
-/* ---------- MODALS ---------- */
-.modal-backdrop.show { opacity: .68; }
-
-.modal-content {
-    border: 1px solid rgba(255,255,255,.5) !important;
-    border-radius: 26px !important;
-    background: rgba(255,253,249,.985) !important;
-    box-shadow: var(--sf-shadow-lg) !important;
-}
-
-.modal-header {
-    padding: 24px 26px 18px !important;
-    border-bottom-color: var(--sf-line) !important;
-}
-
-.modal-title,
-#searchRoomModal .modal-title {
-    color: var(--sf-forest-950);
-    font-family: var(--sf-display) !important;
-    font-size: 1.9rem !important;
-    font-weight: 700 !important;
-}
-
-.modal-body { padding: 24px 26px 26px !important; }
-
-/* ---------- ALERTS / EMPTY STATES ---------- */
-.alert {
-    border-radius: 16px !important;
-    border-color: var(--sf-line) !important;
-}
-
-.alert-light {
-    background: rgba(255,253,249,.9) !important;
-}
-
-.sawade-empty-icon {
-    color: var(--sf-gold-500) !important;
-    background: #f1e7d7 !important;
-}
-
-/* ---------- FOOTER ---------- */
-.site-footer {
-    background:
-        radial-gradient(circle at 78% 12%, rgba(205,167,104,.10), transparent 24rem),
-        var(--sf-forest-950) !important;
-}
-
-.footer-main { padding: 68px 0 44px !important; }
-
-.footer-mark {
-    color: #ead3aa !important;
-    font-size: 1.8rem !important;
-    letter-spacing: .16em !important;
-}
-
-.footer-heading {
-    color: #e7c994 !important;
-    letter-spacing: .17em !important;
-}
-
-.footer-link { color: rgba(255,255,255,.64) !important; }
-.footer-link:hover { color: #fff !important; }
-
-/* ---------- MOTION ---------- */
-.room-card,
-.service-luxe-card,
-.guide-step,
-.profile-order,
-.luxe-lookup .card,
-.detail-feature {
-    transition:
-        transform 260ms var(--sf-ease),
-        box-shadow 260ms var(--sf-ease),
-        border-color 220ms ease !important;
-}
-
-@media (hover:hover) and (pointer:fine) {
-    .service-luxe-card:hover,
-    .guide-step:hover,
-    .luxe-lookup .card:hover {
-        transform: translateY(-4px);
-        border-color: rgba(185,139,78,.27) !important;
-        box-shadow: var(--sf-shadow-sm) !important;
+/* Chống xuống dòng xấu ở thanh menu trên laptop */
+@media (min-width: 992px) {
+    .navbar-sawade .navbar-nav .nav-link,
+    .sawade-nav-actions .btn {
+        white-space: nowrap !important;
     }
 }
 
-/* ---------- RESPONSIVE ---------- */
-@media (max-width: 1199.98px) {
-    .hero-title { font-size: clamp(3.6rem, 7vw, 5.5rem) !important; }
-    .floating-search-bar { padding: 18px !important; }
-    .horizontal-scroll-item { width: 310px !important; }
-}
-
-@media (max-width: 991.98px) {
-    .navbar-sawade { min-height: 74px !important; }
-
-    .navbar-sawade .navbar-collapse {
-        margin-top: 12px !important;
-        padding: 16px !important;
-        border: 1px solid var(--sf-line) !important;
-        border-radius: 20px !important;
-        background: rgba(255,253,249,.985) !important;
-        box-shadow: var(--sf-shadow-md) !important;
-    }
-
-    .navbar-overlay .navbar-collapse {
-        background: rgba(16,37,29,.985) !important;
-    }
-
-    .hero-banner { min-height: 680px !important; }
-    .hero-title { font-size: clamp(3.35rem, 9vw, 5rem) !important; }
-
-    .search-shell { margin-top: -34px !important; }
-    .floating-search-bar { border-radius: 22px !important; }
-
-    .auth-card { padding: 34px !important; }
-    .booking-detail-head,
-    .booking-detail-body { padding: 28px !important; }
-}
-
-@media (max-width: 767.98px) {
-    body { font-size: 15px; }
-
-    .hero-banner {
-        min-height: auto !important;
-        padding: 92px 0 54px !important;
-    }
-
-    .hero-copy { padding-top: 4px !important; }
-
-    .hero-title {
-        font-size: clamp(3rem, 13vw, 4.3rem) !important;
-        line-height: .91 !important;
-    }
-
-    .hero-description { font-size: .95rem !important; }
-
-    .search-shell {
-        margin-top: 18px !important;
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-
-    .floating-search-bar {
-        margin: 0 !important;
-        padding: 16px !important;
-        border-radius: 20px !important;
-    }
-
-    .home-content-wrap { margin-top: 44px !important; }
-
-    .section-heading,
-    .luxe-title { font-size: clamp(2.6rem, 10vw, 3.5rem) !important; }
-
-    .horizontal-scroll-item {
-        width: 84vw !important;
-        max-width: 340px;
-    }
-
-    .luxe-page { padding: 56px 0 72px !important; }
-
-    .auth-page { padding: 34px 0 58px !important; }
-    .auth-card { padding: 28px 22px !important; border-radius: 24px !important; }
-    .auth-card .luxe-title { font-size: 2.7rem !important; }
-
-    .luxe-account { padding: 44px 0 64px !important; }
-    .luxe-account h1 { font-size: 3.4rem !important; }
-
-    .luxe-lookup { padding-top: 48px !important; padding-bottom: 72px !important; }
-    .luxe-lookup h1 { font-size: 3.6rem !important; }
-
-    .confirm-card { padding: 34px 22px !important; border-radius: 24px !important; }
-
-    .booking-detail-page { padding: 42px 0 64px !important; }
-    .booking-detail-sheet { border-radius: 22px !important; }
-    .booking-detail-head,
-    .booking-detail-body { padding: 22px !important; }
-}
-
-@media (max-width: 575.98px) {
-    .brand-name { font-size: 1.3rem !important; }
-    .brand-emblem { width: 40px !important; height: 40px !important; }
-
-    .hero-title { font-size: clamp(2.85rem, 14vw, 3.9rem) !important; }
-    .hero-actions > * { width: 100%; }
-
-    .rooms-page { padding-top: 38px !important; }
-    .rooms-filter { padding: 18px !important; }
-
-    .service-luxe-card,
-    .guide-step { padding: 24px !important; }
-
-    .luxe-account h1 { font-size: 3rem !important; }
-    .luxe-account .profile-order { padding: 18px !important; }
-    .luxe-account .profile-sum { min-height: 96px; padding: 18px !important; }
-
-    .luxe-lookup h1 { font-size: 3.15rem !important; }
-    .luxe-lookup .card-body img { height: 205px !important; }
-
-    .booking-detail-head h1 { font-size: 2.25rem !important; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .room-card,
-    .service-luxe-card,
-    .guide-step,
-    .profile-order,
-    .luxe-lookup .card,
-    .detail-feature {
-        transition: none !important;
-        transform: none !important;
-    }
-}
-
-@media print {
-    .booking-detail-page,
-    body {
-        font-family: "Segoe UI", Arial, sans-serif !important;
-    }
+/* Chừa khoảng thở top cho trang không dùng overlay nếu cần */
+body:not(.sawade-has-overlay) main {
+    min-height: calc(100vh - 82px);
 }

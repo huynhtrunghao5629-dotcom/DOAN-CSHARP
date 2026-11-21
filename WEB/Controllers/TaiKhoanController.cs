@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using QuanLyKhachSan.Web.Models;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace QuanLyKhachSan.Web.Controllers
 {
@@ -117,7 +118,20 @@ namespace QuanLyKhachSan.Web.Controllers
             }
             try
             {
-                using var response = await client.PutAsync($"api/DatPhong/{datPhongId}/huy-don", null);
+                var customerClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(customerClaim, out var khachHangId) || khachHangId <= 0)
+                {
+                    TempData["Loi"] = "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.";
+                    return RedirectToAction("DangNhap");
+                }
+
+                using var response = await client.PutAsJsonAsync(
+                    $"api/DatPhong/{datPhongId}/huy-don",
+                    new
+                    {
+                        KhachHangId = khachHangId,
+                        SoDienThoai = phone
+                    });
                 if (response.IsSuccessStatusCode)
                     TempData["ThongBao"] = "Đã hủy yêu cầu đặt phòng.";
                 else
@@ -265,6 +279,19 @@ namespace QuanLyKhachSan.Web.Controllers
         public async Task<IActionResult> DangKy(DangKyViewModel model)
         {
             ViewData["NavbarOverlay"] = false;
+
+            if (!string.IsNullOrWhiteSpace(model.Email))
+            {
+                model.Email = model.Email.Trim();
+                if (!Regex.IsMatch(model.Email,
+                    @"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$",
+                    RegexOptions.CultureInvariant))
+                {
+                    ModelState.AddModelError(nameof(model.Email),
+                        "Email phải có tên miền đầy đủ, ví dụ: example@gmail.com.");
+                }
+            }
+
             if (!ModelState.IsValid) return View(model);
 
             try
@@ -285,7 +312,11 @@ namespace QuanLyKhachSan.Web.Controllers
                     return RedirectToAction("DangNhap");
                 }
 
-                TempData["Loi"] = "Đăng ký chưa thành công. Vui lòng kiểm tra lại thông tin và đảm bảo số điện thoại, CCCD chưa được sử dụng.";
+                var apiError = await response.Content.ReadAsStringAsync();
+                apiError = apiError.Trim().Trim('"');
+                TempData["Loi"] = string.IsNullOrWhiteSpace(apiError)
+                    ? "Đăng ký chưa thành công. Vui lòng kiểm tra lại thông tin."
+                    : apiError;
                 return View(model);
             }
             catch

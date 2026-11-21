@@ -5,72 +5,156 @@
     var services = Model?.ToList() ?? new();
 }
 
+@section Styles {
+    <style>
+        .services-toolbar {
+            padding: 20px 24px;
+            border: 1px solid var(--sawade-line);
+            border-radius: 20px;
+            background: var(--sawade-ivory-50);
+            box-shadow: var(--sawade-shadow-xs);
+        }
+
+        .services-count-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 9px 16px;
+            border-radius: 999px;
+            background: var(--sawade-ivory-100);
+            border: 1px solid var(--sawade-line);
+            color: var(--sawade-forest-900);
+            font-size: 0.84rem;
+            font-weight: 600;
+        }
+
+        .service-luxe-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .service-price-val {
+            color: var(--sawade-gold-600);
+            font-size: 1.18rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.2;
+        }
+
+        .service-unit-text {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--sawade-muted);
+        }
+
+        .services-note-box {
+            padding: 18px 22px;
+            border-radius: 18px;
+            border: 1px solid var(--sawade-line);
+            background: var(--sawade-ivory-50);
+            color: var(--sawade-muted);
+            font-size: 0.88rem;
+        }
+    </style>
+}
+
 <section class="luxe-page">
     <div class="container">
         <header class="luxe-page-head">
             <div class="luxe-kicker mb-2">SAWADE SERVICES</div>
-            <h1 class="luxe-title display-6 fw-bold mb-3">Những tiện ích làm kỳ nghỉ trọn vẹn hơn</h1>
+            <h1 class="luxe-title display-6 mb-3">Những tiện ích làm kỳ nghỉ trọn vẹn hơn</h1>
             <p class="luxe-lead mb-0">Khám phá các dịch vụ và mức giá tham khảo đang được đồng bộ trực tiếp từ hệ thống khách sạn.</p>
         </header>
 
         @if (ViewBag.ApiError != null)
         {
-            <div class="alert alert-warning rounded-4" role="alert">
-                <i class="bi bi-wifi-off me-2"></i>@ViewBag.ApiError
+            <div class="alert alert-warning rounded-4 mb-4" role="alert">
+                <i class="bi bi-wifi-off me-2" aria-hidden="true"></i>@ViewBag.ApiError
                 <a asp-controller="Home" asp-action="DichVu" class="alert-link ms-2">Thử tải lại</a>
             </div>
         }
 
         @if (services.Any())
         {
-            <div class="row justify-content-between align-items-end g-3 mb-4">
-                <div class="col-md-6 col-lg-5">
-                    <label class="form-label fw-semibold" for="serviceSearch">Tìm dịch vụ</label>
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                        <input id="serviceSearch" type="search" class="form-control border-start-0" placeholder="Ví dụ: ăn sáng, giặt ủi..." />
+            <div class="services-toolbar mb-4">
+                <div class="row justify-content-between align-items-center g-3">
+                    <div class="col-md-7 col-lg-5">
+                        <label class="form-label mb-1" for="serviceSearch">Tìm kiếm dịch vụ</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="bi bi-search" aria-hidden="true"></i></span>
+                            <input id="serviceSearch" type="search" class="form-control border-start-0" placeholder="Ví dụ: ăn sáng, giặt ủi, đưa đón..." />
+                        </div>
+                    </div>
+                    <div class="col-md-auto">
+                        <span class="services-count-pill">
+                            <i class="bi bi-grid-3x3-gap text-gold" aria-hidden="true"></i>
+                            <span id="serviceCount">@services.Count</span> dịch vụ đang hiển thị
+                        </span>
                     </div>
                 </div>
-                <div class="col-md-auto text-muted small"><span id="serviceCount" class="fw-bold text-dark">@services.Count</span> dịch vụ đang hiển thị</div>
             </div>
 
             <div class="row g-4" id="servicesGrid">
                 @foreach (var service in services)
                 {
                     <div class="col-md-6 col-xl-4 service-item" data-search="@(HienThiDichVu.Ten(service.TenDichVu) + " " + HienThiDichVu.MoTa(service.MoTa))">
-                        <article class="service-luxe-card">
-                            <div class="service-luxe-icon mb-4"><i class="bi @HienThiDichVu.Icon(service.TenDichVu)"></i></div>
-                            <div class="luxe-kicker mb-2">HOTEL SERVICE</div>
-                            <h2 class="h4 fw-bold mb-2">@HienThiDichVu.Ten(service.TenDichVu)</h2>
+                        <article class="service-luxe-card h-100">
+                            <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+                                <div class="service-luxe-icon">
+                                    <i class="bi @HienThiDichVu.Icon(service.TenDichVu)" aria-hidden="true"></i>
+                                </div>
+                                <span class="luxe-kicker">HOTEL SERVICE</span>
+                            </div>
+
+                            <h2 class="h5 fw-bold mb-2">@HienThiDichVu.Ten(service.TenDichVu)</h2>
+
                             @if (!string.IsNullOrWhiteSpace(service.MoTa))
                             {
                                 <p class="text-muted small mb-4">@HienThiDichVu.MoTa(service.MoTa)</p>
                             }
+                            else
+                            {
+                                <p class="text-muted small mb-4">Dịch vụ đi kèm phục vụ trực tiếp tại phòng hoặc khu vực tiện ích khách sạn.</p>
+                            }
+
                             <div class="border-top mt-auto pt-3 d-flex justify-content-between align-items-end gap-3">
                                 <span class="small text-muted">Giá tham khảo</span>
-                                <strong class="text-end" style="color:#8f6834">@service.DonGia.ToString("N0") đ<br /><span class="small fw-normal text-muted">/ @HienThiDichVu.DonVi(service.DonViTinh)</span></strong>
+                                <div class="text-end">
+                                    <div class="service-price-val">@service.DonGia.ToString("N0") đ</div>
+                                    <div class="service-unit-text">/ @HienThiDichVu.DonVi(service.DonViTinh)</div>
+                                </div>
                             </div>
                         </article>
                     </div>
                 }
             </div>
 
-            <div class="alert alert-light border rounded-4 mt-4 small text-muted">
-                <i class="bi bi-info-circle me-2"></i>Dịch vụ phát sinh được nhân viên khách sạn ghi nhận và thanh toán theo đơn thực tế. Trang này chỉ giới thiệu danh mục dịch vụ, chưa hỗ trợ đặt dịch vụ trực tuyến.
+            <div id="noServices" class="bg-white border rounded-4 p-5 text-center mt-4" hidden>
+                <div class="sawade-empty-icon mb-3"><i class="bi bi-search" aria-hidden="true"></i></div>
+                <h2 class="h5 fw-bold mb-1">Không tìm thấy dịch vụ phù hợp</h2>
+                <p class="text-muted small mb-0">Hãy thử từ khóa ngắn hơn hoặc xóa ô tìm kiếm để xem toàn bộ danh mục.</p>
             </div>
-            <div id="noServices" class="alert alert-light border rounded-4 mt-4" hidden>Không tìm thấy dịch vụ phù hợp với từ khóa.</div>
+
+            <div class="services-note-box mt-4 d-flex align-items-start gap-3">
+                <i class="bi bi-info-circle-fill text-gold fs-5 mt-1" aria-hidden="true"></i>
+                <div>
+                    Dịch vụ phát sinh được lễ tân ghi nhận trực tiếp vào đơn đặt phòng và thanh toán khi trả phòng. Trang này dùng để tra cứu danh mục và bảng giá tham khảo, chưa hỗ trợ đặt dịch vụ riêng trực tuyến.
+                </div>
+            </div>
         }
         else if (ViewBag.ApiError == null)
         {
-            <div class="service-luxe-card text-center p-5 mx-auto" style="max-width:680px">
-                <i class="bi bi-bag-x display-5 text-muted"></i>
-                <h2 class="h5 mt-3">Chưa có dịch vụ để hiển thị</h2>
-                <p class="text-muted mb-0">Danh mục dịch vụ đang được cập nhật.</p>
+            <div class="service-luxe-card text-center p-5 mx-auto" style="max-width: 640px;">
+                <div class="sawade-empty-icon mb-3"><i class="bi bi-bag-x" aria-hidden="true"></i></div>
+                <h2 class="h5 fw-bold mt-2">Chưa có dịch vụ để hiển thị</h2>
+                <p class="text-muted mb-0">Danh mục dịch vụ đang được cập nhật trên hệ thống.</p>
             </div>
         }
 
         <div class="text-center mt-5">
-            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary rounded-pill px-4 py-3">Khám phá phòng nghỉ <i class="bi bi-arrow-right ms-1"></i></a>
+            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary rounded-pill px-4 py-3">
+                Khám phá phòng nghỉ <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+            </a>
         </div>
     </div>
 </section>
