@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSanAPI.Models;
 using QuanLyKhachSanAPI.Security;
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace QuanLyKhachSanAPI.Controllers;
 
@@ -16,21 +18,46 @@ public class KhachHangController : ControllerBase
         _context = context;
     }
 
+    private static bool EmailHopLe(string email)
+    {
+        return Regex.IsMatch(
+            email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$",
+            RegexOptions.CultureInvariant);
+    }
+
     [HttpPost("dang-ky")]
     public async Task<IActionResult> DangKy([FromBody] KhachHangDangKyDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.SoDienThoai) || string.IsNullOrWhiteSpace(request.MatKhau))
-            return BadRequest("Số điện thoại và mật khẩu không được để trống.");
+        if (string.IsNullOrWhiteSpace(request.HoTen) ||
+            string.IsNullOrWhiteSpace(request.SoDienThoai) ||
+            string.IsNullOrWhiteSpace(request.MatKhau))
+            return BadRequest("Họ tên, số điện thoại và mật khẩu không được để trống.");
+
+        var hoTen = request.HoTen.Trim();
+        var soDienThoai = request.SoDienThoai.Trim();
+        var cccd = string.IsNullOrWhiteSpace(request.CCCD) ? null : request.CCCD.Trim();
+        var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+
+        if (hoTen.Length > 100 || soDienThoai.Length > 15 || (cccd?.Length ?? 0) > 20 ||
+            (email?.Length ?? 0) > 100)
+            return BadRequest("Thông tin đăng ký vượt quá độ dài cho phép.");
+
+        if (email != null && !EmailHopLe(email))
+            return BadRequest("Email phải có tên miền đầy đủ, ví dụ: example@gmail.com.");
+
+        if (request.MatKhau.Length < 6)
+            return BadRequest("Mật khẩu phải có ít nhất 6 ký tự.");
 
         // 1. Kiểm tra trùng Số điện thoại
-        bool trungSdt = await _context.KhachHangs.AnyAsync(k => k.SoDienThoai == request.SoDienThoai.Trim());
+        bool trungSdt = await _context.KhachHangs.AnyAsync(k => k.SoDienThoai == soDienThoai);
         if (trungSdt)
             return BadRequest("Số điện thoại này đã được đăng ký.");
 
         // 2. Kiểm tra trùng CCCD (Nguyên nhân chính gây ra lỗi UNIQUE KEY của bạn)
         if (!string.IsNullOrWhiteSpace(request.CCCD))
         {
-            bool trungCccd = await _context.KhachHangs.AnyAsync(k => k.Cccd == request.CCCD.Trim());
+            bool trungCccd = await _context.KhachHangs.AnyAsync(k => k.Cccd == cccd);
             if (trungCccd)
                 return BadRequest("Số CCCD/CMND này đã tồn tại trong hệ thống.");
         }
@@ -38,17 +65,17 @@ public class KhachHangController : ControllerBase
         // 3. Kiểm tra trùng Email (nếu người dùng có nhập)
         if (!string.IsNullOrWhiteSpace(request.Email))
         {
-            bool trungEmail = await _context.KhachHangs.AnyAsync(k => k.Email == request.Email.Trim());
+            bool trungEmail = await _context.KhachHangs.AnyAsync(k => k.Email == email);
             if (trungEmail)
                 return BadRequest("Email này đã được sử dụng.");
         }
 
         var khachHang = new QuanLyKhachSanAPI.Models.KhachHang
         {
-            HoTen = request.HoTen.Trim(),
-            SoDienThoai = request.SoDienThoai.Trim(),
-            Cccd = string.IsNullOrWhiteSpace(request.CCCD) ? null : request.CCCD.Trim(),
-            Email = request.Email?.Trim(),
+            HoTen = hoTen,
+            SoDienThoai = soDienThoai,
+            Cccd = cccd,
+            Email = email,
             MatKhau = PasswordSecurity.Hash(request.MatKhau)
         };
 
@@ -191,10 +218,22 @@ public class KhachHangController : ControllerBase
                 return BadRequest("Số CCCD đã tồn tại ở khách hàng khác.");
         }
 
-        khachHang.HoTen = model.HoTen;
-        khachHang.Cccd = model.Cccd;
-        khachHang.SoDienThoai = model.SoDienThoai;
-        khachHang.Email = model.Email;
+        var emailCapNhat = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
+        if (emailCapNhat != null && !EmailHopLe(emailCapNhat))
+            return BadRequest("Email phải có tên miền đầy đủ, ví dụ: example@gmail.com.");
+
+        if (emailCapNhat != null)
+        {
+            bool trungEmail = await _context.KhachHangs
+                .AnyAsync(k => k.KhachHangId != id && k.Email == emailCapNhat);
+            if (trungEmail)
+                return BadRequest("Email này đã được sử dụng bởi tài khoản khác.");
+        }
+
+        khachHang.HoTen = model.HoTen.Trim();
+        khachHang.Cccd = string.IsNullOrWhiteSpace(model.Cccd) ? null : model.Cccd.Trim();
+        khachHang.SoDienThoai = string.IsNullOrWhiteSpace(model.SoDienThoai) ? null : model.SoDienThoai.Trim();
+        khachHang.Email = emailCapNhat;
         khachHang.DiaChi = model.DiaChi;
 
 
@@ -205,27 +244,63 @@ public class KhachHangController : ControllerBase
     [HttpPut("cap-nhat-ho-so")]
     public async Task<IActionResult> CapNhatHoSo([FromBody] CapNhatHoSoDto request)
     {
-        var khachHang = await _context.KhachHangs.FirstOrDefaultAsync(k => k.SoDienThoai == request.SoDienThoai);
-        if (khachHang == null) return NotFound("Không tìm thấy tài khoản.");
+        if (request == null || string.IsNullOrWhiteSpace(request.SoDienThoai) ||
+            string.IsNullOrWhiteSpace(request.HoTen))
+            return BadRequest("Thiếu số điện thoại hoặc họ tên.");
 
-        // Kiểm tra CCCD có bị trùng với người khác không
-        if (!string.IsNullOrWhiteSpace(request.CCCD) && request.CCCD != khachHang.Cccd)
+        var soDienThoai = request.SoDienThoai.Trim();
+        var hoTen = request.HoTen.Trim();
+        var cccd = string.IsNullOrWhiteSpace(request.CCCD) ? null : request.CCCD.Trim();
+        var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+
+        if (hoTen.Length > 100 || (cccd?.Length ?? 0) > 20 || (email?.Length ?? 0) > 100)
+            return BadRequest("Thông tin hồ sơ vượt quá độ dài cho phép.");
+
+        if (email != null && !EmailHopLe(email))
+            return BadRequest("Email phải có tên miền đầy đủ, ví dụ: example@gmail.com.");
+
+        if (!string.IsNullOrWhiteSpace(request.MatKhauMoi) && request.MatKhauMoi.Length < 6)
+            return BadRequest("Mật khẩu mới phải có ít nhất 6 ký tự.");
+
+        var khachHang = await _context.KhachHangs
+            .FirstOrDefaultAsync(k => k.SoDienThoai == soDienThoai);
+
+        if (khachHang == null)
+            return NotFound("Không tìm thấy tài khoản.");
+
+        if (cccd != null && !string.Equals(cccd, khachHang.Cccd, StringComparison.Ordinal))
         {
-            bool trungCccd = await _context.KhachHangs.AnyAsync(k => k.Cccd == request.CCCD.Trim());
-            if (trungCccd) return BadRequest("CCCD này đã được đăng ký cho tài khoản khác.");
+            bool trungCccd = await _context.KhachHangs.AnyAsync(k =>
+                k.KhachHangId != khachHang.KhachHangId && k.Cccd == cccd);
+            if (trungCccd)
+                return BadRequest("CCCD này đã được đăng ký cho tài khoản khác.");
         }
 
-        // Cập nhật thông tin
-        khachHang.HoTen = request.HoTen.Trim();
-        if (!string.IsNullOrWhiteSpace(request.CCCD)) khachHang.Cccd = request.CCCD.Trim();
-        khachHang.Email = request.Email?.Trim();
+        if (email != null && !string.Equals(email, khachHang.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            bool trungEmail = await _context.KhachHangs.AnyAsync(k =>
+                k.KhachHangId != khachHang.KhachHangId && k.Email == email);
+            if (trungEmail)
+                return BadRequest("Email này đã được sử dụng bởi tài khoản khác.");
+        }
 
-        // Cập nhật mật khẩu nếu khách hàng có nhập mật khẩu mới
+        khachHang.HoTen = hoTen;
+        khachHang.Cccd = cccd;
+        khachHang.Email = email;
+
         if (!string.IsNullOrWhiteSpace(request.MatKhauMoi))
             khachHang.MatKhau = PasswordSecurity.Hash(request.MatKhauMoi);
 
         await _context.SaveChangesAsync();
-        return Ok(new { Message = "Cập nhật thành công" });
+        return Ok(new
+        {
+            Message = "Cập nhật thành công",
+            khachHang.KhachHangId,
+            khachHang.HoTen,
+            khachHang.SoDienThoai,
+            khachHang.Cccd,
+            khachHang.Email
+        });
     }
 
     public class CapNhatHoSoDto
