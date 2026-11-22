@@ -274,7 +274,7 @@ namespace QuanLyKhachSan.Web.Controllers
 
             return RedirectToAction("HoSoCaNhan");
         }
-            [HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DangKy(DangKyViewModel model)
         {
@@ -312,16 +312,16 @@ namespace QuanLyKhachSan.Web.Controllers
                     return RedirectToAction("DangNhap");
                 }
 
+                // Hiển thị chính xác thông báo lỗi API trả về thay vì câu báo cứng
                 var apiError = await response.Content.ReadAsStringAsync();
-                apiError = apiError.Trim().Trim('"');
                 TempData["Loi"] = string.IsNullOrWhiteSpace(apiError)
-                    ? "Đăng ký chưa thành công. Vui lòng kiểm tra lại thông tin."
-                    : apiError;
+                    ? $"Đăng ký thất bại (Mã lỗi {(int)response.StatusCode})."
+                    : apiError.Trim('"');
                 return View(model);
             }
-            catch
+            catch (Exception ex)
             {
-                TempData["Loi"] = "Không thể kết nối đến Web API.";
+                TempData["Loi"] = "Không thể kết nối đến Web API: " + ex.Message;
                 return View(model);
             }
         }
