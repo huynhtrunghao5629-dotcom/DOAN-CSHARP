@@ -174,22 +174,23 @@ public class KhachHangController : ControllerBase
         if (string.IsNullOrWhiteSpace(khachHang.HoTen))
             return BadRequest("Họ tên không được để trống.");
 
+        // Chuẩn hóa chuỗi rỗng thành null để không vi phạm ràng buộc UNIQUE của SQL Server
+        khachHang.HoTen = khachHang.HoTen.Trim();
+        khachHang.Cccd = string.IsNullOrWhiteSpace(khachHang.Cccd) ? null : khachHang.Cccd.Trim();
+        khachHang.SoDienThoai = string.IsNullOrWhiteSpace(khachHang.SoDienThoai) ? null : khachHang.SoDienThoai.Trim();
+        khachHang.Email = string.IsNullOrWhiteSpace(khachHang.Email) ? null : khachHang.Email.Trim();
+
         var khachCu = await _context.KhachHangs
             .FirstOrDefaultAsync(k =>
-                (!string.IsNullOrWhiteSpace(khachHang.Cccd) && k.Cccd == khachHang.Cccd.Trim()) ||
-                (!string.IsNullOrWhiteSpace(khachHang.SoDienThoai) && k.SoDienThoai == khachHang.SoDienThoai.Trim()));
+                (khachHang.Cccd != null && k.Cccd == khachHang.Cccd) ||
+                (khachHang.SoDienThoai != null && k.SoDienThoai == khachHang.SoDienThoai));
 
         if (khachCu != null)
         {
-            // Never silently overwrite an existing customer's profile by matching phone/CCCD.
             return Conflict("Số điện thoại hoặc CCCD đã thuộc khách hàng khác.");
         }
 
         khachHang.KhachHangId = 0;
-
-        if (!string.IsNullOrWhiteSpace(khachHang.Cccd)) khachHang.Cccd = khachHang.Cccd.Trim();
-        if (!string.IsNullOrWhiteSpace(khachHang.SoDienThoai)) khachHang.SoDienThoai = khachHang.SoDienThoai.Trim();
-        if (!string.IsNullOrWhiteSpace(khachHang.HoTen)) khachHang.HoTen = khachHang.HoTen.Trim();
 
         _context.KhachHangs.Add(khachHang);
         await _context.SaveChangesAsync();
