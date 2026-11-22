@@ -30,6 +30,9 @@ namespace HotelManagement.Desktop.Models
         [JsonPropertyName("hoTen")]
         public string? FullName { get; set; }
 
+        [JsonPropertyName("loaiKhach")]
+        public string? CustomerType { get; set; }
+
         [JsonPropertyName("cccd")]
         public string? IdentityCard { get; set; }
 

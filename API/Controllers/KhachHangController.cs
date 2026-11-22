@@ -130,7 +130,8 @@ public class KhachHangController : ControllerBase
                 k.Cccd,
                 k.SoDienThoai,
                 k.Email,
-                k.DiaChi
+                k.DiaChi,
+                LoaiKhach = !string.IsNullOrEmpty(k.MatKhau) ? "Thành viên (Web)" : "Vãng lai (Tại quầy)"
             }).ToListAsync();
         return Ok(khachHangs);
     }
@@ -161,7 +162,16 @@ public class KhachHangController : ControllerBase
             .Where(k => k.HoTen.Contains(tuKhoa) 
                      || (k.SoDienThoai != null && k.SoDienThoai.Contains(tuKhoa)) 
                      || (k.Cccd != null && k.Cccd.Contains(tuKhoa)))
-            .Select(k => new { k.KhachHangId, k.HoTen, k.Cccd, k.SoDienThoai, k.Email, k.DiaChi })
+            .Select(k => new
+            {
+                k.KhachHangId,
+                k.HoTen,
+                k.Cccd,
+                k.SoDienThoai,
+                k.Email,
+                k.DiaChi,
+                LoaiKhach = !string.IsNullOrEmpty(k.MatKhau) ? "Thành viên (Web)" : "Vãng lai (Tại quầy)"
+            })
             .ToListAsync();
 
         return Ok(result);
