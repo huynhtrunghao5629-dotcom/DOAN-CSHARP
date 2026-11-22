@@ -85,10 +85,10 @@ public class KhachHangController : ControllerBase
             await _context.SaveChangesAsync();
             return Ok(new { Message = "Đăng ký thành công!" });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Bắt lỗi an toàn nếu cấu trúc DB còn ràng buộc UNIQUE nào khác
-            return BadRequest("Không thể đăng ký: Dữ liệu (SĐT hoặc CCCD) bị trùng lặp với hệ thống.");
+            // Trả về lỗi chi tiết từ SQL Server / EF Core để biết chính xác cột nào bị vướng
+            return BadRequest("Lỗi lưu DB: " + (ex.InnerException?.Message ?? ex.Message));
         }
     }
 

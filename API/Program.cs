@@ -47,9 +47,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// Tự động bổ sung cột MatKhau nếu database trên máy thành viên chưa có
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.ExecuteSqlRaw(@"
+        IF OBJECT_ID('dbo.KhachHang', 'U') IS NOT NULL AND COL_LENGTH('dbo.KhachHang', 'MatKhau') IS NULL
+        BEGIN
+            ALTER TABLE dbo.KhachHang ADD MatKhau NVARCHAR(255) NULL;
+        END
+    ");
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
