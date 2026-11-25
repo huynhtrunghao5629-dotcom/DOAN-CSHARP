@@ -28,6 +28,22 @@ namespace HotelManager.UI
             dgvCustomers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvCustomers.MultiSelect = false;
             dgvCustomers.AllowUserToAddRows = false;
+            dgvCustomers.CellFormatting += (_, e) =>
+            {
+                if (dgvCustomers.Columns[e.ColumnIndex].DataPropertyName == "CustomerType" && e.Value != null)
+                {
+                    string loai = e.Value.ToString()!;
+                    if (loai.Contains("Web"))
+                    {
+                        e.CellStyle!.ForeColor = Color.SeaGreen;
+                        e.CellStyle.Font = new Font(dgvCustomers.Font, FontStyle.Bold);
+                    }
+                    else
+                    {
+                        e.CellStyle!.ForeColor = Color.DimGray;
+                    }
+                }
+            };
 
             // Current API has NO DELETE /api/KhachHang/{id} route.
             // Do not show a misleading active button.
@@ -174,20 +190,24 @@ namespace HotelManager.UI
         }
 
         private void TranslateHeaders()
-        {
-            var names = new Dictionary<string, string>
-            {
-                ["CustomerId"] = "Mã khách hàng",
-                ["FullName"] = "Họ và tên",
-                ["IdentityCard"] = "CCCD/CMND",
-                ["PhoneNumber"] = "Số điện thoại",
-                ["Email"] = "Email",
-                ["Address"] = "Địa chỉ"
-            };
-            foreach (DataGridViewColumn column in dgvCustomers.Columns)
-                if (names.TryGetValue(column.DataPropertyName, out var header))
-                    column.HeaderText = header;
-        }
+{
+    var names = new Dictionary<string, string>
+    {
+        ["CustomerId"] = "Mã khách hàng",
+        ["FullName"] = "Họ và tên",
+        ["CustomerType"] = "Phân loại",
+        ["IdentityCard"] = "CCCD/CMND",
+        ["PhoneNumber"] = "Số điện thoại",
+        ["Email"] = "Email",
+        ["Address"] = "Địa chỉ"
+    };
+    foreach (DataGridViewColumn column in dgvCustomers.Columns)
+        if (names.TryGetValue(column.DataPropertyName, out var header))
+            column.HeaderText = header;
+
+    if (dgvCustomers.Columns["CustomerType"] != null)
+        dgvCustomers.Columns["CustomerType"]!.DisplayIndex = 2;
+}
 
         private void dgvCustomers_CellClick(object sender, DataGridViewCellEventArgs e)
         {
