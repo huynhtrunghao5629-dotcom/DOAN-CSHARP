@@ -57,13 +57,21 @@ namespace QuanLyKhachSan.Web.Controllers
                     string khachHangId = root.GetProperty("khachHangId").ToString();
                     string hoTen = root.GetProperty("hoTen").GetString() ?? "Khách hàng";
                     string soDienThoai = root.GetProperty("soDienThoai").GetString() ?? "";
+                    string apiToken = root.TryGetProperty("token", out var tokenElement)
+                        ? tokenElement.GetString() ?? "" : "";
+                    if (string.IsNullOrWhiteSpace(apiToken))
+                    {
+                        TempData["Loi"] = "Máy chủ chưa trả token đăng nhập. Vui lòng kiểm tra phiên bản API.";
+                        return View(model);
+                    }
 
                     // === CẤP COOKIE ĐĂNG NHẬP CHO WEB ===
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.NameIdentifier, khachHangId),
                         new Claim(ClaimTypes.Name, hoTen),
-                        new Claim(ClaimTypes.MobilePhone, soDienThoai) // Số điện thoại thực từ API, không dùng input email/CCCD
+                        new Claim(ClaimTypes.MobilePhone, soDienThoai), // Số điện thoại thực từ API
+                        new Claim("SawadeApiToken", apiToken) // Chỉ lưu trong cookie xác thực được bảo vệ
                     };
                     var identity = new ClaimsIdentity(claims, "Cookies");
                     var principal = new ClaimsPrincipal(identity);
