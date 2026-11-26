@@ -1,4 +1,4 @@
-@{
+﻿@{
     var navbarOverlay = ViewData["NavbarOverlay"] is bool value && value;
     var flashSuccess = TempData["ThongBao"] as string;
     var flashError = TempData["Loi"] as string;
@@ -10,18 +10,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SAWADE Hotels &amp; Resorts</title>
+    <title>@ViewData["Title"] — SAWADE Hotels &amp; Resorts</title>
 
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Bộ font chuyên biệt cho tiếng Việt: Playfair Display (tiêu đề sang trọng) + Be Vietnam Pro (giao diện & nội dung sắc nét) -->
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
-    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
 
     @if (navbarOverlay)
     {
-        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1542314831-c6a4d27ce66f?q=80&amp;w=2000&amp;auto=format&amp;fit=crop" fetchpriority="high" />
+        <link rel="preload" as="image" href="@Url.Content("~/images/201.jpg")" fetchpriority="high" />
     }
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -42,15 +39,15 @@
         <div class="sawade-flash-stack" aria-label="Thông báo của hệ thống">
             @if (!string.IsNullOrWhiteSpace(flashError))
             {
-                <div class="alert alert-danger alert-dismissible shadow-sm rounded-4 sawade-flash" role="alert">
-                    <i class="bi bi-exclamation-circle-fill me-2" aria-hidden="true"></i>@flashError
+                <div class="alert alert-danger alert-dismissible sawade-flash" role="alert">
+                    <i class="bi bi-exclamation-circle me-2" aria-hidden="true"></i>@flashError
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng thông báo lỗi"></button>
                 </div>
             }
             @if (!string.IsNullOrWhiteSpace(flashSuccess))
             {
-                <div class="alert alert-success alert-dismissible shadow-sm rounded-4 sawade-flash" role="status" data-sawade-auto-dismiss="true">
-                    <i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i>@flashSuccess
+                <div class="alert alert-success alert-dismissible sawade-flash" role="status" data-sawade-auto-dismiss="true">
+                    <i class="bi bi-check2-circle me-2" aria-hidden="true"></i>@flashSuccess
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng thông báo thành công"></button>
                 </div>
             }
@@ -59,11 +56,17 @@
 
     <nav class="navbar navbar-expand-lg navbar-sawade @(navbarOverlay ? "navbar-overlay" : string.Empty)" id="sawadeMainNavbar">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-3" asp-controller="Home" asp-action="Index" aria-label="Sawade Hotels &amp; Resorts - Trang chủ">
-                <span class="brand-emblem"><i class="bi bi-stars" aria-hidden="true"></i></span>
+            <a class="navbar-brand d-flex align-items-center gap-3" asp-controller="Home" asp-action="Index" aria-label="SAWADE Hotels &amp; Resorts — Trang chủ">
+                <span class="brand-monogram" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="2" width="36" height="36" rx="9" stroke="currentColor" stroke-width="1" stroke-opacity="0.55" />
+                        <rect x="5.5" y="5.5" width="29" height="29" rx="6" stroke="#C4A574" stroke-width="0.75" />
+                        <text x="20" y="26" text-anchor="middle" fill="currentColor" font-family="Cormorant Garamond, Georgia, serif" font-size="19" font-weight="500">S</text>
+                    </svg>
+                </span>
                 <span class="d-block">
-                    <span class="brand-name d-block">Sawade</span>
-                    <span class="brand-subtitle d-block">Hotels &middot; Resorts</span>
+                    <span class="brand-name d-block">SAWADE</span>
+                    <span class="brand-subtitle d-block">HOTELS &middot; RESORTS</span>
                 </span>
             </a>
 
@@ -91,24 +94,25 @@
                     </li>
                 </ul>
 
-                <div class="sawade-nav-actions d-flex align-items-center gap-2 ms-lg-3">
-                    <button type="button" class="btn btn-sawade-light rounded-pill" data-bs-toggle="modal" data-bs-target="#searchRoomModal">
-                        <i class="bi bi-search me-1" aria-hidden="true"></i>Tìm phòng
+                <div class="sawade-nav-actions d-flex align-items-center gap-2 ms-lg-3 mt-3 mt-lg-0">
+                    <button type="button" class="btn btn-nav-ghost" data-bs-toggle="modal" data-bs-target="#searchRoomModal">
+                        <i class="bi bi-search me-1" aria-hidden="true"></i>Đặt lịch
                     </button>
 
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
                         <div class="dropdown">
-                            <button class="btn btn-sawade-primary rounded-pill dropdown-toggle d-flex align-items-center" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle me-2" aria-hidden="true"></i><span class="sawade-user-label">@User.Identity.Name</span>
+                            <button class="btn btn-nav-account dropdown-toggle d-flex align-items-center" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person me-2" aria-hidden="true"></i><span class="sawade-user-label">@User.Identity.Name</span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-4 p-2" aria-labelledby="userMenu">
-                                <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="TraCuuDon" asp-action="Index"><i class="bi bi-clock-history me-2"></i>Lịch sử đặt phòng</a></li>
-                                <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="TaiKhoan" asp-action="HoSoCaNhan"><i class="bi bi-person-lines-fill me-2"></i>Hồ sơ cá nhân</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end mt-2" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item" asp-controller="TraCuuDon" asp-action="Index"><i class="bi bi-clock-history me-2 text-gold"></i>Lịch sử đặt phòng</a></li>
+                                <li><a class="dropdown-item" asp-controller="TaiKhoan" asp-action="HoSoCaNhan"><i class="bi bi-person-vcard me-2 text-gold"></i>Hồ sơ cá nhân</a></li>
                                 <li><hr class="dropdown-divider my-1"></li>
                                 <li>
                                     <form asp-controller="TaiKhoan" asp-action="DangXuat" method="post">
-                                        <button type="submit" class="dropdown-item rounded-3 py-2 fw-semibold text-danger"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item text-danger fw-medium"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
                                     </form>
                                 </li>
                             </ul>
@@ -117,12 +121,12 @@
                     else
                     {
                         <div class="dropdown">
-                            <button class="btn btn-sawade-primary rounded-pill dropdown-toggle d-flex align-items-center" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle me-2" aria-hidden="true"></i>Tài khoản
+                            <button class="btn btn-nav-account dropdown-toggle d-flex align-items-center" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person me-2" aria-hidden="true"></i>Tài khoản
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-4 p-2" aria-labelledby="userMenu">
-                                <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="TaiKhoan" asp-action="DangNhap"><i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập</a></li>
-                                <li><a class="dropdown-item rounded-3 py-2 fw-medium" asp-controller="TaiKhoan" asp-action="DangKy"><i class="bi bi-person-plus me-2"></i>Đăng ký</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end mt-2" aria-labelledby="userMenu">
+                                <li><a class="dropdown-item" asp-controller="TaiKhoan" asp-action="DangNhap"><i class="bi bi-box-arrow-in-right me-2 text-gold"></i>Đăng nhập</a></li>
+                                <li><a class="dropdown-item" asp-controller="TaiKhoan" asp-action="DangKy"><i class="bi bi-person-plus me-2 text-gold"></i>Đăng ký thành viên</a></li>
                             </ul>
                         </div>
                     }
@@ -135,35 +139,48 @@
         @RenderBody()
     </main>
 
-    <footer class="site-footer text-white">
+    <footer class="site-footer">
         <div class="footer-main">
             <div class="container">
-                <div class="row g-4 g-lg-5 align-items-start">
+                <div class="row g-5 align-items-start">
                     <div class="col-lg-5">
-                        <div class="footer-mark mb-3"><i class="bi bi-stars me-2" aria-hidden="true"></i>SAWADE</div>
-                        <div class="footer-line mb-3"></div>
-                        <p class="footer-brand-copy mb-0">Không gian nghỉ dưỡng được chăm chút từ những chi tiết nhỏ nhất, để mỗi kỳ lưu trú trở thành một trải nghiệm thư thái, tinh tế và đáng nhớ.</p>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span class="brand-monogram text-white" aria-hidden="true">
+                                <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="2" y="2" width="36" height="36" rx="9" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.45" />
+                                    <rect x="5.5" y="5.5" width="29" height="29" rx="6" stroke="#C4A574" stroke-width="0.75" />
+                                    <text x="20" y="26" text-anchor="middle" fill="#FFFFFF" font-family="Cormorant Garamond, Georgia, serif" font-size="19" font-weight="500">S</text>
+                                </svg>
+                            </span>
+                            <div>
+                                <div class="footer-mark lh-1">SAWADE</div>
+                                <div class="brand-subtitle" style="color: var(--sawade-gold-300);">HOTELS &middot; RESORTS</div>
+                            </div>
+                        </div>
+                        <div class="footer-line my-3"></div>
+                        <p class="footer-brand-copy mb-0">Không gian lưu trú chú trọng sự tĩnh lặng, ánh sáng tự nhiên và dịch vụ lễ tân tận tâm — nơi mỗi kỳ nghỉ được chăm chút đến từng chi tiết nhỏ nhất.</p>
                     </div>
                     <div class="col-6 col-lg-2">
-                        <div class="footer-heading">Khám phá</div>
+                        <div class="footer-heading">Bộ sưu tập</div>
                         <a class="footer-link" asp-controller="Home" asp-action="DanhSachPhong">Phòng nghỉ</a>
-                        <a class="footer-link" asp-controller="Home" asp-action="DichVu">Dịch vụ</a>
                         <a class="footer-link" href="@(Url.Action("Index", "Home"))#loai-phong">Hạng phòng</a>
+                        <a class="footer-link" asp-controller="Home" asp-action="DichVu">Dịch vụ đi kèm</a>
                     </div>
                     <div class="col-6 col-lg-2">
-                        <div class="footer-heading">Hỗ trợ</div>
+                        <div class="footer-heading">Khách hàng</div>
                         <a class="footer-link" asp-controller="Home" asp-action="HuongDan">Hướng dẫn đặt phòng</a>
                         <a class="footer-link" asp-controller="Home" asp-action="Privacy">Quyền riêng tư</a>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <a class="footer-link" asp-controller="TraCuuDon" asp-action="Index">Lịch sử đặt phòng</a>
+                            <a class="footer-link" asp-controller="TaiKhoan" asp-action="HoSoCaNhan">Hồ sơ cá nhân</a>
                         }
                     </div>
                     <div class="col-lg-3">
-                        <div class="footer-heading">Đặt kỳ nghỉ</div>
-                        <p class="footer-cta-note mb-3">Chọn ngày lưu trú và kiểm tra phòng trống tức thời trên hệ thống đồng bộ.</p>
-                        <button type="button" class="btn btn-footer-gold rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#searchRoomModal">
-                            <i class="bi bi-calendar2-heart me-2" aria-hidden="true"></i>Tìm phòng ngay
+                        <div class="footer-heading">Đặt phòng trực tuyến</div>
+                        <p class="footer-cta-note mb-3">Kiểm tra lịch trống theo ngày và nhận mã xác nhận đồng bộ trực tiếp từ quầy lễ tân.</p>
+                        <button type="button" class="btn btn-footer-gold" data-bs-toggle="modal" data-bs-target="#searchRoomModal">
+                            Kiểm tra phòng trống <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
@@ -172,7 +189,7 @@
         <div class="footer-bottom">
             <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <span>&copy; @DateTime.Now.Year SAWADE Hotels &amp; Resorts.</span>
-                <span>Đặt phòng trực tuyến &middot; Dữ liệu đồng bộ thời gian thực</span>
+                <span>Hệ thống đặt phòng trực tuyến &middot; Đồng bộ dữ liệu thời gian thực</span>
             </div>
         </div>
     </footer>
@@ -183,28 +200,28 @@
 
     <div class="modal fade" id="searchRoomModal" tabindex="-1" aria-labelledby="searchRoomTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0">
-                <div class="modal-header px-4 pt-4">
+            <div class="modal-content">
+                <div class="modal-header">
                     <div>
                         <div class="luxe-kicker mb-1">SAWADE RESERVATION</div>
-                        <h2 class="modal-title h4 mb-0" id="searchRoomTitle">Tìm kỳ nghỉ phù hợp</h2>
+                        <h2 class="modal-title mb-0" id="searchRoomTitle">Kiểm tra phòng trống</h2>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
                 <form asp-controller="Home" asp-action="DanhSachPhong" method="get" class="modal-body p-4" id="quickRoomSearch" data-sawade-busy="Đang tìm phòng...">
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
-                            <label class="form-label" for="searchCheckIn"><i class="bi bi-calendar-event me-1 text-gold" aria-hidden="true"></i>Ngày nhận phòng</label>
+                            <label class="form-label" for="searchCheckIn">Ngày nhận phòng</label>
                             <input class="form-control" type="date" id="searchCheckIn" name="ngayNhan" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label" for="searchCheckOut"><i class="bi bi-calendar-check me-1 text-gold" aria-hidden="true"></i>Ngày trả phòng</label>
+                            <label class="form-label" for="searchCheckOut">Ngày trả phòng</label>
                             <input class="form-control" type="date" id="searchCheckOut" name="ngayTra" min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="searchGuests"><i class="bi bi-people me-1 text-gold" aria-hidden="true"></i>Số khách lưu trú</label>
+                    <div class="mb-4">
+                        <label class="form-label" for="searchGuests">Số khách lưu trú</label>
                         <select class="form-select" id="searchGuests" name="soKhach">
                             <option value="">Tất cả sức chứa</option>
                             @for (int guestCount = 1; guestCount <= 10; guestCount++)
@@ -215,10 +232,10 @@
                     </div>
 
                     <p id="searchRoomError" class="text-danger small mb-3" role="alert" hidden>
-                        <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>Ngày trả phòng phải sau ngày nhận phòng.
+                        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Ngày trả phòng phải sau ngày nhận phòng.
                     </p>
-                    <button type="submit" class="btn btn-sawade-primary w-100 rounded-pill py-3">
-                        Kiểm tra phòng trống <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                    <button type="submit" class="btn btn-sawade-primary w-100 py-3">
+                        Tìm phòng trống <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
                     </button>
                 </form>
             </div>

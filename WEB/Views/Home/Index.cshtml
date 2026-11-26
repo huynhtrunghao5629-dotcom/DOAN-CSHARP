@@ -1,4 +1,4 @@
-@model IEnumerable<QuanLyKhachSan.Web.Models.PhongViewModel>
+﻿@model IEnumerable<QuanLyKhachSan.Web.Models.PhongViewModel>
 @using System.Linq
 
 @{
@@ -8,11 +8,11 @@
 
     var fallbackImgs = new[]
     {
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1618773928120-22165582f349?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80"
+        Url.Content("~/images/102.jpg"),
+        Url.Content("~/images/201.jpg"),
+        Url.Content("~/images/208.jpg"),
+        Url.Content("~/images/301.jpg"),
+        Url.Content("~/images/106.jpg")
     };
 }
 
@@ -20,121 +20,207 @@
     <style>
         .home-api-alert {
             position: relative;
-            z-index: 1020;
+            z-index: 1060;
             margin-top: 82px;
             border: 0;
-            border-bottom: 1px solid rgba(184, 139, 74, 0.35);
-            background: #FFF6E0;
-            color: #5E420D;
+            border-bottom: 1px solid rgba(166, 134, 87, 0.35);
+            background: #FBF4E6;
+            color: #5C4319;
+            font-size: 0.88rem;
+            border-radius: 0 !important;
+        }
+
+        /* Editorial Manifesto & Architectural Ledger */
+        .editorial-manifesto {
+            padding: 96px 0 88px;
+            border-bottom: 1px solid var(--sawade-line);
+        }
+
+        .manifesto-quote {
+            font-family: var(--sawade-font-display);
+            font-size: clamp(1.95rem, 3.1vw, 2.95rem);
+            font-weight: 400;
+            line-height: 1.24;
+            letter-spacing: 0.02em;
+            color: var(--sawade-forest-950);
+        }
+
+        .manifesto-quote em {
+            font-family: var(--sawade-font-italic);
+            font-style: italic;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            color: var(--sawade-gold-600);
+        }
+
+        .pillar-ledger {
+            margin-top: 56px;
+            border-top: 1px solid var(--sawade-line-strong);
+        }
+
+        .pillar-cell {
+            padding: 28px 24px 8px 0;
+            border-right: 1px solid var(--sawade-line);
+        }
+
+        .pillar-cell:last-child {
+            border-right: 0;
+        }
+
+        .pillar-num {
+            font-family: var(--sawade-font-display);
+            font-size: 1.75rem;
+            font-weight: 500;
+            color: var(--sawade-gold-500);
+            line-height: 1;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .pillar-title {
+            font-family: var(--sawade-font-sans);
+            font-size: 0.94rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            color: var(--sawade-forest-950);
+            margin-bottom: 8px;
+        }
+
+        .pillar-desc {
+            font-family: var(--sawade-font-sans);
             font-size: 0.9rem;
+            color: var(--sawade-muted);
+            line-height: 1.72;
+            margin: 0;
         }
 
-        .home-search-divider {
-            position: relative;
-        }
-
-        @@media (min-width: 992px) {
-            .home-search-divider::before {
-                content: "";
-                position: absolute;
-                left: 0;
-                top: 16%;
-                bottom: 16%;
-                width: 1px;
-                background: var(--sawade-line);
-            }
-        }
-
-        .home-section-link {
+        /* Section Link with Soft Editorial Underline */
+        .home-editorial-link {
             display: inline-flex;
             align-items: center;
-            gap: 0.45rem;
-            padding: 0.55rem 1.15rem;
+            gap: 10px;
+            padding: 8px 18px;
+            border: 1px solid rgba(18, 34, 27, 0.18);
             border-radius: 999px;
-            border: 1px solid var(--sawade-line-strong);
-            background: var(--sawade-ivory-50);
             color: var(--sawade-forest-900);
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-family: var(--sawade-font-sans);
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             text-decoration: none;
-            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+            transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease, gap 0.25s ease;
         }
 
-        .home-section-link:hover {
+        .home-editorial-link:hover {
+            color: #fff;
             background: var(--sawade-forest-900);
             border-color: var(--sawade-forest-900);
-            color: #fff;
-            transform: translateY(-2px);
+            gap: 14px;
+        }
+
+        /* Lookbook Room Category Frames (Bo tròn mềm mại) */
+        .home-section-band {
+            padding: 88px 0;
+        }
+
+        .home-section-band--tinted {
+            background: var(--sawade-ivory-50);
+            border-top: 1px solid var(--sawade-line);
+            border-bottom: 1px solid var(--sawade-line);
         }
 
         .home-category-card {
             position: relative;
             display: block;
-            height: 310px;
-            border-radius: 24px;
+            height: 430px;
             overflow: hidden;
-            border: 1px solid var(--sawade-line);
+            border-radius: 20px;
             background: var(--sawade-forest-950);
-            box-shadow: var(--sawade-shadow-xs);
             text-decoration: none;
-            transition: transform 0.3s var(--sawade-ease-out), box-shadow 0.3s var(--sawade-ease-out), border-color 0.25s ease;
+            box-shadow: 0 14px 34px rgba(15, 28, 23, 0.10);
+            transition: transform 0.45s ease, box-shadow 0.45s ease;
+        }
+
+        .home-category-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 42px rgba(15, 28, 23, 0.18);
         }
 
         .home-category-card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.6s var(--sawade-ease-out);
+            transition: transform 1s var(--sawade-ease-editorial), filter 0.6s ease;
         }
 
-        .home-category-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(184, 139, 74, 0.42);
-            box-shadow: var(--sawade-shadow-md);
+        .home-category-card::after {
+            content: "";
+            position: absolute;
+            inset: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 14px;
+            pointer-events: none;
+            z-index: 2;
+            transition: inset 0.45s var(--sawade-ease-editorial), border-color 0.45s ease;
+        }
+
+        .home-category-card:hover::after {
+            inset: 10px;
+            border-color: rgba(222, 199, 161, 0.72);
         }
 
         .home-category-card:hover img {
             transform: scale(1.06);
         }
 
-        .home-category-badge {
+        .home-category-count {
             position: absolute;
-            top: 16px;
-            left: 16px;
-            padding: 6px 12px;
+            top: 26px;
+            left: 26px;
+            z-index: 3;
+            padding: 6px 14px;
             border-radius: 999px;
-            background: rgba(14, 34, 27, 0.72);
-            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(11, 18, 15, 0.72);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(222, 199, 161, 0.40);
             color: var(--sawade-gold-300);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            font-size: 0.74rem;
-            font-weight: 600;
+            font-family: var(--sawade-font-sans);
+            font-size: 0.70rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
         }
 
         .home-category-overlay {
             position: absolute;
             inset: auto 0 0;
-            padding: 64px 22px 22px;
-            background: linear-gradient(0deg, rgba(10, 24, 19, 0.92) 0%, rgba(10, 24, 19, 0.45) 58%, transparent 100%);
+            z-index: 2;
+            padding: 110px 28px 28px;
+            background: linear-gradient(0deg, rgba(11, 18, 15, 0.90) 0%, rgba(11, 18, 15, 0.44) 58%, transparent 100%);
             color: #fff;
         }
 
         .home-category-overlay h3 {
             font-family: var(--sawade-font-display);
-            font-size: 1.5rem;
-            line-height: 1.2;
+            font-size: 2rem;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            line-height: 1.15;
             color: #fff;
-            margin-bottom: 6px;
+            margin-bottom: 10px;
         }
 
         .home-category-meta {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: 12px;
+            font-family: var(--sawade-font-sans);
             font-size: 0.84rem;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(252, 251, 248, 0.82);
+            border-top: 1px solid rgba(255, 255, 255, 0.16);
+            padding-top: 12px;
         }
 
         .home-category-price {
@@ -143,50 +229,174 @@
             font-variant-numeric: tabular-nums;
         }
 
-        .home-room-badge {
+        /* Signature Room Tag */
+        .home-room-tag {
             position: absolute;
             top: 14px;
             left: 14px;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 999px;
-            background: rgba(255, 253, 249, 0.94);
+            background: rgba(252, 251, 248, 0.94);
+            backdrop-filter: blur(6px);
             color: var(--sawade-forest-950);
-            font-size: 0.75rem;
+            font-family: var(--sawade-font-sans);
+            font-size: 0.70rem;
             font-weight: 600;
-            box-shadow: 0 6px 16px rgba(14, 34, 27, 0.14);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
 
-        .home-editorial-banner {
+        /* Luxury Italic Quote Strip (Phong cách Hình 3) */
+        .luxury-quote-section {
+            padding: 0 0 88px;
+        }
+
+        .luxury-quote-card {
+            background: #212D31;
+            border-radius: 24px;
+            padding: 64px 48px;
             position: relative;
             overflow: hidden;
-            border-radius: 28px;
-            padding: 44px 48px;
-            background:
-                radial-gradient(circle at 86% 18%, rgba(207, 166, 107, 0.22), transparent 22rem),
-                linear-gradient(135deg, var(--sawade-forest-950) 0%, var(--sawade-forest-800) 100%);
-            color: #fff;
-            box-shadow: var(--sawade-shadow-md);
+            box-shadow: 0 20px 48px rgba(17, 27, 30, 0.16);
         }
 
-        .home-editorial-banner h2 {
+        .luxury-quote-card::before {
+            content: "";
+            position: absolute;
+            inset: 14px;
+            border: 1px solid rgba(200, 162, 122, 0.22);
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+        .luxury-quote-text {
+            font-family: var(--sawade-font-italic);
+            font-style: italic;
+            font-weight: 400;
+            font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+            line-height: 1.32;
+            color: #C8A27A;
+            max-width: 780px;
+            margin: 0 auto 18px;
+        }
+
+        .luxury-quote-sub {
+            font-family: var(--sawade-font-sans);
+            font-size: 0.95rem;
+            color: rgba(246, 242, 234, 0.72);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.75;
+        }
+
+        /* Split Full-Bleed Architectural Experience Section */
+        .experience-split {
+            background: var(--sawade-forest-900);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .experience-photo {
+            position: relative;
+            min-height: 520px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .experience-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .experience-photo-caption {
+            position: absolute;
+            left: 28px;
+            bottom: 24px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(11, 18, 15, 0.78);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(222, 199, 161, 0.35);
+            color: rgba(252, 251, 248, 0.90);
+            font-family: var(--sawade-font-sans);
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .experience-panel {
+            padding: 72px 64px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .experience-panel h2 {
             font-family: var(--sawade-font-display);
+            font-size: clamp(2.1rem, 3.2vw, 3.1rem);
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            line-height: 1.18;
             color: #fff;
-            font-size: clamp(1.75rem, 2.8vw, 2.5rem);
-            line-height: 1.2;
         }
 
-        .home-editorial-banner p {
-            color: rgba(255, 255, 255, 0.78);
-            max-width: 560px;
+        .experience-panel h2 em {
+            font-family: var(--sawade-font-italic);
+            font-style: italic;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            color: #C8A27A;
         }
 
-        @@media (max-width: 767.98px) {
-            .home-category-card {
-                height: 260px;
+        .experience-list {
+            list-style: none;
+            padding: 0;
+            margin: 28px 0 36px;
+            border-top: 1px solid rgba(246, 242, 234, 0.14);
+        }
+
+        .experience-list li {
+            display: flex;
+            align-items: baseline;
+            gap: 18px;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(246, 242, 234, 0.14);
+            font-family: var(--sawade-font-sans);
+            font-size: 0.92rem;
+            line-height: 1.7;
+            color: rgba(246, 242, 234, 0.82);
+        }
+
+        .experience-list .exp-idx {
+            font-family: var(--sawade-font-display);
+            font-size: 1.3rem;
+            color: #C8A27A;
+            flex: 0 0 28px;
+        }
+
+        @@media (max-width: 991.98px) {
+            .pillar-cell {
+                border-right: 0;
+                border-bottom: 1px solid var(--sawade-line);
+                padding: 20px 0;
             }
-            .home-editorial-banner {
-                padding: 30px 24px;
-                border-radius: 22px;
+            .pillar-cell:last-child {
+                border-bottom: 0;
+            }
+            .experience-photo {
+                min-height: 320px;
+            }
+            .experience-panel {
+                padding: 44px 24px;
+            }
+            .home-category-card {
+                height: 340px;
+            }
+            .luxury-quote-card {
+                padding: 44px 24px;
             }
         }
     </style>
@@ -200,110 +410,149 @@
     </div>
 }
 
-<section class="hero-banner" style="background-image: url('https://images.unsplash.com/photo-1542314831-c6a4d27ce66f?q=80&w=2000&auto=format&fit=crop');">
-    <div class="container hero-content">
-        <div class="col-lg-8 col-xl-7 hero-copy">
-            <p class="hero-eyebrow text-uppercase mb-3">SAWADE HOTELS &amp; RESORTS &middot; STAY DIFFERENT</p>
+<!-- CINEMATIC FULL-VIEWPORT HERO WITH LOCAL HIGH-RES PHOTOGRAPHY -->
+<section class="hero-cinema" aria-label="Giới thiệu SAWADE Hotels & Resorts">
+    <div class="hero-slides" id="sawadeHeroSlides" aria-hidden="true">
+        <div class="hero-slide is-active" style="background-image: url('@Url.Content("~/images/201.jpg")');"></div>
+        <div class="hero-slide" style="background-image: url('@Url.Content("~/images/102.jpg")');"></div>
+        <div class="hero-slide" style="background-image: url('@Url.Content("~/images/208.jpg")');"></div>
+    </div>
+    <div class="hero-vignette" aria-hidden="true"></div>
 
-            <h1 class="hero-title mb-3">Chạm vào một nhịp nghỉ dưỡng khác biệt</h1>
+    <div class="hero-body">
+        <div class="container">
+            <div class="row align-items-end justify-content-between g-4">
+                <div class="col-lg-8 col-xl-7">
+                    <p class="hero-eyebrow mb-4">SAWADE HOTELS &amp; RESORTS &middot; PRIVATE SANCTUARY</p>
+                    <h1 class="hero-title mb-0">
+                        Nghệ thuật của sự <em>tĩnh lặng</em><br />&amp; lưu trú tinh tế
+                    </h1>
+                    <p class="hero-description">
+                        Kiến trúc tiết chế, ánh sáng tự nhiên và dịch vụ đón tiếp chuẩn mực — mỗi căn phòng tại SAWADE là một khoảng lặng riêng tư dành trọn cho kỳ nghỉ của bạn.
+                    </p>
+                    <div class="hero-actions">
+                        <a asp-controller="Home" asp-action="DanhSachPhong" class="hero-cta-primary">
+                            Khám phá bộ sưu tập phòng <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+                        </a>
+                        <a href="#loai-phong" class="hero-cta-secondary">
+                            Xem hạng phòng
+                        </a>
+                    </div>
+                </div>
 
-            <p class="hero-description">
-                Không chỉ là một căn phòng để dừng chân. SAWADE kiến tạo không gian yên tĩnh, chỉn chu và đủ riêng tư để mỗi kỳ nghỉ của bạn đều trọn vẹn.
-            </p>
+                <div class="col-lg-4 d-none d-lg-flex justify-content-end">
+                    <div class="hero-slide-controls" role="tablist" aria-label="Chuyển ảnh không gian">
+                        <button type="button" class="hero-slide-btn is-active" data-hero-index="0" aria-selected="true">
+                            <span>01 &middot; Hướng biển</span><span class="slide-bar"></span>
+                        </button>
+                        <button type="button" class="hero-slide-btn" data-hero-index="1" aria-selected="false">
+                            <span>02 &middot; Không gian gỗ</span><span class="slide-bar"></span>
+                        </button>
+                        <button type="button" class="hero-slide-btn" data-hero-index="2" aria-selected="false">
+                            <span>03 &middot; Suite riêng tư</span><span class="slide-bar"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <div class="hero-actions position-relative" style="z-index: 10;">
-                <a asp-controller="Home" asp-action="DanhSachPhong" class="hero-cta-primary">
-                    Tìm phòng phù hợp <i class="bi bi-arrow-up-right ms-2" aria-hidden="true"></i>
+    <!-- INTEGRATED RESERVATION LEDGER DOCK -->
+    <div class="hero-reservation-dock">
+        <div class="container px-0 px-lg-3">
+            <form asp-controller="Home" asp-action="DanhSachPhong" method="get" class="row g-0 align-items-stretch" data-sawade-busy="Đang tìm phòng...">
+                <div class="col-lg-3 col-md-12 reservation-ledger-cell">
+                    <label>Điểm đến</label>
+                    <div class="text-white fw-medium" style="font-size: 0.94rem; padding-top: 4px;">Khách sạn SAWADE</div>
+                    <div style="font-size: 0.78rem; color: rgba(246, 242, 234, 0.62);">Lịch trống đồng bộ thời gian thực</div>
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-6 reservation-ledger-cell">
+                    <label for="homeNgayNhan">Ngày nhận phòng</label>
+                    <input id="homeNgayNhan" type="date" name="ngayNhan" min="@(DateTime.Today.ToString("yyyy-MM-dd"))" class="form-control reservation-ledger-input" required />
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-6 reservation-ledger-cell">
+                    <label for="homeNgayTra">Ngày trả phòng</label>
+                    <input id="homeNgayTra" type="date" name="ngayTra" min="@(DateTime.Today.AddDays(1).ToString("yyyy-MM-dd"))" class="form-control reservation-ledger-input" required />
+                </div>
+
+                <div class="col-lg-2 col-md-4 col-12 reservation-ledger-cell">
+                    <label for="homeGuests">Số khách</label>
+                    <select id="homeGuests" name="soKhach" class="form-select reservation-ledger-input" aria-label="Số khách">
+                        <option value="">Tất cả sức chứa</option>
+                        @for (int guests = 1; guests <= 6; guests++)
+                        {
+                            <option value="@guests">@guests khách</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-12">
+                    <button type="submit" class="reservation-ledger-submit">
+                        Kiểm tra phòng trống <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- PHẦN 1: TUYÊN NGÔN THƯƠNG HIỆU & 4 CHUẨN MỰC VẬN HÀNH -->
+<section class="editorial-manifesto">
+    <div class="container">
+        <div class="row g-4 align-items-end justify-content-between reveal-up">
+            <div class="col-lg-7">
+                <p class="section-eyebrow mb-3">TRIẾT LÝ LƯU TRÚ SAWADE</p>
+                <h2 class="manifesto-quote mb-0">
+                    Không gian được đo đạc cho những <em>khoảng lặng</em>, nơi mọi chi tiết vận hành đều minh bạch và chỉn chu.
+                </h2>
+            </div>
+            <div class="col-lg-4">
+                <p class="luxe-lead mb-3">
+                    Từ khoảnh khắc tra cứu lịch trống theo ngày đến lúc nhận phòng tại quầy, toàn bộ hệ thống website và lễ tân SAWADE đồng bộ trên một nguồn dữ liệu duy nhất.
+                </p>
+                <a asp-controller="Home" asp-action="HuongDan" class="home-editorial-link">
+                    Quy trình đặt phòng <i class="bi bi-arrow-right" aria-hidden="true"></i>
                 </a>
-                <a href="#loai-phong" class="hero-cta-secondary">
-                    <i class="bi bi-compass me-2" aria-hidden="true"></i>Khám phá hạng phòng
-                </a>
+            </div>
+        </div>
+
+        <div class="pillar-ledger row g-0 reveal-up">
+            <div class="col-md-6 col-lg-3 pillar-cell">
+                <span class="pillar-num">01</span>
+                <div class="pillar-title">Xác minh chống trùng lịch</div>
+                <p class="pillar-desc">Kiểm tra trùng lịch ngày nhận – trả trực tiếp trên hệ thống trước khi ghi nhận đơn.</p>
+            </div>
+            <div class="col-md-6 col-lg-3 pillar-cell ps-lg-4">
+                <span class="pillar-num">02</span>
+                <div class="pillar-title">Lễ tân đồng hành 24/7</div>
+                <p class="pillar-desc">Tiếp nhận yêu cầu tức thời, hỗ trợ nhận phòng và dịch vụ phát sinh linh hoạt.</p>
+            </div>
+            <div class="col-md-6 col-lg-3 pillar-cell ps-lg-4">
+                <span class="pillar-num">03</span>
+                <div class="pillar-title">Kiến trúc riêng tư</div>
+                <p class="pillar-desc">Vật liệu ấm áp, bố trí khoa học với đa dạng hạng phòng từ tiêu chuẩn đến VIP.</p>
+            </div>
+            <div class="col-md-6 col-lg-3 pillar-cell ps-lg-4">
+                <span class="pillar-num">04</span>
+                <div class="pillar-title">Biểu giá niêm yết rõ ràng</div>
+                <p class="pillar-desc">Đơn giá phòng và bảng giá dịch vụ đồng bộ trực tiếp từ hệ thống quản trị khách sạn.</p>
             </div>
         </div>
     </div>
 </section>
 
-<div class="search-shell container">
-    <div class="floating-search-bar">
-        <form asp-controller="Home" asp-action="DanhSachPhong" method="get" class="row align-items-center g-2" data-sawade-busy="Đang tìm phòng...">
-            <div class="col-lg-2 col-md-12 px-lg-3 px-2 py-2">
-                <label class="text-muted small fw-semibold mb-1 d-block">
-                    <i class="bi bi-buildings me-1 text-gold" aria-hidden="true"></i>Điểm đến
-                </label>
-                <div class="fw-bold" style="color: var(--sawade-forest-950);">Khách sạn SAWADE</div>
-                <div class="text-muted small">Phòng đồng bộ trực tiếp</div>
-            </div>
-
-            <div class="col-lg-3 col-md-4 col-6 home-search-divider px-lg-3 px-2 py-2">
-                <label class="text-muted small fw-semibold mb-1 d-block" for="homeNgayNhan">
-                    <i class="bi bi-calendar-check me-1 text-gold" aria-hidden="true"></i>Ngày nhận phòng
-                </label>
-                <input id="homeNgayNhan" type="date" name="ngayNhan" min="@(DateTime.Today.ToString("yyyy-MM-dd"))" class="form-control search-input" required />
-            </div>
-
-            <div class="col-lg-3 col-md-4 col-6 home-search-divider px-lg-3 px-2 py-2">
-                <label class="text-muted small fw-semibold mb-1 d-block" for="homeNgayTra">
-                    <i class="bi bi-calendar-x me-1 text-gold" aria-hidden="true"></i>Ngày trả phòng
-                </label>
-                <input id="homeNgayTra" type="date" name="ngayTra" min="@(DateTime.Today.AddDays(1).ToString("yyyy-MM-dd"))" class="form-control search-input" required />
-            </div>
-
-            <div class="col-lg-2 col-md-4 col-12 home-search-divider px-lg-3 px-2 py-2">
-                <label class="text-muted small fw-semibold mb-1 d-block" for="homeGuests">
-                    <i class="bi bi-people me-1 text-gold" aria-hidden="true"></i>Số khách
-                </label>
-                <select id="homeGuests" name="soKhach" class="form-select search-input" aria-label="Số khách">
-                    <option value="">Tất cả</option>
-                    @for (int guests = 1; guests <= 6; guests++)
-                    {
-                        <option value="@guests">@guests người</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-lg-2 col-12 px-lg-3 px-2 py-2">
-                <button type="submit" class="btn btn-sawade-primary w-100 rounded-pill py-3">
-                    <i class="bi bi-search me-2" aria-hidden="true"></i>Tìm phòng
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="container home-content-wrap">
-    <!-- 4 GIÁ TRỊ CAM KẾT -->
-    <section class="trust-strip row g-3" aria-label="Cam kết dịch vụ">
-        <div class="col-6 col-md-3">
-            <i class="bi bi-shield-check trust-icon" aria-hidden="true"></i>
-            <strong>Đặt phòng an tâm</strong>
-            <small>Xác minh chống trùng lịch tức thì</small>
-        </div>
-        <div class="col-6 col-md-3">
-            <i class="bi bi-headset trust-icon" aria-hidden="true"></i>
-            <strong>Hỗ trợ tận tâm</strong>
-            <small>Lễ tân đồng hành trong suốt kỳ nghỉ</small>
-        </div>
-        <div class="col-6 col-md-3">
-            <i class="bi bi-stars trust-icon" aria-hidden="true"></i>
-            <strong>Không gian chỉn chu</strong>
-            <small>Thiết kế ấm áp, tiện nghi đầy đủ</small>
-        </div>
-        <div class="col-6 col-md-3">
-            <i class="bi bi-tags trust-icon" aria-hidden="true"></i>
-            <strong>Giá minh bạch</strong>
-            <small>Niêm yết trực tiếp theo hệ thống</small>
-        </div>
-    </section>
-
-    <!-- KHU VỰC 1: KHÁM PHÁ THEO HẠNG PHÒNG -->
-    <section id="loai-phong" class="mb-5 pb-lg-3">
-        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+<!-- PHẦN 2: BỘ SƯU TẬP THEO HẠNG PHÒNG -->
+<section id="loai-phong" class="home-section-band">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-5 reveal-up">
             <div>
-                <p class="section-eyebrow mb-2">Tìm không gian phù hợp</p>
+                <p class="section-eyebrow mb-2">THE COLLECTION</p>
                 <h2 class="section-heading mb-0">Khám phá theo hạng phòng</h2>
             </div>
-            <a asp-controller="Home" asp-action="DanhSachPhong" class="home-section-link">
-                Xem tất cả phòng <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            <a asp-controller="Home" asp-action="DanhSachPhong" class="home-editorial-link">
+                Xem toàn bộ phòng <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
         </div>
 
@@ -320,7 +569,7 @@
                 .Take(6)
                 .ToList();
 
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 reveal-up">
                 @foreach (var item in roomTypeGroups)
                 {
                     var typeRoom = item.Representative;
@@ -335,12 +584,12 @@
                     <div class="col">
                         <a class="home-category-card" href="@(Url.Action("DanhSachPhong", "Home", new { loaiPhong = typeRoom.LoaiPhongId }))">
                             <img src="@imagePath" alt="@HienThiPhong.TenLoai(typeRoom.TenLoaiPhong)" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='@fallback';" />
-                            <span class="home-category-badge">@item.Count phòng hiện có</span>
+                            <span class="home-category-count">@item.Count.ToString("D2") PHÒNG</span>
                             <div class="home-category-overlay">
                                 <h3>@HienThiPhong.TenLoai(typeRoom.TenLoaiPhong)</h3>
                                 <div class="home-category-meta">
                                     <span>Từ <span class="home-category-price">@item.MinPrice.ToString("#,##0") đ</span> / đêm</span>
-                                    <span>Khám phá <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></span>
+                                    <span style="letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.74rem;">Khám phá <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></span>
                                 </div>
                             </div>
                         </a>
@@ -350,28 +599,44 @@
         }
         else
         {
-            <div class="bg-white rounded-4 p-5 text-center border text-muted">
+            <div class="bg-white p-5 text-center border rounded-4 text-muted">
                 @(ViewBag.ApiError != null ? "Không tải được hạng phòng do kết nối API gián đoạn." : "Hiện chưa có dữ liệu hạng phòng để hiển thị.")
             </div>
         }
-    </section>
+    </div>
+</section>
 
-    <!-- KHU VỰC 2: NHỮNG CĂN PHÒNG NỔI BẬT -->
-    <section id="phong-noi-bat" class="mt-5 mb-5">
-        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+<!-- DẢI TRÍCH DẪN CHỮ NGHIÊNG SANG TRỌNG (ĐIỂM NHẤN LORA ITALIC) -->
+<section class="luxury-quote-section reveal-up">
+    <div class="container">
+        <div class="luxury-quote-card text-center">
+            <p class="luxury-quote-text">
+                Trải nghiệm trọn vẹn sự tinh tế và thư thái tại SAWADE Luxury Resort
+            </p>
+            <p class="luxury-quote-sub">
+                Từ không gian nghỉ dưỡng chan hòa ánh sáng đến phong cách phục vụ tận tâm — mọi khoảnh khắc lưu trú đều được chăm chút để trở thành kỷ niệm đáng nhớ.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- PHẦN 3: NHỮNG CĂN PHÒNG NỔI BẬT -->
+<section id="phong-noi-bat" class="home-section-band home-section-band--tinted">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-5 reveal-up">
             <div>
-                <p class="section-eyebrow mb-2">Lựa chọn dành cho bạn</p>
-                <h2 class="section-heading mb-1">Những căn phòng nổi bật</h2>
-                <p class="text-muted mb-0">Thông tin tình trạng và mức giá được đồng bộ trực tiếp từ hệ thống quản lý.</p>
+                <p class="section-eyebrow mb-2">SIGNATURE RESIDENCES</p>
+                <h2 class="section-heading mb-2">Những căn phòng nổi bật</h2>
+                <p class="luxe-lead mb-0">Trạng thái phòng và đơn giá được cập nhật trực tiếp từ hệ thống quản lý khách sạn.</p>
             </div>
-            <a asp-controller="Home" asp-action="DanhSachPhong" class="home-section-link">
+            <a asp-controller="Home" asp-action="DanhSachPhong" class="home-editorial-link">
                 Danh sách đầy đủ <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
         </div>
 
         @if (rooms.Any())
         {
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 reveal-up">
                 @foreach (var room in rooms.Take(6))
                 {
                     var roomNumber = (room.SoPhong ?? string.Empty).Trim();
@@ -390,30 +655,28 @@
                         <article class="room-card d-flex flex-column h-100">
                             <div class="room-image-wrapper">
                                 <img src="@imagePath" alt="Phòng @room.SoPhong" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='@fallback';" />
-                                <span class="home-room-badge">@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
+                                <span class="home-room-tag">@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
                             </div>
                             <div class="card-body p-4 d-flex flex-column flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                    <h3 class="h5 fw-bold mb-0" style="color: var(--sawade-forest-950);">Phòng @room.SoPhong</h3>
-                                    <span class="room-status @statusClass">
-                                        <i class="bi @(isAvailable ? "bi-check-circle-fill" : "bi-info-circle-fill")" aria-hidden="true"></i>@statusText
-                                    </span>
+                                    <h3 class="editorial-serif mb-0" style="font-size: 1.6rem; color: var(--sawade-forest-950);">Phòng @room.SoPhong</h3>
+                                    <span class="room-status @statusClass">@statusText</span>
                                 </div>
 
-                                <div class="d-flex flex-wrap gap-3 text-muted small mb-3 mt-1">
-                                    <span><i class="bi bi-building me-1 text-gold" aria-hidden="true"></i>@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
+                                <div class="d-flex flex-wrap gap-3 text-muted small mb-4 mt-1">
+                                    <span>@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
                                     @if (room.SoNguoiToiDa.HasValue)
                                     {
-                                        <span><i class="bi bi-people me-1 text-gold" aria-hidden="true"></i>Tối đa @room.SoNguoiToiDa khách</span>
+                                        <span>&middot; Tối đa @room.SoNguoiToiDa khách</span>
                                     }
                                 </div>
 
                                 <div class="mt-auto d-flex justify-content-between align-items-end gap-2 border-top pt-3">
                                     <div>
-                                        <span class="text-muted small d-block">Giá mỗi đêm</span>
+                                        <span class="text-muted d-block" style="font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;">Giá mỗi đêm</span>
                                         <strong class="room-price">@room.GiaPhong.ToString("#,##0") đ</strong>
                                     </div>
-                                    <a asp-controller="Home" asp-action="ChiTietPhong" asp-route-id="@room.PhongId" class="btn btn-sawade-primary rounded-pill px-4">
+                                    <a asp-controller="Home" asp-action="ChiTietPhong" asp-route-id="@room.PhongId" class="btn btn-sawade-primary btn-sm">
                                         Chi tiết <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
                                     </a>
                                 </div>
@@ -425,39 +688,91 @@
         }
         else
         {
-            <div class="bg-white rounded-4 p-5 text-center border shadow-sm">
+            <div class="bg-white p-5 text-center border rounded-4">
                 <div class="sawade-empty-icon mb-3"><i class="bi bi-house-x" aria-hidden="true"></i></div>
-                <h5 class="fw-bold">@(ViewBag.ApiError != null ? "Không tải được dữ liệu phòng" : "Chưa có phòng để hiển thị")</h5>
+                <h5 class="editorial-serif h4">@(ViewBag.ApiError != null ? "Không tải được dữ liệu phòng" : "Chưa có phòng để hiển thị")</h5>
                 <p class="text-muted mb-0">@(ViewBag.ApiError != null ? "Vui lòng kiểm tra kết nối API và thử tải lại trang." : "Dữ liệu phòng chưa có trong hệ thống. Vui lòng quay lại sau.")</p>
             </div>
         }
-    </section>
+    </div>
+</section>
 
-    <!-- KHU VỰC 3: BANNER TRẢI NGHIỆM & DỊCH VỤ -->
-    <section class="mb-5 pb-3">
-        <div class="home-editorial-banner">
-            <div class="row align-items-center g-4">
-                <div class="col-lg-8">
-                    <div class="hero-eyebrow mb-2">SAWADE EXPERIENCE</div>
-                    <h2 class="mb-3">Trọn vẹn từng khoảnh khắc lưu trú với tiện ích đi kèm</h2>
-                    <p class="mb-0">Từ dịch vụ ẩm thực, giặt ủi đến hỗ trợ nhận trả phòng linh hoạt — mọi yêu cầu đều được lễ tân tiếp nhận và cập nhật minh bạch ngay trên hồ sơ đặt phòng của bạn.</p>
+<!-- PHẦN 4: TRẢI NGHIỆM & DỊCH VỤ (SPLIT EDITORIAL FULL-BLEED) -->
+<section class="experience-split reveal-up">
+    <div class="container-fluid px-0">
+        <div class="row g-0 align-items-stretch">
+            <div class="col-lg-6">
+                <div class="experience-photo">
+                    <img src="@Url.Content("~/images/102.jpg")" alt="Không gian nội thất SAWADE" loading="lazy" decoding="async" />
+                    <div class="experience-photo-caption">SAWADE &middot; BESPOKE HOSPITALITY</div>
                 </div>
-                <div class="col-lg-4 d-flex flex-wrap justify-content-lg-end gap-2">
-                    <a asp-controller="Home" asp-action="DichVu" class="hero-cta-primary">
-                        Xem dịch vụ <i class="bi bi-cup-hot ms-2" aria-hidden="true"></i>
-                    </a>
-                    <a asp-controller="Home" asp-action="HuongDan" class="hero-cta-secondary">
-                        Hướng dẫn đặt
-                    </a>
+            </div>
+            <div class="col-lg-6">
+                <div class="experience-panel h-100">
+                    <div class="hero-eyebrow mb-3">SAWADE CONCIERGE</div>
+                    <h2 class="mb-3">Trọn vẹn từng khoảnh khắc với <em>dịch vụ đi kèm</em></h2>
+                    <p style="color: rgba(246, 242, 234, 0.76); max-width: 500px; font-size: 0.94rem; line-height: 1.78;">
+                        Mọi yêu cầu bổ sung trong thời gian lưu trú được đội ngũ lễ tân tiếp nhận trực tiếp và ghi nhận minh bạch trên hóa đơn trả phòng của bạn.
+                    </p>
+
+                    <ul class="experience-list">
+                        <li>
+                            <span class="exp-idx">01</span>
+                            <span><strong>Ẩm thực &amp; Bữa sáng</strong> — Phục vụ tinh tế theo khẩu vị tại nhà hàng hoặc trực tiếp tại phòng.</span>
+                        </li>
+                        <li>
+                            <span class="exp-idx">02</span>
+                            <span><strong>Giặt ủi &amp; Chăm sóc trang phục</strong> — Xử lý nhanh trong ngày, đảm bảo chỉn chu cho mọi lịch trình.</span>
+                        </li>
+                        <li>
+                            <span class="exp-idx">03</span>
+                            <span><strong>Hỗ trợ lễ tân &amp; Tra cứu 24/7</strong> — Theo dõi tiến độ đơn và in phiếu xác nhận ngay trên tài khoản thành viên.</span>
+                        </li>
+                    </ul>
+
+                    <div class="d-flex flex-wrap gap-3">
+                        <a asp-controller="Home" asp-action="DichVu" class="hero-cta-primary">
+                            Khám phá dịch vụ <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+                        </a>
+                        <a asp-controller="Home" asp-action="HuongDan" class="hero-cta-secondary">
+                            Hướng dẫn đặt phòng
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
-</div>
+    </div>
+</section>
 
 @section Scripts {
     <script>
         (() => {
+            // 1. Editorial Hero Slideshow (3 local signature photos)
+            const slides = [...document.querySelectorAll('#sawadeHeroSlides .hero-slide')];
+            const buttons = [...document.querySelectorAll('[data-hero-index]')];
+            if (slides.length > 1) {
+                let current = 0;
+                const setActive = (idx) => {
+                    current = idx % slides.length;
+                    slides.forEach((s, i) => s.classList.toggle('is-active', i === current));
+                    buttons.forEach((b, i) => {
+                        const active = i === current;
+                        b.classList.toggle('is-active', active);
+                        b.setAttribute('aria-selected', String(active));
+                    });
+                };
+                let timer = window.setInterval(() => setActive(current + 1), 6500);
+                buttons.forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const idx = Number(btn.getAttribute('data-hero-index') || 0);
+                        setActive(idx);
+                        window.clearInterval(timer);
+                        timer = window.setInterval(() => setActive(current + 1), 6500);
+                    });
+                });
+            }
+
+            // 2. Date validation on Hero Reservation Dock
             const checkIn = document.getElementById('homeNgayNhan');
             const checkOut = document.getElementById('homeNgayTra');
             if (!checkIn || !checkOut) return;

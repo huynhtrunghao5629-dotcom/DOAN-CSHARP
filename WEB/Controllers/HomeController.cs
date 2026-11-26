@@ -251,6 +251,7 @@ namespace QuanLyKhachSan.Web.Controllers
                 ViewBag.NgayTra = ngayTra;
                 ViewBag.SoKhach = soKhach;
                 ViewData["NavbarOverlay"] = false;
+                ViewBag.LichDaDat = await GetBookedDateRangesAsync(id);
                 return View(room);
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
@@ -300,10 +301,10 @@ namespace QuanLyKhachSan.Web.Controllers
             }
 
             if (!NgayNhan.HasValue || !NgayTra.HasValue ||
-                    NgayNhan.Value.Date < DateTime.Today ||
-                    NgayTra.Value <= NgayNhan.Value)
+                            NgayNhan.Value.Date < DateTime.Today ||
+                            NgayTra.Value.Date <= NgayNhan.Value.Date)
             {
-                TempData["Loi"] = "Thời gian nhận phòng không hợp lệ hoặc thời gian trả phòng phải sau thời gian nhận phòng.";
+                TempData["Loi"] = "Ngày nhận phòng phải từ hôm nay trở đi và ngày trả phòng phải sau ngày nhận phòng ít nhất 1 đêm.";
                 return QuayLaiChiTiet();
             }
 
@@ -343,24 +344,11 @@ namespace QuanLyKhachSan.Web.Controllers
                 }
 
                 // === BƯỚC 2: KIỂM TRA TRÙNG LỊCH TRONG TƯƠNG LAI ===
-                var ngayNhan = DateOnly.FromDateTime(NgayNhan.Value.Date);
-                var ngayTra = DateOnly.FromDateTime(NgayTra.Value.Date);
-                var availabilityUrl = $"api/Phong/tim-kiem?ngayNhan={ngayNhan:yyyy-MM-dd}&ngayTra={ngayTra:yyyy-MM-dd}";
-                var availableRooms = await GetRoomsAsync(availabilityUrl);
-
-                if (!availableRooms.Any(p => p.PhongId == PhongId))
-                {
-                    TempData["Loi"] = "Phòng này đã có người đặt trong khoảng thời gian bạn chọn. Vui lòng chọn ngày khác.";
-                    return QuayLaiChiTiet();
-                }
-
-                // Dùng mã khách hàng đã xác thực trong cookie, không tạo hồ sơ khách khác
-                // từ thông tin tùy ý nhập trên form.
                 var bookingPayload = new
                 {
                     KhachHangId = khachHangId,
-                    NgayNhan = NgayNhan.Value,
-                    NgayTra = NgayTra.Value,
+                    NgayNhan = NgayNhan.Value.Date,
+                    NgayTra = NgayTra.Value.Date,
                     SoKhach = SoKhach,
                     DanhSachPhongId = new List<int> { PhongId }
                 };
@@ -368,7 +356,6 @@ namespace QuanLyKhachSan.Web.Controllers
                 using var bookingResponse = await _client.PostAsJsonAsync("api/DatPhong", bookingPayload);
                 if (bookingResponse.IsSuccessStatusCode)
                 {
-                    // Read the booking ID returned from API, not from the customer object.
                     var bookingJson = await bookingResponse.Content.ReadAsStringAsync();
                     var bookingId = TryReadIdFromNamedProperty(bookingJson, "datPhongId");
                     if (bookingId.HasValue)
@@ -378,9 +365,13 @@ namespace QuanLyKhachSan.Web.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
+                var apiMessage = (await bookingResponse.Content.ReadAsStringAsync()).Trim().Trim('"');
                 TempData["Loi"] = bookingResponse.StatusCode switch
                 {
-                    HttpStatusCode.BadRequest or HttpStatusCode.Conflict => "Thông tin đặt phòng không hợp lệ hoặc phòng vừa được người khác đặt. Vui lòng kiểm tra lại ngày lưu trú.",
+                    HttpStatusCode.BadRequest or HttpStatusCode.Conflict =>
+                        !string.IsNullOrWhiteSpace(apiMessage) && apiMessage.Length < 300
+                            ? apiMessage
+                            : "Phòng này đã có người đặt trong khoảng ngày bạn chọn. Vui lòng chọn ngày khác.",
                     HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => "Không có quyền đặt phòng. Vui lòng đăng nhập lại.",
                     _ => "Không thể đặt phòng lúc này. Vui lòng thử lại hoặc liên hệ lễ tân."
                 };
@@ -460,6 +451,30 @@ namespace QuanLyKhachSan.Web.Controllers
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<List<PhongViewModel>>()
                    ?? new List<PhongViewModel>();
+        }
+
+        private async Task<List<string>> GetBookedDateRangesAsync(int phongId)
+        {
+            try
+            {
+                using var response = await _client.GetAsync($"api/Phong/{phongId}/lich-dat");
+                if (!response.IsSuccessStatusCode) return new();
+                var items = await response.Content.ReadFromJsonAsync<List<LichDatPhongDto>>() ?? new();
+                return items
+                    .Select(x => $"{x.NgayNhan:dd/MM/yyyy} → {x.NgayTra:dd/MM/yyyy}")
+                    .Distinct()
+                    .ToList();
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+            {
+                return new();
+            }
+        }
+
+        private sealed class LichDatPhongDto
+        {
+            public DateTime NgayNhan { get; set; }
+            public DateTime NgayTra { get; set; }
         }
 
 

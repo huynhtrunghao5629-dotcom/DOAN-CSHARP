@@ -5,41 +5,44 @@
 
 @section Styles {
     <style>
-        .guide-step {
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+        .guide-timeline {
+            border-top: 1px solid var(--sawade-line-strong);
+            border-bottom: 1px solid var(--sawade-line-strong);
+            background: var(--sawade-ivory-50);
         }
 
-        .guide-step::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 28px;
-            right: 28px;
-            height: 2px;
-            background: linear-gradient(90deg, var(--sawade-gold-400), transparent);
+        .guide-step-col {
+            padding: 36px 32px;
+            border-right: 1px solid var(--sawade-line);
         }
 
-        .guide-step-icon {
-            color: var(--sawade-gold-500);
-            font-size: 1.2rem;
+        .guide-step-col:last-child {
+            border-right: 0;
         }
 
         .guide-tip-card {
-            padding: 22px 24px;
-            border-radius: 20px;
-            border: 1px solid var(--sawade-line);
+            padding: 24px 26px;
+            border: 1px solid var(--sawade-line-strong);
+            border-left: 3px solid var(--sawade-gold-500);
             background: var(--sawade-ivory-50);
-            box-shadow: var(--sawade-shadow-xs);
         }
 
         .accordion-body {
             color: var(--sawade-ink-soft);
-            font-size: 0.92rem;
-            line-height: 1.72;
-            padding: 1rem 1.35rem 1.35rem;
+            font-size: 0.91rem;
+            line-height: 1.78;
+            padding: 0.5rem 0.5rem 1.4rem;
+        }
+
+        @@media (max-width: 767.98px) {
+            .guide-step-col {
+                border-right: 0;
+                border-bottom: 1px solid var(--sawade-line);
+                padding: 26px 20px;
+            }
+            .guide-step-col:last-child {
+                border-bottom: 0;
+            }
         }
     </style>
 }
@@ -47,61 +50,53 @@
 <section class="luxe-page">
     <div class="container" style="max-width: 1080px;">
         <header class="luxe-page-head">
-            <div class="luxe-kicker mb-2">GUEST GUIDE</div>
-            <h1 class="luxe-title display-6 mb-3">Đặt phòng SAWADE chỉ trong vài bước</h1>
+            <div class="luxe-kicker mb-2">GUEST CONCIERGE GUIDE</div>
+            <h1 class="luxe-title mb-3">Đặt phòng SAWADE trong ba bước tinh gọn</h1>
+            <div class="editorial-rule my-3"></div>
             <p class="luxe-lead mb-0">Từ lúc chọn ngày lưu trú đến khi theo dõi xác nhận, mọi thông tin đều minh bạch và đồng bộ trực tiếp trên website.</p>
         </header>
 
-        <div class="row g-4 mb-5 pb-lg-2">
-            <div class="col-md-4">
-                <article class="guide-step">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="guide-step-number mb-0">01</span>
-                        <i class="bi bi-sliders guide-step-icon" aria-hidden="true"></i>
-                    </div>
-                    <h2 class="h5 fw-bold mb-2">Tìm &amp; lọc phòng</h2>
-                    <p class="text-muted small mb-0">Chọn ngày nhận, ngày trả, số khách, hạng phòng và khoảng giá để lọc chính xác những phòng còn trống.</p>
-                </article>
+        <div class="guide-timeline row g-0 mb-5">
+            <div class="col-md-4 guide-step-col">
+                <div class="d-flex justify-content-between align-items-baseline mb-4">
+                    <span class="guide-step-number">01</span>
+                    <span class="luxe-kicker">TRA CỨU</span>
+                </div>
+                <h2 class="editorial-serif h3 mb-2">Tìm &amp; lọc phòng</h2>
+                <p class="text-muted small mb-0" style="line-height: 1.72;">Chọn ngày nhận, ngày trả, số khách, hạng phòng và khoảng giá để lọc chính xác những phòng còn trống theo lịch của bạn.</p>
             </div>
-            <div class="col-md-4">
-                <article class="guide-step">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="guide-step-number mb-0">02</span>
-                        <i class="bi bi-calendar2-check guide-step-icon" aria-hidden="true"></i>
-                    </div>
-                    <h2 class="h5 fw-bold mb-2">Gửi yêu cầu đặt phòng</h2>
-                    <p class="text-muted small mb-0">Đăng nhập tài khoản thành viên, xem thông tin phòng chi tiết, kiểm tra tạm tính và gửi yêu cầu đến hệ thống.</p>
-                </article>
+            <div class="col-md-4 guide-step-col">
+                <div class="d-flex justify-content-between align-items-baseline mb-4">
+                    <span class="guide-step-number">02</span>
+                    <span class="luxe-kicker">XÁC NHẬN</span>
+                </div>
+                <h2 class="editorial-serif h3 mb-2">Gửi yêu cầu đặt phòng</h2>
+                <p class="text-muted small mb-0" style="line-height: 1.72;">Đăng nhập tài khoản thành viên, kiểm tra lịch đã đặt, xem tổng tiền tạm tính và gửi yêu cầu trực tiếp đến hệ thống.</p>
             </div>
-            <div class="col-md-4">
-                <article class="guide-step">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="guide-step-number mb-0">03</span>
-                        <i class="bi bi-file-earmark-check guide-step-icon" aria-hidden="true"></i>
-                    </div>
-                    <h2 class="h5 fw-bold mb-2">Theo dõi trạng thái</h2>
-                    <p class="text-muted small mb-0">Nhận mã đơn ngay lập tức, theo dõi tiến độ xác nhận và in phiếu thông tin trong mục Tài khoản của tôi.</p>
-                </article>
+            <div class="col-md-4 guide-step-col">
+                <div class="d-flex justify-content-between align-items-baseline mb-4">
+                    <span class="guide-step-number">03</span>
+                    <span class="luxe-kicker">THEO DÕI</span>
+                </div>
+                <h2 class="editorial-serif h3 mb-2">Nhận mã &amp; In phiếu</h2>
+                <p class="text-muted small mb-0" style="line-height: 1.72;">Nhận mã đơn ngay lập tức, theo dõi tiến độ duyệt của lễ tân và in phiếu thông tin khổ A4 trong mục Tài khoản của tôi.</p>
             </div>
         </div>
 
-        <div class="row g-4 g-lg-5 align-items-start">
+        <div class="row g-4 g-lg-5 align-items-start pt-3">
             <div class="col-lg-4">
-                <div class="luxe-kicker mb-2">FAQ</div>
-                <h2 class="luxe-title h2 mb-3">Câu hỏi thường gặp</h2>
+                <div class="luxe-kicker mb-2">FREQUENTLY ASKED</div>
+                <h2 class="editorial-serif h1 mb-3">Câu hỏi thường gặp</h2>
                 <p class="luxe-lead small mb-4">Giải đáp nhanh những tình huống phổ biến trong quá trình tra cứu và đặt phòng tại SAWADE.</p>
 
                 <div class="guide-tip-card">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-clock-history text-gold" aria-hidden="true"></i>
-                        <strong class="small" style="color: var(--sawade-forest-950);">Mẹo đặt phòng nhanh</strong>
-                    </div>
-                    <p class="text-muted small mb-0">Hãy đăng nhập trước khi chọn phòng để hệ thống tự điền thông tin liên hệ và lưu lịch sử đơn ngay lập tức.</p>
+                    <div class="luxe-kicker mb-2">LƯU Ý ĐẶT PHÒNG NHANH</div>
+                    <p class="text-muted small mb-0" style="line-height: 1.7;">Đăng nhập tài khoản thành viên trước khi chọn phòng để hệ thống tự động điền thông tin liên hệ và lưu lịch sử đơn ngay lập tức.</p>
                 </div>
             </div>
 
             <div class="col-lg-8">
-                <div class="accordion" id="sawadeFaq">
+                <div class="accordion accordion-flush" id="sawadeFaq">
                     <div class="accordion-item">
                         <h3 class="accordion-header">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
@@ -149,7 +144,7 @@
                         </h3>
                         <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#sawadeFaq">
                             <div class="accordion-body">
-                                Hãy thử thay đổi khoảng ngày lưu trú, điều chỉnh số lượng khách hoặc bấm <strong>Xóa bộ lọc</strong>. Nếu vẫn chưa thấy phòng, các hạng phòng bạn chọn có thể đã kín lịch trong giai đoạn đó.
+                                Hãy thử thay đổi khoảng ngày lưu trú, điều chỉnh số lượng khách hoặc bấm <strong>Xóa bộ lọc</strong>. Nếu vẫn chưa thấy phòng, các hạng phòng bạn chọn có thể đã có lịch đặt trùng trong khoảng ngày đó.
                             </div>
                         </div>
                     </div>
@@ -157,9 +152,9 @@
             </div>
         </div>
 
-        <div class="text-center mt-5 pt-2">
-            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary rounded-pill px-5 py-3">
-                Bắt đầu tìm phòng <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+        <div class="text-center mt-5 pt-3">
+            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary btn-lg">
+                Bắt đầu tìm phòng <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
             </a>
         </div>
     </div>

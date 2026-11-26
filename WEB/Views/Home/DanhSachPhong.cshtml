@@ -36,30 +36,34 @@
 
     var fallbackImgs = new[]
     {
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1618773928120-22165582f349?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80"
+        Url.Content("~/images/102.jpg"),
+        Url.Content("~/images/201.jpg"),
+        Url.Content("~/images/208.jpg"),
+        Url.Content("~/images/301.jpg"),
+        Url.Content("~/images/106.jpg")
     };
 }
 
 @section Styles {
     <style>
         .rooms-page {
-            min-height: 80vh;
-            padding: 44px 0 84px;
+            min-height: 82vh;
+            padding: 52px 0 92px;
         }
 
         .rooms-filter {
             position: sticky;
-            top: 98px;
+            top: 102px;
+            padding: 28px 24px;
+            background: var(--sawade-ivory-50);
+            border: 1px solid var(--sawade-line-strong);
+            border-top: 2px solid var(--sawade-forest-900);
         }
 
         .filter-section {
-            padding-bottom: 16px;
-            margin-bottom: 16px;
-            border-bottom: 1px dashed var(--sawade-line);
+            padding-bottom: 18px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--sawade-line);
         }
 
         .filter-section:last-of-type {
@@ -67,42 +71,34 @@
             padding-bottom: 0;
         }
 
-        .filter-label {
-            display: block;
-            font-size: 0.80rem;
+        .filter-count-tag {
+            padding: 3px 9px;
+            background: var(--sawade-forest-900);
+            color: var(--sawade-gold-300);
+            font-size: 0.66rem;
             font-weight: 600;
-            color: var(--sawade-ink-soft);
-            margin-bottom: 7px;
-        }
-
-        .filter-count-pill {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: var(--sawade-gold-100);
-            color: var(--sawade-gold-600);
-            font-size: 0.72rem;
-            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
         }
 
         .rooms-header-bar {
-            padding-bottom: 22px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--sawade-line);
+            padding-bottom: 24px;
+            margin-bottom: 26px;
+            border-bottom: 1px solid var(--sawade-line-strong);
         }
 
-        .rooms-stat-pill {
+        .rooms-stat-tag {
             display: inline-flex;
             align-items: center;
-            gap: 0.45rem;
-            padding: 8px 14px;
-            border-radius: 999px;
+            gap: 8px;
+            padding: 7px 14px;
             background: var(--sawade-ivory-50);
-            border: 1px solid var(--sawade-line);
+            border: 1px solid var(--sawade-line-strong);
             color: var(--sawade-forest-900);
-            font-size: 0.83rem;
-            font-weight: 600;
+            font-size: 0.74rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
         .active-filter-bar {
@@ -110,33 +106,23 @@
             flex-wrap: wrap;
             align-items: center;
             gap: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .active-filter-chip {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: #fff;
-            border: 1px solid rgba(184, 139, 74, 0.34);
-            color: var(--sawade-forest-900);
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-
-        .active-filter-chip i {
-            color: var(--sawade-gold-600);
-        }
-
-        .rooms-page .room-image-wrapper {
-            height: auto;
-            aspect-ratio: 4 / 3;
+            padding: 5px 12px;
+            background: var(--sawade-ivory-50);
+            border: 1px solid var(--sawade-gold-500);
+            color: var(--sawade-forest-950);
+            font-size: 0.75rem;
+            font-weight: 500;
         }
 
         .rooms-page .room-content {
-            padding: 20px 22px 22px;
+            padding: 22px 22px 24px;
             display: flex;
             flex-direction: column;
             flex: 1;
@@ -146,42 +132,31 @@
             position: absolute;
             top: 14px;
             left: 14px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: rgba(255, 253, 249, 0.94);
+            padding: 5px 11px;
+            background: rgba(252, 251, 248, 0.94);
             color: var(--sawade-forest-950);
-            font-size: 0.74rem;
+            font-size: 0.66rem;
             font-weight: 600;
-            box-shadow: 0 6px 16px rgba(14, 34, 27, 0.14);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .rooms-price-range-box {
+            padding: 14px;
+            background: var(--sawade-ivory-100);
+            border: 1px solid var(--sawade-line);
         }
 
         .rooms-page .form-switch .form-check-input {
-            width: 2.5em;
-            height: 1.3em;
+            width: 2.35em;
+            height: 1.2em;
+            border-radius: 0;
             cursor: pointer;
         }
 
         .rooms-page .form-switch .form-check-input:checked {
             background-color: var(--sawade-forest-900);
             border-color: var(--sawade-forest-900);
-        }
-
-        .rooms-price-range-box {
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: var(--sawade-ivory-100);
-            border: 1px solid var(--sawade-line);
-        }
-
-        .custom-pagination .page-link {
-            border-radius: 999px;
-            min-width: 40px;
-            height: 40px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 14px;
-            font-size: 0.86rem;
         }
 
         @@media (max-width: 991.98px) {
@@ -199,23 +174,23 @@
             <aside class="col-lg-3">
                 <div class="rooms-filter">
                     <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
-                        <h5 class="fw-bold mb-0">Bộ lọc phòng</h5>
+                        <h2 class="editorial-serif h4 mb-0">Bộ lọc phòng</h2>
                         @if (appliedFilters > 0)
                         {
-                            <span class="filter-count-pill">@appliedFilters tiêu chí</span>
+                            <span class="filter-count-tag">@appliedFilters lọc</span>
                         }
                     </div>
-                    <p class="text-muted small mb-4">Tinh chỉnh hạng phòng, khoảng giá và ngày lưu trú.</p>
+                    <p class="text-muted small mb-4">Tinh chỉnh hạng phòng, khoảng giá và lịch lưu trú.</p>
 
                     <form method="get" asp-controller="Home" asp-action="DanhSachPhong" data-sawade-busy="Đang lọc phòng...">
                         <div class="filter-section">
                             <div class="mb-3">
-                                <label class="filter-label" for="filterKeyword">Tìm kiếm nhanh</label>
+                                <label class="form-label" for="filterKeyword">Tìm kiếm nhanh</label>
                                 <input id="filterKeyword" name="tuKhoa" type="search" class="form-control" placeholder="Số phòng (101) hoặc hạng phòng..." value="@searchKeyword" maxlength="80" />
                             </div>
 
                             <div class="mb-3">
-                                <label class="filter-label" for="filterRoomType">Hạng phòng</label>
+                                <label class="form-label" for="filterRoomType">Hạng phòng</label>
                                 <select id="filterRoomType" name="loaiPhong" class="form-select">
                                     <option value="">Tất cả hạng phòng</option>
                                     @foreach (var roomType in roomTypes)
@@ -226,7 +201,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="filter-label" for="filterGuests">Số khách lưu trú</label>
+                                <label class="form-label" for="filterGuests">Số khách lưu trú</label>
                                 <select id="filterGuests" name="soKhach" class="form-select">
                                     <option value="">Không giới hạn số khách</option>
                                     @for (int guestCount = 1; guestCount <= 10; guestCount++)
@@ -237,7 +212,7 @@
                             </div>
 
                             <div>
-                                <label class="filter-label" for="filterSortPrice">Sắp xếp theo giá</label>
+                                <label class="form-label" for="filterSortPrice">Sắp xếp theo giá</label>
                                 <select id="filterSortPrice" name="sapXepGia" class="form-select">
                                     <option value="">Mặc định</option>
                                     <option value="tang" selected="@(ViewBag.SapXepGia == "tang")">Giá từ thấp đến cao</option>
@@ -247,7 +222,7 @@
                         </div>
 
                         <div class="filter-section">
-                            <label class="filter-label">Khoảng giá mỗi đêm (VND)</label>
+                            <label class="form-label">Khoảng giá mỗi đêm (VND)</label>
                             <div class="rooms-price-range-box">
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
@@ -261,39 +236,39 @@
                                 <input type="hidden" name="giaTu" id="giaTu" value="@(ViewBag.GiaTu is decimal p1 ? p1.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")" />
                                 <input type="hidden" name="giaDen" id="giaDen" value="@(ViewBag.GiaDen is decimal p2 ? p2.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")" />
 
-                                <label class="text-muted d-block mb-1" for="sliderGiaTu" style="font-size: 0.74rem;">Mức giá TỪ:</label>
+                                <label class="text-muted d-block mb-1" for="sliderGiaTu" style="font-size: 0.72rem;">Mức giá TỪ:</label>
                                 <input type="range" class="form-range" id="sliderGiaTu" min="0" max="10000000" step="100000" value="@priceFrom.ToString(System.Globalization.CultureInfo.InvariantCulture)">
 
-                                <label class="text-muted d-block mt-2 mb-1" for="sliderGiaDen" style="font-size: 0.74rem;">Mức giá ĐẾN:</label>
+                                <label class="text-muted d-block mt-2 mb-1" for="sliderGiaDen" style="font-size: 0.72rem;">Mức giá ĐẾN:</label>
                                 <input type="range" class="form-range" id="sliderGiaDen" min="0" max="10000000" step="100000" value="@priceTo.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                             </div>
                         </div>
 
                         <div class="filter-section">
                             <div class="mb-3">
-                                <label class="filter-label" for="filterCheckIn">Ngày nhận phòng</label>
+                                <label class="form-label" for="filterCheckIn">Ngày nhận phòng</label>
                                 <input id="filterCheckIn" type="date" name="ngayNhan" class="form-control" min="@(DateTime.Today.ToString("yyyy-MM-dd"))" value="@strCheckIn" />
                             </div>
 
                             <div class="mb-3">
-                                <label class="filter-label" for="filterCheckOut">Ngày trả phòng</label>
+                                <label class="form-label" for="filterCheckOut">Ngày trả phòng</label>
                                 <input id="filterCheckOut" type="date" name="ngayTra" class="form-control" min="@(DateTime.Today.AddDays(1).ToString("yyyy-MM-dd"))" value="@strCheckOut" />
                             </div>
 
                             <div class="form-check form-switch d-flex align-items-center gap-2 ps-5 mb-0">
                                 <input class="form-check-input" type="checkbox" role="switch" name="chiPhongTrong" value="true" id="checkPhongTrong" @(ViewBag.ChiPhongTrong == true ? "checked" : "")>
-                                <label class="form-check-label small fw-semibold" for="checkPhongTrong">Chỉ hiển thị phòng trống</label>
+                                <label class="form-check-label small fw-medium" for="checkPhongTrong">Chỉ hiển thị phòng trống</label>
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2 mt-3">
-                            <button type="submit" class="btn room-btn py-2.5">
-                                <i class="bi bi-funnel me-1" aria-hidden="true"></i>Áp dụng bộ lọc
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-sawade-primary py-2.5">
+                                Áp dụng bộ lọc
                             </button>
                             @if (appliedFilters > 0)
                             {
                                 <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-light py-2">
-                                    <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Xóa bộ lọc
+                                    Xóa bộ lọc
                                 </a>
                             }
                         </div>
@@ -305,16 +280,15 @@
             <section class="col-lg-9" aria-labelledby="roomsHeading">
                 <div class="rooms-header-bar d-flex flex-wrap justify-content-between align-items-end gap-3">
                     <div>
-                        <span class="section-eyebrow d-block mb-2">SAWADE &middot; KỲ NGHỈ THEO CÁCH BẠN CHỌN</span>
-                        <h1 id="roomsHeading" class="mb-2">Không gian nghỉ dưỡng</h1>
-                        <p class="text-muted mb-0">Lựa chọn căn phòng phù hợp nhất với lịch trình và ngân sách của bạn.</p>
+                        <span class="section-eyebrow d-block mb-2">SAWADE &middot; ROOMS &amp; SUITES</span>
+                        <h1 id="roomsHeading" class="section-heading mb-2">Không gian nghỉ dưỡng</h1>
+                        <p class="luxe-lead mb-0">Lựa chọn căn phòng phù hợp nhất với lịch trình và ngân sách của bạn.</p>
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-2">
-                        <span class="rooms-stat-pill">
-                            <i class="bi bi-door-open text-gold" aria-hidden="true"></i>
-                            Tìm thấy <strong>@totalRooms</strong> phòng
+                        <span class="rooms-stat-tag">
+                            <strong class="tabular-nums">@totalRooms</strong> phòng
                         </span>
-                        <span class="rooms-stat-pill">
+                        <span class="rooms-stat-tag tabular-nums">
                             Trang @currentPage / @Math.Max(1, totalPages)
                         </span>
                     </div>
@@ -325,55 +299,53 @@
                     <div class="active-filter-bar" aria-label="Bộ lọc đang áp dụng">
                         @if (!string.IsNullOrWhiteSpace(selectedTypeName))
                         {
-                            <span class="active-filter-chip"><i class="bi bi-building" aria-hidden="true"></i>@HienThiPhong.TenLoai(selectedTypeName)</span>
+                            <span class="active-filter-chip">@HienThiPhong.TenLoai(selectedTypeName)</span>
                         }
                         @if (!string.IsNullOrWhiteSpace(searchKeyword))
                         {
-                            <span class="active-filter-chip"><i class="bi bi-search" aria-hidden="true"></i>"@searchKeyword"</span>
+                            <span class="active-filter-chip">Từ khóa: "@searchKeyword"</span>
                         }
                         @if (selectedGuests.HasValue)
                         {
-                            <span class="active-filter-chip"><i class="bi bi-people" aria-hidden="true"></i>@selectedGuests khách</span>
+                            <span class="active-filter-chip">@selectedGuests khách</span>
                         }
                         @if (ViewBag.GiaTu != null || ViewBag.GiaDen != null)
                         {
-                            <span class="active-filter-chip">
-                                <i class="bi bi-cash-stack" aria-hidden="true"></i>
+                            <span class="active-filter-chip tabular-nums">
                                 @(ViewBag.GiaTu != null ? ((decimal)ViewBag.GiaTu).ToString("#,##0") + " đ" : "0 đ") – @(ViewBag.GiaDen != null ? ((decimal)ViewBag.GiaDen).ToString("#,##0") + " đ" : "10.000.000 đ")
                             </span>
                         }
                         @if (searchedDates)
                         {
-                            <span class="active-filter-chip"><i class="bi bi-calendar-range" aria-hidden="true"></i>@selectedCheckIn?.ToString("dd/MM/yyyy") &rarr; @selectedCheckOut?.ToString("dd/MM/yyyy")</span>
+                            <span class="active-filter-chip tabular-nums">@selectedCheckIn?.ToString("dd/MM/yyyy") &rarr; @selectedCheckOut?.ToString("dd/MM/yyyy")</span>
                         }
                         @if (ViewBag.ChiPhongTrong == true)
                         {
-                            <span class="active-filter-chip"><i class="bi bi-check-circle" aria-hidden="true"></i>Chỉ phòng trống</span>
+                            <span class="active-filter-chip">Chỉ phòng trống</span>
                         }
-                        <a asp-controller="Home" asp-action="DanhSachPhong" class="small text-decoration-none fw-semibold ms-1">Đặt lại tất cả</a>
+                        <a asp-controller="Home" asp-action="DanhSachPhong" class="small text-decoration-none fw-semibold ms-1" style="color: var(--sawade-gold-600);">Đặt lại</a>
                     </div>
                 }
 
                 @if (searchedDates)
                 {
-                    <div class="alert alert-light border rounded-4 small mb-3" role="status">
-                        <i class="bi bi-calendar-check me-2 text-gold" aria-hidden="true"></i>
-                        Đang xem phòng trống trong khoảng <strong>@selectedCheckIn?.ToString("dd/MM/yyyy")</strong> đến <strong>@selectedCheckOut?.ToString("dd/MM/yyyy")</strong>. Tình trạng thực tế được xác minh lại khi bạn gửi yêu cầu đặt phòng.
+                    <div class="alert alert-light border small mb-4" style="border-left: 3px solid var(--sawade-gold-500) !important;" role="status">
+                        Đang hiển thị các phòng trống từ <strong>@selectedCheckIn?.ToString("dd/MM/yyyy")</strong> đến <strong>@selectedCheckOut?.ToString("dd/MM/yyyy")</strong>. Lịch thực tế sẽ được xác minh lần cuối khi bạn gửi yêu cầu đặt phòng.
                     </div>
                 }
                 @if (ViewBag.FilterNotice != null)
                 {
-                    <div class="alert alert-info rounded-4 mb-3" role="status">@ViewBag.FilterNotice</div>
+                    <div class="alert alert-info mb-4" role="status">@ViewBag.FilterNotice</div>
                 }
                 @if (ViewBag.FilterError != null)
                 {
-                    <div class="alert alert-warning rounded-4 mb-3" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>@ViewBag.FilterError
+                    <div class="alert alert-warning mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>@ViewBag.FilterError
                     </div>
                 }
                 @if (ViewBag.ApiError != null)
                 {
-                    <div class="alert alert-danger rounded-4 mb-3" role="alert">
+                    <div class="alert alert-danger mb-4" role="alert">
                         <i class="bi bi-wifi-off me-2" aria-hidden="true"></i>@ViewBag.ApiError
                         <a href="@(Context.Request.Path.ToString() + Context.Request.QueryString.ToString())" class="alert-link ms-2">Thử tải lại</a>
                     </div>
@@ -392,7 +364,7 @@
                             var fallbackIndex = (int)(Math.Abs((long)room.PhongId) % fallbackImgs.Length);
                             var fallback = fallbackImgs[fallbackIndex];
 
-                            var statusText = searchedDates ? "Phù hợp ngày đã chọn" : HienThiPhong.TrangThai(room.TrangThai);
+                            var statusText = searchedDates ? "Trống theo ngày chọn" : HienThiPhong.TrangThai(room.TrangThai);
                             var isAvailable = searchedDates || HienThiPhong.DangTrong(room.TrangThai);
                             var isOccupied = statusText == "Đang có khách";
                             var statusClass = isAvailable ? "available" : isOccupied ? "occupied" : "unavailable";
@@ -408,23 +380,21 @@
                                     </div>
                                     <div class="room-content">
                                         <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                            <h2 class="mb-0">Phòng @room.SoPhong</h2>
-                                            <span class="room-status @statusClass">
-                                                <i class="bi @(isAvailable ? "bi-check-circle-fill" : (isOccupied ? "bi-x-circle-fill" : "bi-exclamation-circle-fill"))" aria-hidden="true"></i>@statusText
-                                            </span>
+                                            <h2 class="editorial-serif mb-0" style="font-size: 1.5rem; color: var(--sawade-forest-950);">Phòng @room.SoPhong</h2>
+                                            <span class="room-status @statusClass">@statusText</span>
                                         </div>
 
-                                        <div class="text-muted small mb-3 d-flex flex-column gap-1 mt-1">
-                                            <span><i class="bi bi-building me-2 text-gold" aria-hidden="true"></i>@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
+                                        <div class="text-muted small mb-4 d-flex flex-column gap-1 mt-1">
+                                            <span>@HienThiPhong.TenLoai(room.TenLoaiPhong)</span>
                                             @if (room.SoNguoiToiDa.HasValue)
                                             {
-                                                <span><i class="bi bi-people me-2 text-gold" aria-hidden="true"></i>Tối đa @room.SoNguoiToiDa người</span>
+                                                <span>Sức chứa tối đa @room.SoNguoiToiDa người</span>
                                             }
                                         </div>
 
                                         <div class="border-top pt-3 mt-auto d-flex justify-content-between align-items-end gap-2">
                                             <div>
-                                                <div class="text-muted small">Giá mỗi đêm</div>
+                                                <div class="text-muted" style="font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase;">Giá mỗi đêm</div>
                                                 <div class="room-price">@room.GiaPhong.ToString("#,##0") đ</div>
                                             </div>
                                             <a asp-controller="Home" asp-action="ChiTietPhong"
@@ -432,7 +402,7 @@
                                                asp-route-ngayNhan="@strCheckIn"
                                                asp-route-ngayTra="@strCheckOut"
                                                asp-route-soKhach="@selectedGuests"
-                                               class="btn room-btn text-decoration-none">
+                                               class="btn btn-sawade-primary btn-sm">
                                                 Xem phòng
                                             </a>
                                         </div>
@@ -447,7 +417,7 @@
                         <nav aria-label="Điều hướng trang" class="mt-5">
                             <ul class="pagination justify-content-center gap-1 custom-pagination mb-0">
                                 <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                    <a class="page-link me-1" href="@Url.Action("DanhSachPhong", "Home", new {
+                                    <a class="page-link" href="@Url.Action("DanhSachPhong", "Home", new {
                                         trang = currentPage - 1,
                                         sapXepGia = ViewBag.SapXepGia,
                                         loaiPhong = ViewBag.LoaiPhong,
@@ -482,7 +452,7 @@
                                 }
 
                                 <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                    <a class="page-link ms-1" href="@Url.Action("DanhSachPhong", "Home", new {
+                                    <a class="page-link" href="@Url.Action("DanhSachPhong", "Home", new {
                                         trang = currentPage + 1,
                                         sapXepGia = ViewBag.SapXepGia,
                                         loaiPhong = ViewBag.LoaiPhong,
@@ -503,17 +473,17 @@
                 }
                 else
                 {
-                    <div class="bg-white rounded-4 p-5 text-center border shadow-sm">
+                    <div class="bg-white p-5 text-center border">
                         <div class="sawade-empty-icon mb-3"><i class="bi bi-house-x" aria-hidden="true"></i></div>
-                        <h2 class="h5 fw-bold">@(ViewBag.ApiError != null ? "Chưa thể tải danh sách phòng" : "Chưa tìm thấy phòng phù hợp")</h2>
+                        <h2 class="editorial-serif h4">@(ViewBag.ApiError != null ? "Chưa thể tải danh sách phòng" : "Chưa tìm thấy phòng phù hợp")</h2>
                         <p class="text-muted mb-4">@(ViewBag.ApiError != null ? "Kết nối đến hệ thống phòng bị gián đoạn. Vui lòng thử tải lại." : "Hãy thử nới rộng khoảng giá, đổi ngày lưu trú hoặc bỏ bớt tiêu chí lọc.")</p>
                         @if (ViewBag.ApiError != null)
                         {
-                            <a href="@(Context.Request.Path.ToString() + Context.Request.QueryString.ToString())" class="btn btn-sawade-primary rounded-pill px-4">Thử tải lại</a>
+                            <a href="@(Context.Request.Path.ToString() + Context.Request.QueryString.ToString())" class="btn btn-sawade-primary">Thử tải lại</a>
                         }
                         else
                         {
-                            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-outline-dark rounded-pill px-4">Xóa toàn bộ bộ lọc</a>
+                            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-light">Xóa toàn bộ bộ lọc</a>
                         }
                     </div>
                 }

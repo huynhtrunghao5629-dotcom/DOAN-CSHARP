@@ -18,39 +18,30 @@
             color: #fff;
         }
 
-        .booking-detail-head .badge {
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-
         .booking-detail-body {
             overflow-wrap: anywhere;
         }
 
         .booking-detail-note {
             background: var(--sawade-ivory-100);
-            border: 1px solid var(--sawade-line) !important;
+            border: 1px solid var(--sawade-line-strong) !important;
+            border-left: 3px solid var(--sawade-gold-500) !important;
             color: var(--sawade-ink-soft);
         }
 
         .booking-detail-section-title {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             color: var(--sawade-forest-950);
             margin-bottom: 14px;
-        }
-
-        .booking-detail-section-title i {
-            color: var(--sawade-gold-500);
-            font-size: 1.05rem;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--sawade-line);
         }
 
         .booking-detail-body .table {
             margin-bottom: 0;
-            border-color: var(--sawade-line);
+            border-color: var(--sawade-line-strong);
         }
 
         .booking-detail-body .table-light {
@@ -59,15 +50,15 @@
         }
 
         .booking-detail-total-bar {
-            padding: 18px 22px;
-            border-radius: 16px;
+            padding: 20px 24px;
             background: var(--sawade-ivory-100);
-            border: 1px solid var(--sawade-line);
+            border: 1px solid var(--sawade-line-strong);
+            border-left: 3px solid var(--sawade-forest-900);
         }
 
         .booking-detail-actions {
             max-width: 840px;
-            margin: 20px auto 0;
+            margin: 24px auto 0;
         }
 
         @@media (max-width: 575.98px) {
@@ -75,9 +66,7 @@
             .booking-detail-actions form {
                 width: 100%;
             }
-            .booking-detail-actions .btn {
-                flex: 1;
-            }
+            .booking-detail-actions .btn,
             .booking-detail-actions form .btn {
                 width: 100%;
             }
@@ -105,17 +94,17 @@
             .booking-detail-sheet {
                 max-width: none !important;
                 border: 0 !important;
-                border-radius: 0 !important;
                 box-shadow: none !important;
             }
             .booking-detail-head {
                 background: #fff !important;
-                color: #153127 !important;
-                border-bottom: 2px solid #153127;
+                color: #111C17 !important;
+                border-bottom: 2px solid #111C17;
                 padding: 10px 0 18px !important;
             }
-            .booking-detail-head h1 {
-                color: #153127 !important;
+            .booking-detail-head h1,
+            .booking-detail-head strong {
+                color: #111C17 !important;
             }
             .booking-detail-body {
                 padding: 20px 0 !important;
@@ -137,18 +126,16 @@
         <nav class="breadcrumb small mb-4" aria-label="Đường dẫn">
             <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="text-decoration-none">Tài khoản của tôi</a>
             <span class="mx-2 text-muted">/</span>
-            <span class="text-muted">Chi tiết đơn đặt phòng</span>
+            <span class="text-muted">Phiếu đặt phòng @Model.MaDon</span>
         </nav>
 
         <article class="booking-detail-sheet">
             <header class="booking-detail-head d-flex flex-wrap justify-content-between gap-3 align-items-start">
                 <div>
-                    <div class="small text-uppercase fw-semibold mb-2" style="color: var(--sawade-gold-300); letter-spacing: 0.2em; font-size: 0.72rem;">
-                        SAWADE HOTELS &amp; RESORTS
-                    </div>
+                    <div class="luxe-kicker mb-2" style="color: var(--sawade-gold-300);">SAWADE HOTELS &amp; RESORTS &middot; RESERVATION FOLIO</div>
                     <h1 class="mb-2">Phiếu thông tin đặt phòng</h1>
-                    <div class="small" style="color: rgba(255, 255, 255, 0.85);">
-                        Mã đơn: <strong class="text-white">@Model.MaDon</strong>
+                    <div class="small" style="color: rgba(255, 255, 255, 0.80);">
+                        Mã xác nhận: <strong class="text-white" style="letter-spacing: 0.08em;">@Model.MaDon</strong>
                     </div>
                 </div>
                 <div>
@@ -157,16 +144,14 @@
             </header>
 
             <div class="booking-detail-body">
-                <div class="alert booking-detail-note rounded-4 small mb-4 d-flex align-items-start gap-2">
-                    <i class="bi bi-info-circle-fill text-gold mt-1" aria-hidden="true"></i>
+                <div class="alert booking-detail-note small mb-4 d-flex align-items-start gap-2">
+                    <i class="bi bi-info-circle text-gold mt-1" aria-hidden="true"></i>
                     <div>
                         Đây là phiếu thông tin đặt phòng, <strong>không phải hóa đơn hoặc xác nhận đã thanh toán</strong>. Trạng thái và tổng tiền được cập nhật trực tiếp từ hệ thống khách sạn.
                     </div>
                 </div>
 
-                <h2 class="booking-detail-section-title">
-                    <i class="bi bi-person-vcard" aria-hidden="true"></i>Thông tin khách đặt
-                </h2>
+                <h2 class="booking-detail-section-title">01 &middot; Thông tin khách đặt</h2>
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
                         <div class="booking-detail-box h-100">
@@ -177,55 +162,49 @@
                     <div class="col-sm-6">
                         <div class="booking-detail-box h-100">
                             <span class="booking-detail-label d-block">Số điện thoại tài khoản</span>
-                            <strong>@Model.SoDienThoai</strong>
+                            <strong class="tabular-nums">@Model.SoDienThoai</strong>
                         </div>
                     </div>
                 </div>
 
-                <h2 class="booking-detail-section-title">
-                    <i class="bi bi-calendar-range" aria-hidden="true"></i>Thời gian lưu trú
-                </h2>
+                <h2 class="booking-detail-section-title">02 &middot; Thời gian lưu trú</h2>
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
                         <div class="booking-detail-box h-100">
                             <span class="booking-detail-label d-block">Ngày nhận phòng</span>
-                            <strong>@(Model.NgayNhan?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</strong>
+                            <strong class="tabular-nums">@(Model.NgayNhan?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</strong>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="booking-detail-box h-100">
                             <span class="booking-detail-label d-block">Ngày trả phòng</span>
-                            <strong>@(Model.NgayTra?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</strong>
+                            <strong class="tabular-nums">@(Model.NgayTra?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</strong>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="booking-detail-box h-100">
-                            <span class="booking-detail-label d-block">Thời gian tính tiền dự kiến</span>
+                            <span class="booking-detail-label d-block">Thời gian dự kiến</span>
                             <strong>@(nights.HasValue ? $"{nights} đêm" : "Chưa xác định")</strong>
                         </div>
                     </div>
                 </div>
 
-                <h2 class="booking-detail-section-title">
-                    <i class="bi bi-door-open" aria-hidden="true"></i>Danh sách phòng
-                </h2>
+                <h2 class="booking-detail-section-title">03 &middot; Danh sách phòng</h2>
                 @if (Model.ChiTietPhong.Count > 0)
                 {
-                    <div class="table-responsive rounded-4 border mb-4 overflow-hidden">
+                    <div class="table-responsive border mb-4">
                         <table class="table align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col" class="ps-3 py-3">Phòng</th>
-                                    <th scope="col" class="text-end pe-3 py-3">Đơn giá tham khảo / đêm</th>
+                                    <th scope="col" class="ps-3 py-3 small text-uppercase" style="letter-spacing: 0.1em;">Phòng</th>
+                                    <th scope="col" class="text-end pe-3 py-3 small text-uppercase" style="letter-spacing: 0.1em;">Đơn giá / đêm</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var phong in Model.ChiTietPhong)
                                 {
                                     <tr>
-                                        <td class="ps-3 py-3 fw-semibold">
-                                            <i class="bi bi-door-open me-2 text-gold" aria-hidden="true"></i>Phòng @phong.SoPhong
-                                        </td>
+                                        <td class="ps-3 py-3 fw-semibold">Phòng @phong.SoPhong</td>
                                         <td class="text-end pe-3 py-3 tabular-nums">@phong.GiaPhong.ToString("N0") đ</td>
                                     </tr>
                                 }
@@ -239,26 +218,26 @@
                 }
 
                 <div class="booking-detail-total-bar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-                    <span class="fw-semibold" style="color: var(--sawade-forest-950);">Tổng tiền đặt phòng theo hệ thống</span>
+                    <span class="small fw-semibold text-uppercase" style="letter-spacing: 0.12em; color: var(--sawade-forest-950);">Tổng tiền đặt phòng theo hệ thống</span>
                     <span class="booking-detail-money">@Model.TongTien.ToString("N0") đ</span>
                 </div>
 
                 <p class="text-muted small mb-0">
-                    <i class="bi bi-clock me-1" aria-hidden="true"></i>Đặt ngày: @(Model.NgayDat?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật"). Dịch vụ phát sinh và thanh toán thực tế được lễ tân xử lý riêng tại quầy.
+                    Đặt ngày: @(Model.NgayDat?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật"). Dịch vụ phát sinh và thanh toán thực tế được lễ tân xử lý riêng tại quầy.
                 </p>
             </div>
         </article>
 
         <div class="booking-detail-actions d-flex flex-wrap gap-2 align-items-center justify-content-between">
             <div class="d-flex flex-wrap gap-2">
-                <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="btn btn-sawade-light rounded-pill px-4">
-                    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Quay lại lịch sử
+                <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="btn btn-sawade-light">
+                    <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Quay lại lịch sử
                 </a>
-                <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@Model.DatPhongId" class="btn btn-outline-dark rounded-pill px-4">
-                    <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Làm mới trạng thái
+                <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@Model.DatPhongId" class="btn btn-outline-dark">
+                    <i class="bi bi-arrow-clockwise me-2" aria-hidden="true"></i>Làm mới
                 </a>
-                <button type="button" class="btn btn-sawade-primary rounded-pill px-4" onclick="window.print()">
-                    <i class="bi bi-printer me-1" aria-hidden="true"></i>In phiếu
+                <button type="button" class="btn btn-sawade-primary" onclick="window.print()">
+                    <i class="bi bi-printer me-2" aria-hidden="true"></i>In phiếu A4
                 </button>
             </div>
 
@@ -267,8 +246,8 @@
                 <form asp-controller="TaiKhoan" asp-action="HuyDonHang" method="post" data-sawade-busy="Đang hủy đơn..." onsubmit="return confirm('Bạn có chắc chắn muốn hủy yêu cầu đặt phòng này?');">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="datPhongId" value="@Model.DatPhongId" />
-                    <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
-                        <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Hủy yêu cầu đặt phòng
+                    <button type="submit" class="btn btn-outline-danger">
+                        Hủy yêu cầu đặt phòng
                     </button>
                 </form>
             }

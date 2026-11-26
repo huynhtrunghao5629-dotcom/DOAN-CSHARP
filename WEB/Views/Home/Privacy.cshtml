@@ -2,14 +2,29 @@
     ViewData["Title"] = "Thông tin quyền riêng tư";
     ViewData["NavbarOverlay"] = false;
 }
-<div class="container py-5" style="max-width:850px">
-    <h1 class="fw-bold mb-3">Thông tin quyền riêng tư</h1>
-    <p class="text-muted">SAWADE là ứng dụng minh họa quản lý và đặt phòng khách sạn trong phạm vi đồ án.</p>
-    <h2 class="h5 mt-4">Thông tin bạn cung cấp</h2>
-    <p>Họ tên, số điện thoại, email và thông tin nhận dạng (nếu được yêu cầu) được sử dụng trong quy trình tạo tài khoản, đặt phòng và tra cứu đơn.</p>
-    <h2 class="h5 mt-4">Dữ liệu đặt phòng</h2>
-    <p>Thông tin đặt phòng được gửi đến Web API của hệ thống và lưu trong cơ sở dữ liệu do nhóm triển khai. Chỉ sử dụng dữ liệu mẫu khi trình diễn.</p>
-    <h2 class="h5 mt-4">Lưu ý bảo mật</h2>
-    <p>Đây là hệ thống đang phát triển. Không sử dụng mật khẩu thật, giấy tờ thật hoặc dữ liệu cá nhân nhạy cảm khi kiểm thử trên môi trường đồ án.</p>
-    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark rounded-pill mt-3">Quay lại trang chủ</a>
-</div>
+<section class="luxe-page">
+    <div class="container" style="max-width: 820px;">
+        <div class="luxe-page-head-left">
+            <div class="luxe-kicker mb-2">LEGAL &amp; PRIVACY</div>
+            <h1 class="luxe-title mb-2">Thông tin quyền riêng tư</h1>
+            <p class="luxe-lead mb-0">SAWADE là hệ thống quản lý và đặt phòng khách sạn trực tuyến triển khai trong phạm vi đồ án môn học.</p>
+        </div>
+
+        <div class="bg-white border p-4 p-md-5" style="border-color: var(--sawade-line-strong) !important;">
+            <h2 class="editorial-serif h3 mb-2">01. Thông tin bạn cung cấp</h2>
+            <p class="luxe-lead mb-4">Họ tên, số điện thoại, email và số giấy tờ tùy thân được sử dụng duy nhất trong quy trình tạo tài khoản thành viên, đặt phòng và tra cứu lịch sử đơn.</p>
+
+            <h2 class="editorial-serif h3 mb-2 pt-3 border-top">02. Dữ liệu đặt phòng &amp; Bảo mật mật khẩu</h2>
+            <p class="luxe-lead mb-4">Thông tin đặt phòng được truyền qua Web API và lưu tập trung trên SQL Server. Mật khẩu tài khoản được mã hóa một chiều (PBKDF2) trước khi lưu trữ.</p>
+
+            <h2 class="editorial-serif h3 mb-2 pt-3 border-top">03. Lưu ý môi trường kiểm thử</h2>
+            <p class="luxe-lead mb-0">Vui lòng sử dụng thông tin mẫu khi trình diễn và kiểm thử trên môi trường đồ án, không nhập dữ liệu nhạy cảm thực tế.</p>
+        </div>
+
+        <div class="mt-4">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-sawade-light">
+                <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Quay lại trang chủ
+            </a>
+        </div>
+    </div>
+</section>

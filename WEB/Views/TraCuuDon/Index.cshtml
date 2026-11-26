@@ -14,11 +14,8 @@
         }
 
         .lookup-search-bar .input-group {
-            padding: 5px;
-            background: #fff;
             border: 1px solid var(--sawade-line-strong);
-            border-radius: 999px;
-            box-shadow: var(--sawade-shadow-sm);
+            background: #fff;
         }
 
         .lookup-search-bar .input-group-text,
@@ -26,48 +23,36 @@
             border: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
-            min-height: 44px;
+            min-height: 48px;
         }
 
         .lookup-date-box {
-            padding: 12px 14px;
-            border-radius: 14px;
+            padding: 14px 16px;
             background: var(--sawade-ivory-100);
             border: 1px solid var(--sawade-line);
         }
 
         .lookup-date {
             color: var(--sawade-forest-950);
-            font-size: 0.92rem;
+            font-size: 0.94rem;
             font-variant-numeric: tabular-nums;
-        }
-
-        .luxe-lookup .badge {
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 600;
         }
 
         .lookup-price {
-            color: var(--sawade-gold-600);
-            font-size: 1.2rem;
-            font-weight: 700;
+            font-family: var(--sawade-font-display);
+            color: var(--sawade-forest-950);
+            font-size: 1.55rem;
+            font-weight: 600;
             font-variant-numeric: tabular-nums;
-        }
-
-        @@media (max-width: 575.98px) {
-            .lookup-search-bar .input-group {
-                border-radius: 18px;
-            }
         }
     </style>
 }
 
 <div class="container luxe-lookup">
     <div class="text-center mb-5">
-        <p class="lookup-kicker mb-2">SAWADE &middot; KỲ NGHỈ CỦA BẠN</p>
-        <h1 class="mb-3">Tra cứu đặt phòng</h1>
+        <p class="lookup-kicker mb-2">SAWADE &middot; RESERVATION HISTORY</p>
+        <h1 class="luxe-title mb-3">Tra cứu đặt phòng</h1>
+        <div class="editorial-rule my-3"></div>
         <p class="luxe-lead mx-auto mb-4" style="max-width: 560px;">
             Xem mã đơn, thời gian nhận trả phòng và trạng thái xử lý mới nhất của những đơn đặt phòng thuộc tài khoản của bạn.
         </p>
@@ -76,9 +61,9 @@
             @Html.AntiForgeryToken()
             <div class="input-group">
                 <span class="input-group-text ps-3"><i class="bi bi-telephone text-gold" aria-hidden="true"></i></span>
-                <input type="tel" name="soDienThoai" value="@sdt" class="form-control fw-semibold" readonly aria-label="Số điện thoại tài khoản" />
-                <button class="btn btn-sawade-primary rounded-pill px-4" type="submit">
-                    <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Làm mới
+                <input type="tel" name="soDienThoai" value="@sdt" class="form-control fw-semibold tabular-nums" readonly aria-label="Số điện thoại tài khoản" />
+                <button class="btn btn-sawade-primary px-4" type="submit">
+                    Làm mới
                 </button>
             </div>
         </form>
@@ -86,12 +71,12 @@
 
     @if (!string.IsNullOrEmpty(sdt) && donHangs.Any())
     {
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-            <h2 class="h5 fw-bold mb-0" style="color: var(--sawade-forest-950);">
-                Đang có <span class="lookup-accent">@donHangs.Count</span> đơn đặt phòng của tài khoản <span class="lookup-accent">@sdt</span>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-2 border-bottom">
+            <h2 class="editorial-serif h4 mb-0" style="color: var(--sawade-forest-950);">
+                Đang có <span class="lookup-accent tabular-nums">@donHangs.Count</span> đơn đặt phòng của tài khoản <span class="lookup-accent tabular-nums">@sdt</span>
             </h2>
-            <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="small fw-semibold text-decoration-none">
-                <i class="bi bi-person-lines-fill me-1" aria-hidden="true"></i>Về hồ sơ cá nhân
+            <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="small fw-semibold text-decoration-none" style="letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.72rem;">
+                Về hồ sơ cá nhân <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
             </a>
         </div>
 
@@ -106,7 +91,7 @@
                         <div class="card-header p-3 p-md-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
                             <div>
                                 <span class="badge @badgeClass mb-2">@statusText</span>
-                                <h3 class="h6 mb-0 fw-bold" style="color: var(--sawade-forest-950);">Mã đơn: @don.MaDon</h3>
+                                <h3 class="h6 mb-0 fw-semibold tabular-nums" style="color: var(--sawade-forest-950); letter-spacing: 0.04em;">Mã đơn: @don.MaDon</h3>
                             </div>
                             <div class="text-sm-end">
                                 <small class="text-muted d-block">Ngày tạo: @(don.NgayDat?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</small>
@@ -124,27 +109,23 @@
                                              class="w-100"
                                              alt="Phòng @don.Phong.SoPhong"
                                              loading="lazy" decoding="async"
-                                             onerror="this.onerror=null;this.src='@Url.Content("~/images/room-placeholder.svg")';" />
+                                             onerror="this.onerror=null;this.src='@Url.Content("~/images/102.jpg")';" />
                                     </div>
                                     <div class="col-md-9">
-                                        <h4 class="h5 fw-bold mb-3" style="color: var(--sawade-forest-950);">
+                                        <h4 class="editorial-serif h3 mb-3" style="color: var(--sawade-forest-950);">
                                             @HienThiPhong.TenLoai(don.Phong.TenLoaiPhong) &mdash; Phòng @don.Phong.SoPhong
                                         </h4>
                                         <div class="row g-3">
                                             <div class="col-sm-6">
                                                 <div class="lookup-date-box">
-                                                    <div class="small text-muted mb-1">
-                                                        <i class="bi bi-box-arrow-in-right me-1 text-gold" aria-hidden="true"></i>Nhận phòng
-                                                    </div>
-                                                    <strong class="d-block lookup-date">@(don.NgayNhan?.ToString("dd/MM/yyyy - HH:mm") ?? "Chưa cập nhật")</strong>
+                                                    <div class="small text-muted mb-1">Ngày nhận phòng</div>
+                                                    <strong class="d-block lookup-date">@(don.NgayNhan?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</strong>
                                                 </div>
                                             </div>
                                             <div class="col-sm-6">
                                                 <div class="lookup-date-box">
-                                                    <div class="small text-muted mb-1">
-                                                        <i class="bi bi-box-arrow-right me-1 text-gold" aria-hidden="true"></i>Trả phòng
-                                                    </div>
-                                                    <strong class="d-block lookup-date">@(don.NgayTra?.ToString("dd/MM/yyyy - HH:mm") ?? "Chưa cập nhật")</strong>
+                                                    <div class="small text-muted mb-1">Ngày trả phòng</div>
+                                                    <strong class="d-block lookup-date">@(don.NgayTra?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</strong>
                                                 </div>
                                             </div>
                                         </div>
@@ -158,8 +139,8 @@
                         </div>
 
                         <div class="card-footer p-3 px-md-4 d-flex justify-content-end">
-                            <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@don.DatPhongId" class="btn btn-outline-dark btn-sm rounded-pill px-4">
-                                <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Xem chi tiết đơn
+                            <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@don.DatPhongId" class="btn btn-sawade-primary btn-sm">
+                                Xem phiếu đặt phòng <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
                             </a>
                         </div>
                     </div>
@@ -171,10 +152,10 @@
     {
         <div class="card p-5 text-center mx-auto" style="max-width: 640px;">
             <div class="sawade-empty-icon mb-3"><i class="bi bi-calendar2-x" aria-hidden="true"></i></div>
-            <h2 class="h5 fw-bold">Chưa có đơn đặt phòng</h2>
+            <h2 class="editorial-serif h4">Chưa có đơn đặt phòng</h2>
             <p class="text-muted mb-4">Bạn có thể tìm kiếm phòng trống và gửi yêu cầu đặt phòng trực tiếp trên website.</p>
             <div>
-                <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary rounded-pill px-4 py-2.5">Tìm phòng ngay</a>
+                <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary">Tìm phòng ngay</a>
             </div>
         </div>
     }
@@ -182,10 +163,10 @@
     {
         <div class="card p-5 text-center mx-auto" style="max-width: 640px;" role="alert">
             <div class="sawade-empty-icon mb-3"><i class="bi bi-wifi-off" aria-hidden="true"></i></div>
-            <h2 class="h5 fw-bold">Chưa thể tải lịch sử đặt phòng</h2>
+            <h2 class="editorial-serif h4">Chưa thể tải lịch sử đặt phòng</h2>
             <p class="text-muted mb-4">Không kết nối được với hệ thống máy chủ. Vui lòng thử lại sau ít phút.</p>
             <div>
-                <a asp-controller="TraCuuDon" asp-action="Index" class="btn btn-sawade-primary rounded-pill px-4 py-2.5">Thử tải lại</a>
+                <a asp-controller="TraCuuDon" asp-action="Index" class="btn btn-sawade-primary">Thử tải lại</a>
             </div>
         </div>
     }

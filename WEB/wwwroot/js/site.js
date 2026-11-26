@@ -1,4 +1,4 @@
-// SAWADE - Trạng thái giao diện & tương tác dùng chung (không thay đổi dữ liệu/API).
+// SAWADE Hotels & Resorts — Shared Editorial UI Interactions (zero API/data mutation)
 (() => {
     'use strict';
 
@@ -19,19 +19,14 @@
 
         const scheduleProgress = () => {
             window.clearTimeout(progressTimer);
-            // Không chớp thanh tải khi chuyển trang nhanh.
             progressTimer = window.setTimeout(() => setProgress(true), 180);
         };
 
-        // 1. Theo dõi cuộn trang cho Navbar Overlay (chuyển kính mờ) & nút Lên đầu trang
+        // 1. Navbar scroll state & Back-to-top button
         const handleScroll = () => {
             const y = window.scrollY || document.documentElement.scrollTop || 0;
-            if (navbar) {
-                navbar.classList.toggle('is-scrolled', y > 36);
-            }
-            if (backToTop) {
-                backToTop.hidden = y < 420;
-            }
+            if (navbar) navbar.classList.toggle('is-scrolled', y > 40);
+            if (backToTop) backToTop.hidden = y < 440;
         };
 
         handleScroll();
@@ -43,7 +38,25 @@
             });
         }
 
-        // 2. Cảnh báo trạng thái mạng trình duyệt
+        // 2. Subtle editorial scroll-reveal
+        const revealItems = document.querySelectorAll('.reveal-up');
+        if (revealItems.length > 0) {
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+                revealItems.forEach((el) => observer.observe(el));
+            } else {
+                revealItems.forEach((el) => el.classList.add('is-visible'));
+            }
+        }
+
+        // 3. Offline status banner
         const updateConnection = () => {
             if (offline) offline.hidden = navigator.onLine;
         };
@@ -51,7 +64,7 @@
         window.addEventListener('online', updateConnection);
         window.addEventListener('offline', updateConnection);
 
-        // 3. Tự động đóng thông báo thành công sau 7 giây
+        // 4. Auto-dismiss success flash alerts after 7s
         document.querySelectorAll('[data-sawade-auto-dismiss="true"]').forEach((alert) => {
             window.setTimeout(() => {
                 if (!alert.isConnected) return;
@@ -63,7 +76,7 @@
             }, 7000);
         });
 
-        // 4. Chống bấm gửi form trùng lặp & hiển thị trạng thái đang xử lý
+        // 5. Double-submit protection with busy indicator
         document.addEventListener('submit', (event) => {
             const form = event.target;
             if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-sawade-busy')) return;
@@ -88,7 +101,7 @@
             scheduleProgress();
         });
 
-        // 5. Khôi phục trạng thái form khi người dùng bấm Back/Forward từ bfcache
+        // 6. Restore bfcache state on Back/Forward navigation
         window.addEventListener('pageshow', () => {
             startedForms.clear();
             pendingButtons.forEach((old, button) => {
@@ -103,7 +116,7 @@
             progressTimer = null;
         });
 
-        // 6. Hiển thị thanh tiến trình khi chuyển trang chậm (không chặn điều hướng native)
+        // 7. Navigation progress indicator
         document.addEventListener('click', (event) => {
             const anchor = event.target.closest?.('a[href]');
             if (

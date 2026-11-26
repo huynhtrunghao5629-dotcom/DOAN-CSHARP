@@ -8,52 +8,53 @@
 @section Styles {
     <style>
         .services-toolbar {
-            padding: 20px 24px;
-            border: 1px solid var(--sawade-line);
-            border-radius: 20px;
+            padding: 22px 26px;
+            border: 1px solid var(--sawade-line-strong);
             background: var(--sawade-ivory-50);
-            box-shadow: var(--sawade-shadow-xs);
         }
 
-        .services-count-pill {
+        .services-count-tag {
             display: inline-flex;
             align-items: center;
-            gap: 0.45rem;
-            padding: 9px 16px;
-            border-radius: 999px;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid var(--sawade-line-strong);
             background: var(--sawade-ivory-100);
-            border: 1px solid var(--sawade-line);
             color: var(--sawade-forest-900);
-            font-size: 0.84rem;
+            font-size: 0.74rem;
             font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
         }
 
-        .service-luxe-card {
-            display: flex;
-            flex-direction: column;
+        .service-idx {
+            font-family: var(--sawade-font-display);
+            font-size: 1.5rem;
+            color: var(--sawade-gold-500);
+            line-height: 1;
         }
 
         .service-price-val {
-            color: var(--sawade-gold-600);
-            font-size: 1.18rem;
-            font-weight: 700;
+            font-family: var(--sawade-font-display);
+            color: var(--sawade-forest-950);
+            font-size: 1.55rem;
+            font-weight: 600;
             font-variant-numeric: tabular-nums;
-            line-height: 1.2;
+            line-height: 1.1;
         }
 
         .service-unit-text {
-            font-size: 0.78rem;
-            font-weight: 500;
+            font-size: 0.76rem;
             color: var(--sawade-muted);
         }
 
         .services-note-box {
-            padding: 18px 22px;
-            border-radius: 18px;
-            border: 1px solid var(--sawade-line);
+            padding: 20px 24px;
+            border: 1px solid var(--sawade-line-strong);
+            border-left: 3px solid var(--sawade-gold-500);
             background: var(--sawade-ivory-50);
-            color: var(--sawade-muted);
-            font-size: 0.88rem;
+            color: var(--sawade-ink-soft);
+            font-size: 0.87rem;
         }
     </style>
 }
@@ -61,14 +62,15 @@
 <section class="luxe-page">
     <div class="container">
         <header class="luxe-page-head">
-            <div class="luxe-kicker mb-2">SAWADE SERVICES</div>
-            <h1 class="luxe-title display-6 mb-3">Những tiện ích làm kỳ nghỉ trọn vẹn hơn</h1>
-            <p class="luxe-lead mb-0">Khám phá các dịch vụ và mức giá tham khảo đang được đồng bộ trực tiếp từ hệ thống khách sạn.</p>
+            <div class="luxe-kicker mb-2">SAWADE CONCIERGE &amp; SERVICES</div>
+            <h1 class="luxe-title mb-3">Những tiện ích làm kỳ nghỉ trọn vẹn hơn</h1>
+            <div class="editorial-rule my-3"></div>
+            <p class="luxe-lead mb-0">Danh mục dịch vụ đi kèm và biểu giá tham khảo được đồng bộ trực tiếp từ hệ thống quản trị khách sạn.</p>
         </header>
 
         @if (ViewBag.ApiError != null)
         {
-            <div class="alert alert-warning rounded-4 mb-4" role="alert">
+            <div class="alert alert-warning mb-4" role="alert">
                 <i class="bi bi-wifi-off me-2" aria-hidden="true"></i>@ViewBag.ApiError
                 <a asp-controller="Home" asp-action="DichVu" class="alert-link ms-2">Thử tải lại</a>
             </div>
@@ -76,37 +78,38 @@
 
         @if (services.Any())
         {
-            <div class="services-toolbar mb-4">
-                <div class="row justify-content-between align-items-center g-3">
+            <div class="services-toolbar mb-5">
+                <div class="row justify-content-between align-items-end g-3">
                     <div class="col-md-7 col-lg-5">
-                        <label class="form-label mb-1" for="serviceSearch">Tìm kiếm dịch vụ</label>
+                        <label class="form-label" for="serviceSearch">Tìm kiếm dịch vụ</label>
                         <div class="input-group">
                             <span class="input-group-text border-end-0"><i class="bi bi-search" aria-hidden="true"></i></span>
                             <input id="serviceSearch" type="search" class="form-control border-start-0" placeholder="Ví dụ: ăn sáng, giặt ủi, đưa đón..." />
                         </div>
                     </div>
                     <div class="col-md-auto">
-                        <span class="services-count-pill">
-                            <i class="bi bi-grid-3x3-gap text-gold" aria-hidden="true"></i>
-                            <span id="serviceCount">@services.Count</span> dịch vụ đang hiển thị
+                        <span class="services-count-tag">
+                            <span id="serviceCount" class="tabular-nums">@services.Count</span> dịch vụ
                         </span>
                     </div>
                 </div>
             </div>
 
             <div class="row g-4" id="servicesGrid">
+                @{ var sIndex = 0; }
                 @foreach (var service in services)
                 {
+                    sIndex++;
                     <div class="col-md-6 col-xl-4 service-item" data-search="@(HienThiDichVu.Ten(service.TenDichVu) + " " + HienThiDichVu.MoTa(service.MoTa))">
-                        <article class="service-luxe-card h-100">
+                        <article class="service-luxe-card h-100 d-flex flex-column">
                             <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+                                <span class="service-idx">@sIndex.ToString("D2")</span>
                                 <div class="service-luxe-icon">
                                     <i class="bi @HienThiDichVu.Icon(service.TenDichVu)" aria-hidden="true"></i>
                                 </div>
-                                <span class="luxe-kicker">HOTEL SERVICE</span>
                             </div>
 
-                            <h2 class="h5 fw-bold mb-2">@HienThiDichVu.Ten(service.TenDichVu)</h2>
+                            <h2 class="editorial-serif h3 mb-2">@HienThiDichVu.Ten(service.TenDichVu)</h2>
 
                             @if (!string.IsNullOrWhiteSpace(service.MoTa))
                             {
@@ -118,7 +121,7 @@
                             }
 
                             <div class="border-top mt-auto pt-3 d-flex justify-content-between align-items-end gap-3">
-                                <span class="small text-muted">Giá tham khảo</span>
+                                <span class="text-muted" style="font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;">Biểu giá</span>
                                 <div class="text-end">
                                     <div class="service-price-val">@service.DonGia.ToString("N0") đ</div>
                                     <div class="service-unit-text">/ @HienThiDichVu.DonVi(service.DonViTinh)</div>
@@ -129,16 +132,16 @@
                 }
             </div>
 
-            <div id="noServices" class="bg-white border rounded-4 p-5 text-center mt-4" hidden>
+            <div id="noServices" class="bg-white border p-5 text-center mt-4" hidden>
                 <div class="sawade-empty-icon mb-3"><i class="bi bi-search" aria-hidden="true"></i></div>
-                <h2 class="h5 fw-bold mb-1">Không tìm thấy dịch vụ phù hợp</h2>
+                <h2 class="editorial-serif h4 mb-1">Không tìm thấy dịch vụ phù hợp</h2>
                 <p class="text-muted small mb-0">Hãy thử từ khóa ngắn hơn hoặc xóa ô tìm kiếm để xem toàn bộ danh mục.</p>
             </div>
 
-            <div class="services-note-box mt-4 d-flex align-items-start gap-3">
-                <i class="bi bi-info-circle-fill text-gold fs-5 mt-1" aria-hidden="true"></i>
+            <div class="services-note-box mt-5 d-flex align-items-start gap-3">
+                <i class="bi bi-info-circle text-gold fs-5 mt-1" aria-hidden="true"></i>
                 <div>
-                    Dịch vụ phát sinh được lễ tân ghi nhận trực tiếp vào đơn đặt phòng và thanh toán khi trả phòng. Trang này dùng để tra cứu danh mục và bảng giá tham khảo, chưa hỗ trợ đặt dịch vụ riêng trực tuyến.
+                    Dịch vụ phát sinh được lễ tân ghi nhận trực tiếp vào mã đơn đặt phòng và tổng hợp vào hóa đơn khi trả phòng. Trang này dùng để tra cứu danh mục và mức giá tham khảo, chưa hỗ trợ đặt dịch vụ riêng trực tuyến.
                 </div>
             </div>
         }
@@ -146,14 +149,14 @@
         {
             <div class="service-luxe-card text-center p-5 mx-auto" style="max-width: 640px;">
                 <div class="sawade-empty-icon mb-3"><i class="bi bi-bag-x" aria-hidden="true"></i></div>
-                <h2 class="h5 fw-bold mt-2">Chưa có dịch vụ để hiển thị</h2>
+                <h2 class="editorial-serif h4 mt-2">Chưa có dịch vụ để hiển thị</h2>
                 <p class="text-muted mb-0">Danh mục dịch vụ đang được cập nhật trên hệ thống.</p>
             </div>
         }
 
-        <div class="text-center mt-5">
-            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary rounded-pill px-4 py-3">
-                Khám phá phòng nghỉ <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+        <div class="text-center mt-5 pt-2">
+            <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-primary btn-lg">
+                Khám phá phòng nghỉ <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
             </a>
         </div>
     </div>
