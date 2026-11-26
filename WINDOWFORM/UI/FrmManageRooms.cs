@@ -13,14 +13,23 @@ namespace HotelManager.UI
 {
     public partial class FrmManageRooms : Form
     {
+        private readonly bool _isAdmin;
         private string _selectedPhongId = string.Empty;
         private readonly ComboBox _cboLoaiPhong = new ComboBox();
         private readonly TextBox _txtHinhAnh = new TextBox();
         private readonly Button _btnChonAnh = new Button();
+        private readonly Dictionary<string, Image> _imageCache = new(StringComparer.OrdinalIgnoreCase);
 
-        public FrmManageRooms()
+        // Constructor mặc định dành cho Designer (mặc định chỉ xem để an toàn)
+        public FrmManageRooms() : this(null)
+        {
+        }
+
+        // Constructor chính nhận thông tin phân quyền từ FrmMain
+        public FrmManageRooms(UserSession? user)
         {
             InitializeComponent();
+            _isAdmin = user != null && string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase);
         }
 
         private async void FrmManageRooms_Load(object sender, EventArgs e)
@@ -31,8 +40,62 @@ namespace HotelManager.UI
             SetupDataGridView();
             txtGiaPhong.ReadOnly = true;
             txtTenLoaiPhong.ReadOnly = true;
+
+            ApplyPermissions();
+
+            FormClosed += (_, _) =>
+            {
+                foreach (var img in _imageCache.Values)
+                    img.Dispose();
+                _imageCache.Clear();
+            };
+
             await LoadLoaiPhongAsync();
             await LoadRoomsAsync();
+        }
+
+        private void ApplyPermissions()
+        {
+            Text = _isAdmin ? "Quản lý Phòng" : "Danh sách Phòng (Chỉ xem - Lễ tân)";
+
+            txtSoPhong.ReadOnly = !_isAdmin;
+            _cboLoaiPhong.Enabled = _isAdmin;
+            cboTrangThai.Enabled = _isAdmin;
+            _txtHinhAnh.ReadOnly = !_isAdmin;
+            _btnChonAnh.Enabled = _isAdmin;
+
+            // Khóa các nút Thêm / Cập nhật / Xóa / Làm trống, giữ nguyên nút Tải lại cho Lễ tân
+            ApplyButtonPermissions(this);
+        }
+
+        private void ApplyButtonPermissions(Control parent)
+        {
+            foreach (Control ctrl in parent.Controls)
+            {
+                if (ctrl is Button btn)
+                {
+                    bool isMutationButton =
+                        string.Equals(btn.Name, "btnAdd", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(btn.Name, "btnEdit", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(btn.Name, "btnDelete", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(btn.Name, "btnClear", StringComparison.OrdinalIgnoreCase) ||
+                        btn.Text.Contains("Thêm", StringComparison.OrdinalIgnoreCase) ||
+                        btn.Text.Contains("Cập nhật", StringComparison.OrdinalIgnoreCase) ||
+                        btn.Text.Contains("Sửa", StringComparison.OrdinalIgnoreCase) ||
+                        btn.Text.Contains("Xóa", StringComparison.OrdinalIgnoreCase) ||
+                        btn.Text.Contains("Làm trống", StringComparison.OrdinalIgnoreCase);
+
+                    if (isMutationButton)
+                    {
+                        btn.Enabled = _isAdmin;
+                    }
+                }
+
+                if (ctrl.HasChildren)
+                {
+                    ApplyButtonPermissions(ctrl);
+                }
+            }
         }
 
         private void InitStatusComboBox()
@@ -64,7 +127,6 @@ namespace HotelManager.UI
 
         private void InitHinhAnhInput()
         {
-            // Tự động đặt ô nhập tên file ảnh & nút chọn file ngay bên phải cboTrangThai
             var lblHinhAnh = new Label
             {
                 Text = "Hình ảnh:",
@@ -90,6 +152,8 @@ namespace HotelManager.UI
 
         private void BtnChonAnh_Click(object? sender, EventArgs e)
         {
+            if (!_isAdmin) return;
+
             using var dlg = new OpenFileDialog
             {
                 Title = "Chọn hình ảnh phòng",
@@ -107,12 +171,10 @@ namespace HotelManager.UI
 
         private static string GetImagesFolderPath()
         {
-            // 1. Ưu tiên thư mục "images" nằm ngay cạnh file HotelManager.exe (chạy được trên mọi máy sau khi build/đóng gói)
             string localExeImages = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images");
             if (Directory.Exists(localExeImages))
                 return localExeImages;
 
-            // 2. Nếu chạy ở môi trường Dev từ thư mục clone Git bất kỳ, tự tìm ngược lên WEB\wwwroot\images
             DirectoryInfo? dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
             while (dir != null)
             {
@@ -122,50 +184,56 @@ namespace HotelManager.UI
                 dir = dir.Parent;
             }
 
-            // 3. Fallback an toàn: tự tạo thư mục images cạnh file .exe nếu máy trắng hoàn toàn
             Directory.CreateDirectory(localExeImages);
             return localExeImages;
         }
 
-        private static Image LoadRoomImageSafe(string? fileName)
-{
-    string folder = GetImagesFolderPath();
-    string baseName = Path.GetFileNameWithoutExtension(fileName ?? string.Empty);
-    string exactName = Path.GetFileName(fileName ?? string.Empty);
-
-    // Danh sách các đường dẫn ưu tiên thử lần lượt
-    var candidates = new List<string>();
-    if (!string.IsNullOrWhiteSpace(exactName))
-        candidates.Add(Path.Combine(folder, exactName));
-
-    if (!string.IsNullOrWhiteSpace(baseName))
-    {
-        candidates.Add(Path.Combine(folder, baseName + ".jpg"));
-        candidates.Add(Path.Combine(folder, baseName + ".jpeg"));
-        candidates.Add(Path.Combine(folder, baseName + ".png"));
-    }
-
-    candidates.Add(Path.Combine(folder, "room-placeholder.jpg"));
-    candidates.Add(Path.Combine(folder, "101.jpg")); // Dự phòng cuối cùng nếu thiếu placeholder
-
-    foreach (var path in candidates)
-    {
-        if (!File.Exists(path)) continue;
-        try
+        private Image LoadRoomImageSafe(string? fileName)
         {
-            byte[] bytes = File.ReadAllBytes(path);
-            using var ms = new MemoryStream(bytes);
-            using var tempImg = Image.FromStream(ms);
-            return new Bitmap(tempImg);
-        }
-        catch
-        {
-            // Bỏ qua nếu file bị sai định dạng (vd: WebP đội lốt .jpg) để thử file kế tiếp
-        }
-    }
+            string cacheKey = (fileName ?? string.Empty).Trim();
+            if (_imageCache.TryGetValue(cacheKey, out var cachedImg))
+                return cachedImg;
 
-    return new Bitmap(60, 40);
-}
+            string folder = GetImagesFolderPath();
+            string baseName = Path.GetFileNameWithoutExtension(cacheKey);
+            string exactName = Path.GetFileName(cacheKey);
+
+            var candidates = new List<string>();
+            if (!string.IsNullOrWhiteSpace(exactName))
+                candidates.Add(Path.Combine(folder, exactName));
+
+            if (!string.IsNullOrWhiteSpace(baseName))
+            {
+                candidates.Add(Path.Combine(folder, baseName + ".jpg"));
+                candidates.Add(Path.Combine(folder, baseName + ".jpeg"));
+                candidates.Add(Path.Combine(folder, baseName + ".png"));
+            }
+
+            candidates.Add(Path.Combine(folder, "room-placeholder.jpg"));
+            candidates.Add(Path.Combine(folder, "101.jpg"));
+
+            foreach (var path in candidates)
+            {
+                if (!File.Exists(path)) continue;
+                try
+                {
+                    byte[] bytes = File.ReadAllBytes(path);
+                    using var ms = new MemoryStream(bytes);
+                    using var tempImg = Image.FromStream(ms);
+                    var bmp = new Bitmap(tempImg);
+                    _imageCache[cacheKey] = bmp;
+                    return bmp;
+                }
+                catch
+                {
+                    // Bỏ qua file sai định dạng để thử ảnh kế tiếp
+                }
+            }
+
+            var fallback = new Bitmap(60, 40);
+            _imageCache[cacheKey] = fallback;
+            return fallback;
+        }
 
         private void SetupDataGridView()
         {
@@ -180,12 +248,10 @@ namespace HotelManager.UI
             dgvRooms.RowTemplate.Height = 56;
             dgvRooms.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-            // Chặn hộp thoại lỗi mặc định của DataGridView nếu có dữ liệu lạ
             dgvRooms.DataError += (s, e) => { e.ThrowException = false; };
 
             AddRoomColumn("PhongId", "Mã phòng", 60);
 
-            // Cột hiển thị hình ảnh thu nhỏ (gắn DataPropertyName = "HinhAnh")
             var imgCol = new DataGridViewImageColumn
             {
                 Name = "AnhHienThi",
@@ -300,6 +366,12 @@ namespace HotelManager.UI
 
         private async void btnAdd_Click(object sender, EventArgs e)
         {
+            if (!_isAdmin)
+            {
+                MessageBox.Show("Chỉ Quản lý (Admin) mới có quyền thêm phòng mới.", "Phân quyền", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (!ValidateInput()) return;
 
             string soPhong = txtSoPhong.Text.Trim();
@@ -324,7 +396,10 @@ namespace HotelManager.UI
                 }
                 else
                 {
-                    MessageBox.Show($"Thêm phòng thất bại. Mã lỗi API: {response.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    var detail = (await response.Content.ReadAsStringAsync()).Trim().Trim('"');
+                    MessageBox.Show(string.IsNullOrWhiteSpace(detail)
+                        ? $"Thêm phòng thất bại. Mã lỗi API: HTTP {(int)response.StatusCode}"
+                        : $"Thêm phòng thất bại: {detail}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
@@ -335,6 +410,12 @@ namespace HotelManager.UI
 
         private async void btnEdit_Click(object sender, EventArgs e)
         {
+            if (!_isAdmin)
+            {
+                MessageBox.Show("Chỉ Quản lý (Admin) mới có quyền cập nhật thông tin phòng.", "Phân quyền", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (string.IsNullOrEmpty(_selectedPhongId))
             {
                 MessageBox.Show("Vui lòng chọn phòng cần cập nhật từ bảng danh sách!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -366,7 +447,7 @@ namespace HotelManager.UI
                 }
                 else
                 {
-                    var detail = await response.Content.ReadAsStringAsync();
+                    var detail = (await response.Content.ReadAsStringAsync()).Trim().Trim('"');
                     MessageBox.Show($"Cập nhật thất bại. HTTP {(int)response.StatusCode}: {detail}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -378,6 +459,12 @@ namespace HotelManager.UI
 
         private async void btnDelete_Click(object sender, EventArgs e)
         {
+            if (!_isAdmin)
+            {
+                MessageBox.Show("Chỉ Quản lý (Admin) mới có quyền xóa phòng.", "Phân quyền", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (string.IsNullOrEmpty(_selectedPhongId))
             {
                 MessageBox.Show("Vui lòng chọn phòng cần xóa từ danh sách!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -398,7 +485,10 @@ namespace HotelManager.UI
                 }
                 else
                 {
-                    MessageBox.Show($"Xóa thất bại. Mã lỗi API: {response.StatusCode}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    var detail = (await response.Content.ReadAsStringAsync()).Trim().Trim('"');
+                    MessageBox.Show(string.IsNullOrWhiteSpace(detail)
+                        ? $"Xóa thất bại. Mã lỗi API: HTTP {(int)response.StatusCode}"
+                        : $"Không thể xóa phòng: {detail}", "Lỗi API", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
@@ -417,7 +507,7 @@ namespace HotelManager.UI
                     _selectedPhongId = room.PhongId.ToString();
                     txtSoPhong.Text = room.SoPhong;
                     txtTenLoaiPhong.Text = room.TenLoaiPhong;
-                    txtGiaPhong.Text = room.GiaPhong.ToString("G0");
+                    txtGiaPhong.Text = room.GiaPhong.ToString("N0");
                     _txtHinhAnh.Text = room.HinhAnh ?? string.Empty;
 
                     if (room.LoaiPhongId > 0 && _cboLoaiPhong.DataSource != null)
@@ -466,6 +556,7 @@ namespace HotelManager.UI
 
         private void btnClear_Click(object sender, EventArgs e)
         {
+            if (!_isAdmin) return;
             ClearInputFields();
         }
 
