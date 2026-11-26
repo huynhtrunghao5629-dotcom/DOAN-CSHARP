@@ -19,23 +19,35 @@ namespace HotelManager.UI
         {
             Text = $"Quản lý khách sạn - Tài khoản: {_user.Username} ({TrangThaiTiengViet.VaiTro(_user.Role)})";
             bool isAdmin = string.Equals(_user.Role, "Admin", StringComparison.OrdinalIgnoreCase);
-            mnuManageRooms.Enabled = isAdmin;
+
+            // Đồng bộ tên và phân quyền cho các menu tạo từ Designer
+            mnuManageRooms.Text = "Quản lý phòng";
+            mnuManageRooms.Visible = true;
+            mnuManageRooms.Enabled = true;
+
+            mnuReports.Visible = isAdmin;
+            mnuReports.Enabled = isAdmin;
+
             mnuManageCustomers.Enabled = true;
             menuStrip1.Visible = false; // Menu trống do Designer cũ tạo.
             MainMenuStrip = menuStrip2;
-            // Bổ sung lối mở những màn hình đang có trong dự án.
+
+            // Các chức năng nghiệp vụ quầy (Lễ tân và Quản lý đều dùng được)
             AddMenu("Quản lý đặt phòng", () => OpenChild(new FrmManageBookings()));
             AddMenu("Sơ đồ phòng", () => OpenChild(new FrmRoomGrid()));
             AddMenu("Dịch vụ phát sinh", () => OpenChild(new FrmManageServices()));
             AddMenu("Thanh toán / Trả phòng", () => OpenChild(new FrmManageInvoices()));
+
+            // Các chức năng chỉ dành cho Quản lý (Admin)
             if (isAdmin)
             {
                 AddMenu("Quản lý loại phòng / Giá", () => OpenChild(new FrmManageRoomTypes()));
                 AddMenu("Quản lý tài khoản", () => OpenChild(new FrmManageUsers()));
+                mnuReports.Click += (_, _) => OpenChild(new FrmReport());
             }
-            // ToolStripMenuItem không thuộc Controls.Find(): gắn sự kiện trực tiếp.
+
+            // Gắn sự kiện cho các mục dùng chung
             mnuManageCustomers.Click += (_, _) => OpenChild(new FrmManageCustomers());
-            mnuReports.Click += (_, _) => OpenChild(new FrmReport());
             mnuLogout.Click += (_, _) => { BaseApiClient.ClearToken(); Application.Restart(); };
             mnuExit.Click += (_, _) => Application.Exit();
         }
@@ -54,7 +66,7 @@ namespace HotelManager.UI
                 if (child.GetType() == form.GetType())
                 {
                     form.Dispose();
-                    child.Activate();
+                    child.Activate();   
                     return;
                 }
             }
@@ -63,6 +75,8 @@ namespace HotelManager.UI
         }
 
         public void mnuManageRooms_Click(object sender, EventArgs e)
-            => OpenChild(new FrmManageRooms());
+        {
+            OpenChild(new FrmManageRooms(_user));
+        }
     }
 }

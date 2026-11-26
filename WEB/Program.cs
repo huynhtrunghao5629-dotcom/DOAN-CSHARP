@@ -12,19 +12,22 @@ namespace QuanLyKhachSan.Web
                 // Validate antiforgery token on all MVC POST/PUT/PATCH/DELETE actions.
                 options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
             });
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddTransient<QuanLyKhachSan.Web.Services.CustomerApiTokenHandler>();
             builder.Services.AddHttpClient("HotelApi", client =>
             {
                 var apiUrl = builder.Configuration["HotelApi:BaseUrl"] ?? "http://localhost:5050/";
                 client.BaseAddress = new Uri(apiUrl.TrimEnd('/') + "/");
                 client.Timeout = TimeSpan.FromSeconds(20);
-            });
+            }).AddHttpMessageHandler<QuanLyKhachSan.Web.Services.CustomerApiTokenHandler>();
             // Kích hoạt Cookie Authentication
             builder.Services.AddAuthentication("Cookies")
                 .AddCookie("Cookies", options =>
                 {
                     options.LoginPath = "/TaiKhoan/DangNhap"; // Đường dẫn khi chưa đăng nhập bị bắt buộc
                     options.LogoutPath = "/TaiKhoan/DangXuat";
-                    options.ExpireTimeSpan = TimeSpan.FromDays(30); // Nhớ đăng nhập 30 ngày
+                    options.ExpireTimeSpan = TimeSpan.FromHours(2); // Khớp thời hạn API token
+                    options.SlidingExpiration = false;
                 });
             var app = builder.Build();
 

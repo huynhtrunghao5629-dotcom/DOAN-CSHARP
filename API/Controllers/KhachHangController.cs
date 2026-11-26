@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using QuanLyKhachSanAPI.Models;
 using QuanLyKhachSanAPI.Security;
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 
 namespace QuanLyKhachSanAPI.Controllers;
@@ -12,10 +15,12 @@ namespace QuanLyKhachSanAPI.Controllers;
 public class KhachHangController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JwtSigningSettings _jwt;
 
-    public KhachHangController(AppDbContext context)
+    public KhachHangController(AppDbContext context, JwtSigningSettings jwt)
     {
         _context = context;
+        _jwt = jwt;
     }
 
     private static bool EmailHopLe(string email)
@@ -49,12 +54,10 @@ public class KhachHangController : ControllerBase
         if (request.MatKhau.Length < 6)
             return BadRequest("Mật khẩu phải có ít nhất 6 ký tự.");
 
-        // 1. Kiểm tra trùng Số điện thoại
         bool trungSdt = await _context.KhachHangs.AnyAsync(k => k.SoDienThoai == soDienThoai);
         if (trungSdt)
             return BadRequest("Số điện thoại này đã được đăng ký.");
 
-        // 2. Kiểm tra trùng CCCD (Nguyên nhân chính gây ra lỗi UNIQUE KEY của bạn)
         if (!string.IsNullOrWhiteSpace(request.CCCD))
         {
             bool trungCccd = await _context.KhachHangs.AnyAsync(k => k.Cccd == cccd);
@@ -62,7 +65,6 @@ public class KhachHangController : ControllerBase
                 return BadRequest("Số CCCD/CMND này đã tồn tại trong hệ thống.");
         }
 
-        // 3. Kiểm tra trùng Email (nếu người dùng có nhập)
         if (!string.IsNullOrWhiteSpace(request.Email))
         {
             bool trungEmail = await _context.KhachHangs.AnyAsync(k => k.Email == email);
@@ -98,8 +100,9 @@ public class KhachHangController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.TaiKhoan) || string.IsNullOrWhiteSpace(request.MatKhau))
             return BadRequest("Vui lòng nhập tài khoản và mật khẩu.");
 
+        var taiKhoanInput = request.TaiKhoan.Trim();
         var khachHang = await _context.KhachHangs
-            .FirstOrDefaultAsync(k => k.SoDienThoai == request.TaiKhoan.Trim() || k.Email == request.TaiKhoan.Trim());
+            .FirstOrDefaultAsync(k => k.SoDienThoai == taiKhoanInput || k.Email == taiKhoanInput);
 
         if (khachHang == null)
             return NotFound("Không tìm thấy tài khoản.");
@@ -111,13 +114,40 @@ public class KhachHangController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
+        // Tạo JWT Token trả về cho Web Client (khớp với TaiKhoanController bên Web)
+        var securityKey = new SymmetricSecurityKey(_jwt.Key);
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, khachHang.KhachHangId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, khachHang.KhachHangId.ToString()),
+            new Claim(ClaimTypes.Name, khachHang.HoTen ?? "Khách hàng"),
+            new Claim(ClaimTypes.MobilePhone, khachHang.SoDienThoai ?? ""),
+            new Claim(ClaimTypes.Role, "KhachHang"),
+            new Claim("VaiTro", "KhachHang"),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: _jwt.Issuer,
+            audience: _jwt.Audience,
+            claims: claims,
+            expires: DateTime.Now.AddHours(4),
+            signingCredentials: credentials);
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
         return Ok(new
         {
+            ThongBao = "Đăng nhập thành công!",
+            Token = tokenString,
             KhachHangId = khachHang.KhachHangId,
             HoTen = khachHang.HoTen,
             SoDienThoai = khachHang.SoDienThoai
         });
     }
+
     // GET: api/KhachHang
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -159,8 +189,8 @@ public class KhachHangController : ControllerBase
                 .ToListAsync());
 
         var result = await _context.KhachHangs
-            .Where(k => k.HoTen.Contains(tuKhoa) 
-                     || (k.SoDienThoai != null && k.SoDienThoai.Contains(tuKhoa)) 
+            .Where(k => k.HoTen.Contains(tuKhoa)
+                     || (k.SoDienThoai != null && k.SoDienThoai.Contains(tuKhoa))
                      || (k.Cccd != null && k.Cccd.Contains(tuKhoa)))
             .Select(k => new
             {
@@ -206,8 +236,15 @@ public class KhachHangController : ControllerBase
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetById), new { id = khachHang.KhachHangId },
-            new { khachHang.KhachHangId, khachHang.HoTen, khachHang.Cccd,
-                  khachHang.SoDienThoai, khachHang.Email, khachHang.DiaChi });
+            new
+            {
+                khachHang.KhachHangId,
+                khachHang.HoTen,
+                khachHang.Cccd,
+                khachHang.SoDienThoai,
+                khachHang.Email,
+                khachHang.DiaChi
+            });
     }
 
     // PUT: api/KhachHang/5
@@ -247,11 +284,18 @@ public class KhachHangController : ControllerBase
         khachHang.Email = emailCapNhat;
         khachHang.DiaChi = model.DiaChi;
 
-
         await _context.SaveChangesAsync();
-        return Ok(new { khachHang.KhachHangId, khachHang.HoTen, khachHang.Cccd,
-            khachHang.SoDienThoai, khachHang.Email, khachHang.DiaChi });
+        return Ok(new
+        {
+            khachHang.KhachHangId,
+            khachHang.HoTen,
+            khachHang.Cccd,
+            khachHang.SoDienThoai,
+            khachHang.Email,
+            khachHang.DiaChi
+        });
     }
+
     [HttpPut("cap-nhat-ho-so")]
     public async Task<IActionResult> CapNhatHoSo([FromBody] CapNhatHoSoDto request)
     {
@@ -322,6 +366,7 @@ public class KhachHangController : ControllerBase
         public string? Email { get; set; }
         public string? MatKhauMoi { get; set; }
     }
+
     public class KhachHangDangKyDto
     {
         public string HoTen { get; set; } = string.Empty;

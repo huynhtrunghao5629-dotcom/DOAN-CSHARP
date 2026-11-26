@@ -3,12 +3,18 @@
     ViewData["Title"] = "Đã xảy ra lỗi";
     ViewData["NavbarOverlay"] = false;
 }
-<div class="container py-5 my-5 text-center" style="max-width:640px">
-    <i class="bi bi-exclamation-triangle text-warning display-3" aria-hidden="true"></i>
-    <h1 class="h3 fw-bold mt-4">Rất tiếc, trang đã xảy ra lỗi</h1>
-    <p class="text-muted">Hệ thống chưa thể xử lý yêu cầu. Bạn có thể quay về trang chủ và thử lại.</p>
-    <a asp-controller="Home" asp-action="Index" class="btn btn-sawade rounded-pill px-4">Về trang chủ</a>
-    @if (Model?.ShowRequestId == true) {
-        <p class="small text-muted mt-4">Mã tham chiếu lỗi: <code>@Model.RequestId</code></p>
-    }
-</div>
+<section class="luxe-page">
+    <div class="container" style="max-width: 640px;">
+        <div class="confirm-card text-center">
+            <div class="sawade-empty-icon mb-4"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
+            <div class="luxe-kicker mb-2">SYSTEM NOTICE</div>
+            <h1 class="luxe-title h2 mb-3">Rất tiếc, trang đã xảy ra lỗi</h1>
+            <p class="luxe-lead mb-4">Hệ thống chưa thể xử lý yêu cầu lúc này. Bạn có thể quay về trang chủ và thử lại.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-sawade-primary">Về trang chủ</a>
+            @if (Model?.ShowRequestId == true)
+            {
+                <p class="small text-muted mt-4 mb-0">Mã tham chiếu: <code>@Model.RequestId</code></p>
+            }
+        </div>
+    </div>
+</section>

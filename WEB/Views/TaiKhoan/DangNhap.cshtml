@@ -9,17 +9,18 @@
         .auth-benefit-list {
             list-style: none;
             padding: 0;
-            margin: 18px 0 0;
-            display: grid;
-            gap: 8px;
+            margin: 22px 0 0;
+            border-top: 1px solid rgba(246, 242, 234, 0.22);
         }
 
         .auth-benefit-list li {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.88);
+            padding: 11px 0;
+            border-bottom: 1px solid rgba(246, 242, 234, 0.14);
+            font-size: 0.84rem;
+            color: rgba(252, 251, 248, 0.86);
         }
 
         .auth-benefit-list i {
@@ -27,79 +28,76 @@
         }
 
         .auth-toggle-pwd {
-            border-color: rgba(21, 49, 39, 0.14);
+            border-color: var(--sawade-line-strong);
             border-left: 0;
-            border-radius: 0 13px 13px 0 !important;
             background: #fff;
             color: var(--sawade-muted);
+            padding: 0 14px !important;
         }
 
         .auth-toggle-pwd:hover {
             background: var(--sawade-ivory-100);
             color: var(--sawade-forest-950);
         }
-
-        .auth-pwd-input {
-            border-right: 0 !important;
-            border-radius: 0 !important;
-        }
     </style>
 }
 
 <section class="auth-page">
     <div class="container auth-shell">
-        <div class="row g-4 align-items-stretch">
-            <div class="col-lg-6 d-none d-lg-block">
-                <div class="auth-visual">
-                    <div class="luxe-kicker mb-2" style="color: var(--sawade-gold-300);">MEMBER EXPERIENCE</div>
-                    <h2 class="mb-3">Kỳ nghỉ của bạn, được lưu giữ trong một tài khoản.</h2>
-                    <p class="mb-0">Đăng nhập để đặt phòng nhanh hơn, theo dõi trạng thái xác nhận và tra cứu toàn bộ lịch sử lưu trú tại SAWADE.</p>
-                    <ul class="auth-benefit-list">
-                        <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i>Tự động điền thông tin khách hàng khi đặt phòng</li>
-                        <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i>Theo dõi trạng thái duyệt đơn &amp; in phiếu đặt phòng</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="auth-card d-flex flex-column justify-content-center">
-                    <div class="mb-4">
-                        <div class="luxe-kicker mb-2">WELCOME BACK</div>
-                        <h1 class="luxe-title mb-2">Chào mừng trở lại</h1>
-                        <p class="luxe-lead small mb-0">Đăng nhập để tiếp tục hành trình nghỉ dưỡng cùng SAWADE.</p>
+        <div class="auth-frame">
+            <div class="row g-0 align-items-stretch">
+                <div class="col-lg-6 d-none d-lg-block">
+                    <div class="auth-visual" style="background-image: url('@Url.Content("~/images/201.jpg")');">
+                        <div class="luxe-kicker mb-2" style="color: var(--sawade-gold-300);">SAWADE MEMBERSHIP</div>
+                        <h2 class="mb-3">Kỳ nghỉ của bạn, được lưu giữ trong một tài khoản.</h2>
+                        <p class="mb-0">Đăng nhập để đặt phòng nhanh hơn, theo dõi trạng thái xác nhận và quản lý lịch sử lưu trú tại SAWADE.</p>
+                        <ul class="auth-benefit-list">
+                            <li><i class="bi bi-check2" aria-hidden="true"></i>Tự động điền thông tin liên hệ khi đặt phòng</li>
+                            <li><i class="bi bi-check2" aria-hidden="true"></i>Theo dõi trạng thái xác nhận &amp; in phiếu đặt phòng A4</li>
+                        </ul>
                     </div>
+                </div>
 
-                    <form asp-controller="TaiKhoan" asp-action="DangNhap" method="post" data-sawade-busy="Đang đăng nhập...">
-                        <div class="mb-3">
-                            <label class="form-label" asp-for="TaiKhoan">Số điện thoại hoặc Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0"><i class="bi bi-person" aria-hidden="true"></i></span>
-                                <input type="text" asp-for="TaiKhoan" class="form-control border-start-0" placeholder="Nhập số điện thoại hoặc email" autocomplete="username" required />
+                <div class="col-lg-6">
+                    <div class="auth-card d-flex flex-column justify-content-center">
+                        <div class="mb-4 pb-2 border-bottom">
+                            <div class="luxe-kicker mb-2">WELCOME BACK</div>
+                            <h1 class="luxe-title h2 mb-2">Đăng nhập tài khoản</h1>
+                            <p class="luxe-lead small mb-0">Tiếp tục hành trình lưu trú cùng SAWADE Hotels &amp; Resorts.</p>
+                        </div>
+
+                        <form asp-controller="TaiKhoan" asp-action="DangNhap" method="post" data-sawade-busy="Đang đăng nhập...">
+                            <div class="mb-3">
+                                <label class="form-label" asp-for="TaiKhoan">Số điện thoại hoặc Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-end-0"><i class="bi bi-person" aria-hidden="true"></i></span>
+                                    <input type="text" asp-for="TaiKhoan" class="form-control border-start-0" placeholder="Nhập số điện thoại hoặc email" autocomplete="username" required />
+                                </div>
+                                <span asp-validation-for="TaiKhoan" class="text-danger small"></span>
                             </div>
-                            <span asp-validation-for="TaiKhoan" class="text-danger small"></span>
-                        </div>
 
-                        <div class="mb-4">
-                            <label class="form-label" asp-for="MatKhau">Mật khẩu</label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0"><i class="bi bi-lock" aria-hidden="true"></i></span>
-                                <input type="password" asp-for="MatKhau" id="loginPassword" class="form-control border-start-0 auth-pwd-input" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
-                                <button type="button" class="btn auth-toggle-pwd" data-toggle-pwd="loginPassword" aria-label="Hiện hoặc ẩn mật khẩu">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
+                            <div class="mb-4">
+                                <label class="form-label" asp-for="MatKhau">Mật khẩu</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-end-0"><i class="bi bi-lock" aria-hidden="true"></i></span>
+                                    <input type="password" asp-for="MatKhau" id="loginPassword" class="form-control border-start-0 border-end-0" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
+                                    <button type="button" class="btn auth-toggle-pwd" data-toggle-pwd="loginPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="MatKhau" class="text-danger small"></span>
                             </div>
-                            <span asp-validation-for="MatKhau" class="text-danger small"></span>
-                        </div>
 
-                        <button type="submit" class="btn btn-sawade-primary w-100 rounded-pill py-3 mb-3">
-                            Đăng nhập <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
-                        </button>
+                            <button type="submit" class="btn btn-sawade-primary w-100 py-3 mb-4">
+                                Đăng nhập <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+                            </button>
 
-                        <div class="text-center small text-muted pt-1">
-                            Chưa có tài khoản?
-                            <a asp-controller="TaiKhoan" asp-action="DangKy" class="auth-link text-decoration-none ms-1">Đăng ký ngay</a>
-                        </div>
-                    </form>
+                            <div class="text-center small text-muted">
+                                Chưa có tài khoản thành viên?
+                                <a asp-controller="TaiKhoan" asp-action="DangKy" class="auth-link text-decoration-none ms-1">Đăng ký ngay</a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

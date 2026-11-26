@@ -4,13 +4,39 @@ using Microsoft.IdentityModel.Tokens;
 using QuanLyKhachSanAPI.Models;
 using QuanLyKhachSanAPI.Security;
 using System.Security.Cryptography;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddCors(options => options.AddPolicy("WebLocal", policy => policy
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Dán trực tiếp chuỗi JWT Token lấy từ API đăng nhập (không cần gõ chữ Bearer)."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+}); builder.Services.AddCors(options => options.AddPolicy("WebLocal", policy => policy
     .WithOrigins("https://localhost:7146", "http://localhost:5146")
     .AllowAnyHeader().AllowAnyMethod()));
 builder.Services.AddDbContext<AppDbContext>(options =>

@@ -1,11 +1,43 @@
 /* ============================================================================
-   SAWADE DESIGN SYSTEM — LAYER 3: HARMONIZATION OVERLAY (sawade-final.css)
-   Loaded after @RenderSection("Styles") so page-specific <style> blocks
-   automatically adopt the unified Vietnamese typography, palette & spacing.
+   SAWADE HOTELS & RESORTS — LAYER 3: SOFT LUXURY TYPOGRAPHY & ROUNDED SYSTEM
+   - Nội dung thường (Hình 1): Barlow
+   - Tiêu đề thanh mảnh giãn chữ (Hình 2): Cormorant Garamond
+   - Chữ nghiêng điểm nhấn (Hình 3): Lora Italic
    ============================================================================ */
 
-/* Đảm bảo font chữ đồng nhất ngay cả khi View con có khai báo font riêng */
-body,
+:root {
+    --sawade-font-sans: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --sawade-font-display: 'Cormorant Garamond', Georgia, serif;
+    --sawade-font-italic: 'Lora', Georgia, serif;
+
+    --font-body: var(--sawade-font-sans);
+    --font-heading: var(--sawade-font-display);
+    --font-italic: var(--sawade-font-italic);
+
+    --gold-accent: #C8A27A;
+    --dark-resort: #212D31;
+
+    --sawade-radius-xs: 8px;
+    --sawade-radius-sm: 12px;
+    --sawade-radius-md: 18px;
+    --sawade-radius-lg: 24px;
+    --sawade-radius-pill: 999px;
+}
+
+/* ============================================================================
+   1. HỆ THỐNG FONT 3 TẦNG (CHUẨN TIẾNG VIỆT, KHÔNG XUNG ĐỘT)
+   ============================================================================ */
+
+/* Tầng 1 — Nội dung thường: Barlow (Hình 1) */
+html,
+body {
+    font-family: var(--sawade-font-sans);
+    font-weight: 400;
+    line-height: 1.72;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 p,
 li,
 label,
@@ -19,10 +51,17 @@ button,
 .form-control,
 .form-select,
 .badge,
-.table {
-    font-family: var(--sawade-font-sans) !important;
+.table,
+.luxe-lead,
+.footer-link,
+.footer-brand-copy,
+.footer-cta-note {
+    font-family: var(--sawade-font-sans);
 }
 
+/* Tầng 2 — Tiêu đề lớn: Cormorant Garamond thanh mảnh, thoáng (Hình 2) */
+h1,
+h2,
 .hero-title,
 .section-heading,
 .luxe-title,
@@ -35,85 +74,292 @@ button,
 .booking-detail-head h1,
 .booking-detail-body h2,
 .detail-page-title,
-main .display-6,
-.modal-title {
+.modal-title,
+.editorial-serif {
     font-family: var(--sawade-font-display) !important;
-    letter-spacing: -0.01em !important;
+    font-weight: 500;
+    line-height: 1.2;
 }
 
-/* Khắc phục tình trạng cắt dấu tiếng Việt ở tiêu đề lớn trong các View con */
-.hero-title,
+/* Tiêu đề mục lớn viết hoa giãn chữ thanh thoát như Hình 2 */
 .section-heading,
 .luxe-title,
 .rooms-page #roomsHeading,
 .luxe-account h1,
 .luxe-lookup h1,
 .detail-page-title,
-main .display-6 {
-    line-height: 1.16 !important;
+.modal-title {
+    text-transform: uppercase;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    line-height: 1.28;
 }
 
-/* Đồng bộ nút chính & bảng trong các View con (DanhSachPhong, ChiTietPhong, HoSoCaNhan, TraCuuDon) */
-.rooms-page .room-btn,
-.luxe-account .profile-btn,
-.luxe-lookup .btn-sawade,
-.booking-panel .btn-sawade,
-.booking-panel .btn-sawade-primary {
-    border-radius: 999px !important;
-    background: linear-gradient(135deg, var(--sawade-forest-900), var(--sawade-forest-800)) !important;
-    border-color: var(--sawade-forest-900) !important;
-    color: #fff !important;
+/* Tiêu đề Hero lớn giữ nét mảnh thoáng và hòa quyện với chữ nghiêng */
+.hero-title {
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    line-height: 1.18;
 }
 
-.rooms-page .room-btn:hover,
-.luxe-account .profile-btn:hover,
-.luxe-lookup .btn-sawade:hover,
-.booking-panel .btn-sawade:hover,
-.booking-panel .btn-sawade-primary:hover {
-    background: linear-gradient(135deg, var(--sawade-forest-800), var(--sawade-forest-700)) !important;
-    border-color: var(--sawade-forest-800) !important;
+/* Logo chữ thương hiệu */
+.brand-name,
+.footer-mark {
+    letter-spacing: 0.2em;
+    font-weight: 500;
 }
 
-/* Đồng bộ khung lọc phòng trên trang DanhSachPhong */
-.rooms-page {
-    background:
-        radial-gradient(circle at 82% -6%, rgba(207, 166, 107, 0.11), transparent 28rem),
-        var(--sawade-ivory-100) !important;
+/* Tầng 3 — Chữ nghiêng điểm nhấn: Lora Italic vàng champagne (Hình 3) */
+.luxury-italic,
+.hero-title em,
+.section-heading em,
+.manifesto-quote em,
+.experience-panel h2 em,
+.auth-visual em,
+blockquote.luxury-quote {
+    font-family: var(--sawade-font-italic) !important;
+    font-style: italic !important;
+    font-weight: 400;
+    text-transform: none !important;
+    letter-spacing: 0.01em;
 }
 
-.rooms-page .rooms-filter {
-    border: 1px solid var(--sawade-line) !important;
-    border-radius: 22px !important;
-    background: rgba(255, 253, 249, 0.97) !important;
-    box-shadow: var(--sawade-shadow-sm) !important;
+.hero-title em,
+.experience-panel h2 em,
+.auth-visual em {
+    color: var(--gold-accent);
 }
 
-.rooms-page .room-card {
-    border: 1px solid var(--sawade-line) !important;
-    border-radius: 22px !important;
-    background: var(--sawade-ivory-50) !important;
+.section-heading em,
+.manifesto-quote em {
+    color: var(--sawade-gold-600, #A8814F);
 }
 
-.rooms-page .room-price,
-.luxe-lookup .lookup-accent,
-.booking-detail-money {
-    color: var(--sawade-gold-600) !important;
+/* Tiêu đề nhỏ trong thẻ phòng / bảng biểu dùng Barlow bán đậm cho gọn mắt */
+h4,
+h5,
+h6,
+.card-title,
+.footer-heading {
+    font-family: var(--sawade-font-sans);
+    font-weight: 600;
 }
 
-/* Đảm bảo Trust Strip trên trang chủ không bị Bootstrap .row/.col phá lưới */
-.trust-strip {
-    display: grid !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+/* ============================================================================
+   2. BO TRÒN MỀM MẠI ĐỒNG BỘ TOÀN WEBSITE (HẾT GÓC CẠNH / VUÔNG VỨC)
+   ============================================================================ */
+
+/* Thanh điều hướng & nút trên Navbar */
+.navbar-sawade .btn,
+.btn-nav-ghost,
+.btn-nav-account {
+    border-radius: var(--sawade-radius-pill) !important;
 }
 
-.trust-strip > [class*="col-"] {
-    width: auto !important;
-    max-width: none !important;
-    flex: none !important;
+.dropdown-menu {
+    border-radius: var(--sawade-radius-md) !important;
+    padding: 8px !important;
+    border: 1px solid rgba(18, 34, 27, 0.08) !important;
+    box-shadow: 0 14px 36px rgba(15, 28, 23, 0.14) !important;
 }
 
-/* Chống xuống dòng xấu ở thanh menu trên laptop */
+.dropdown-item {
+    border-radius: 10px !important;
+    padding: 9px 14px;
+}
+
+/* Nút CTA trên Hero & thanh đặt phòng nhanh */
+.hero-cta-primary,
+.hero-cta-secondary {
+    border-radius: var(--sawade-radius-pill) !important;
+}
+
+.hero-reservation-dock .container > form {
+    border-radius: var(--sawade-radius-md) !important;
+    overflow: hidden;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+.hero-reservation-dock .reservation-ledger-input {
+    border-radius: 10px !important;
+}
+
+@media (max-width: 991.98px) {
+    .hero-reservation-dock .container > form {
+        border-radius: 16px !important;
+    }
+    .reservation-ledger-submit {
+        border-radius: 0 0 16px 16px !important;
+    }
+}
+
+/* Các khối thẻ, khung lọc, đặt phòng, tài khoản, hóa đơn, modal */
+.card,
+.room-card,
+.service-card,
+.filter-card,
+.booking-card,
+.booking-summary-card,
+.auth-card,
+.auth-shell,
+.order-card,
+.stat-card,
+.detail-card,
+.detail-panel,
+.info-card,
+.guide-card,
+.guide-step-card,
+.faq-card,
+.confirm-card,
+.lookup-card,
+.profile-card,
+.booking-detail-card,
+.modal-content,
+.accordion-item {
+    border-radius: var(--sawade-radius-md) !important;
+    overflow: hidden;
+    border-color: rgba(18, 34, 27, 0.09);
+}
+
+.room-card,
+.service-card,
+.filter-card,
+.booking-card,
+.order-card,
+.stat-card,
+.guide-card {
+    box-shadow: 0 10px 28px rgba(18, 34, 27, 0.06) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.room-card:hover,
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 38px rgba(18, 34, 27, 0.11) !important;
+}
+
+/* Thanh tìm kiếm & bộ lọc đang chọn */
+.floating-search-bar,
+.services-toolbar,
+.active-filter-bar {
+    border-radius: var(--sawade-radius-lg) !important;
+}
+
+/* Khung ảnh */
+.room-image-wrapper,
+.detail-room-image,
+.category-card,
+.home-category-card {
+    border-radius: var(--sawade-radius-md) !important;
+    overflow: hidden;
+}
+
+.room-card .room-image-wrapper,
+.card > .card-img-top {
+    border-radius: var(--sawade-radius-md) var(--sawade-radius-md) 0 0 !important;
+}
+
+/* Nút bấm toàn trang */
+.btn,
+.room-btn,
+.btn-sawade-primary,
+.btn-sawade-outline,
+.btn-footer-gold,
+.btn-gold,
+.btn-outline-gold {
+    border-radius: var(--sawade-radius-sm) !important;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+}
+
+.btn-footer-gold {
+    border-radius: var(--sawade-radius-pill) !important;
+}
+
+/* Ô nhập liệu, dropdown chọn, hộp thông báo */
+.form-control,
+.form-select,
+.input-group-text {
+    border-radius: var(--sawade-radius-sm) !important;
+}
+
+.input-group > .form-control:not(:last-child),
+.input-group > .form-select:not(:last-child) {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.input-group > .btn:last-child,
+.input-group > .input-group-text:last-child {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+.alert,
+.sawade-flash {
+    border-radius: 14px !important;
+}
+
+/* Nhãn trạng thái & huy hiệu dạng viên thuốc mềm mại */
+.badge,
+.room-status {
+    border-radius: var(--sawade-radius-pill) !important;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.70rem !important;
+    padding: 6px 13px !important;
+}
+
+/* Phân trang bo tròn gọn mắt */
+.pagination .page-link {
+    border-radius: 10px !important;
+}
+
+/* Nút quay lại đầu trang hình tròn */
+.sawade-back-to-top {
+    border-radius: 50% !important;
+}
+
+/* Bảng trong chi tiết đơn bo góc nhẹ */
+.booking-detail-body .table-responsive,
+.booking-detail-body table {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* Thanh trượt lọc giá (DanhSachPhong) — đổi nút vuông sang chấm tròn mềm */
+input[type="range"].form-range::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--sawade-line-strong);
+    border-radius: 999px;
+}
+
+input[type="range"].form-range::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--sawade-forest-900);
+    border: 2px solid var(--sawade-gold-400);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].form-range::-moz-range-track {
+    height: 4px;
+    background: var(--sawade-line-strong);
+    border-radius: 999px;
+}
+
+input[type="range"].form-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--sawade-forest-900);
+    border: 2px solid var(--sawade-gold-400);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
 @media (min-width: 992px) {
     .navbar-sawade .navbar-nav .nav-link,
     .sawade-nav-actions .btn {
@@ -121,7 +367,15 @@ main .display-6 {
     }
 }
 
-/* Chừa khoảng thở top cho trang không dùng overlay nếu cần */
 body:not(.sawade-has-overlay) main {
     min-height: calc(100vh - 82px);
+}
+
+/* Giữ nguyên bản in sạch khi in phiếu xác nhận đặt phòng */
+@media print {
+    .card,
+    .detail-card,
+    .booking-detail-card {
+        box-shadow: none !important;
+    }
 }

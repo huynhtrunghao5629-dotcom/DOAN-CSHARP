@@ -5,34 +5,12 @@
 
 @section Styles {
     <style>
-        .confirm-icon-ring {
-            width: 88px;
-            height: 88px;
-            margin: 0 auto 22px;
-            display: grid;
-            place-items: center;
-            border-radius: 50%;
-            background: rgba(22, 101, 52, 0.08);
-        }
-
-        .confirm-icon-ring .confirm-icon {
-            margin: 0;
-            width: 66px;
-            height: 66px;
-            font-size: 1.9rem;
-        }
-
         .confirm-code-value {
             font-family: var(--sawade-font-display);
-            font-size: 1.85rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
             color: var(--sawade-forest-950);
-        }
-
-        .confirm-copy-btn {
-            font-size: 0.78rem;
-            padding: 5px 12px;
         }
     </style>
 }
@@ -40,41 +18,37 @@
 <section class="luxe-page">
     <div class="container">
         <div class="confirm-card text-center">
-            <div class="confirm-icon-ring">
-                <div class="confirm-icon"><i class="bi bi-check-lg" aria-hidden="true"></i></div>
-            </div>
+            <div class="confirm-icon mb-4"><i class="bi bi-check-lg" aria-hidden="true"></i></div>
 
-            <div class="luxe-kicker mb-2">REQUEST RECEIVED</div>
+            <div class="luxe-kicker mb-2">RESERVATION RECEIVED</div>
             <h1 class="luxe-title h2 mb-3">Yêu cầu đặt phòng đã được ghi nhận</h1>
             <p class="luxe-lead mb-4">
-                Lễ tân sẽ tiếp nhận và xác nhận yêu cầu của bạn trên hệ thống. Bạn có thể theo dõi trạng thái mới nhất bất cứ lúc nào trong lịch sử đặt phòng.
+                Lễ tân sẽ tiếp nhận và xác nhận yêu cầu của bạn trên hệ thống. Bạn có thể theo dõi trạng thái mới nhất bất cứ lúc nào trong tài khoản thành viên.
             </p>
 
             <div class="confirm-code mb-4">
-                <span class="small text-muted d-block mb-1">Mã đơn đặt phòng của bạn</span>
-                <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap mb-2">
+                <span class="luxe-kicker d-block mb-2">MÃ ĐƠN ĐẶT PHÒNG</span>
+                <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap mb-3">
                     <span class="confirm-code-value" id="confirmBookingCode">@ViewBag.MaDon</span>
-                    <button type="button" class="btn btn-sawade-light confirm-copy-btn rounded-pill" id="copyBookingCodeBtn" title="Sao chép mã đơn">
+                    <button type="button" class="btn btn-sawade-light btn-sm" id="copyBookingCodeBtn" title="Sao chép mã đơn">
                         <i class="bi bi-clipboard me-1" aria-hidden="true"></i>Sao chép
                     </button>
                 </div>
-                <span class="room-status unavailable">
-                    <i class="bi bi-hourglass-split" aria-hidden="true"></i>Trạng thái: @ViewBag.TrangThai
-                </span>
+                <span class="room-status unavailable">Trạng thái: @ViewBag.TrangThai</span>
             </div>
 
             <p class="small text-muted mb-4">
-                Vui lòng lưu lại mã đơn để đối chiếu khi nhận phòng. Trạng thái sẽ tự động cập nhật sau khi lễ tân xác nhận.
+                Vui lòng lưu lại mã đơn để đối chiếu khi làm thủ tục nhận phòng tại quầy.
             </p>
 
             <div class="d-flex gap-2 justify-content-center flex-wrap">
-                <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@ViewBag.DatPhongId" class="btn btn-sawade-primary rounded-pill px-4 py-2.5">
-                    <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Xem chi tiết đơn
+                <a asp-controller="DonDatPhong" asp-action="ChiTiet" asp-route-id="@ViewBag.DatPhongId" class="btn btn-sawade-primary">
+                    Xem phiếu đặt phòng
                 </a>
-                <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="btn btn-outline-dark rounded-pill px-4 py-2.5">
-                    <i class="bi bi-clock-history me-1" aria-hidden="true"></i>Lịch sử đặt phòng
+                <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="btn btn-outline-dark">
+                    Lịch sử đặt phòng
                 </a>
-                <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-light rounded-pill px-4 py-2.5">
+                <a asp-controller="Home" asp-action="DanhSachPhong" class="btn btn-sawade-light">
                     Xem phòng khác
                 </a>
             </div>

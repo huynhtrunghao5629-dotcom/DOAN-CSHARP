@@ -12,9 +12,9 @@
 
     var fallbackImgs = new[]
     {
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=1100&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1618773928120-22165582f349?q=80&w=1100&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1100&auto=format&fit=crop"
+        Url.Content("~/images/102.jpg"),
+        Url.Content("~/images/201.jpg"),
+        Url.Content("~/images/208.jpg")
     };
     var fallbackIndex = (int)(Math.Abs((long)Model.PhongId) % fallbackImgs.Length);
     var fallbackImage = fallbackImgs[fallbackIndex];
@@ -28,111 +28,137 @@
     DateOnly? selectedCheckIn = ViewBag.NgayNhan as DateOnly?;
     DateOnly? selectedCheckOut = ViewBag.NgayTra as DateOnly?;
     int? selectedGuests = ViewBag.SoKhach as int?;
-    string initialCheckIn = selectedCheckIn?.ToString("yyyy-MM-dd") + (selectedCheckIn.HasValue ? "T14:00" : "");
-    string initialCheckOut = selectedCheckOut?.ToString("yyyy-MM-dd") + (selectedCheckOut.HasValue ? "T12:00" : "");
+    string initialCheckIn = selectedCheckIn?.ToString("yyyy-MM-dd") ?? "";
+    string initialCheckOut = selectedCheckOut?.ToString("yyyy-MM-dd") ?? "";
+    var bookedRanges = ViewBag.LichDaDat as List<string> ?? new List<string>();
 }
 
 @section Styles {
     <style>
         .detail-shell {
-            padding: 36px 0 80px;
+            padding: 40px 0 88px;
         }
 
-        .detail-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
-            color: var(--sawade-muted);
-        }
-
-        .detail-surface {
-            border: 1px solid var(--sawade-line);
-            border-radius: 28px;
-            background: var(--sawade-ivory-50);
-            box-shadow: var(--sawade-shadow-sm);
-        }
-
-        .detail-room-image {
+        .detail-room-frame {
             position: relative;
-            height: min(52vw, 490px);
+            height: min(52vw, 510px);
             min-height: 300px;
             overflow: hidden;
-            border-radius: 22px;
-            background: var(--sawade-ivory-200);
+            background: var(--sawade-forest-950);
+            border: 1px solid var(--sawade-line-strong);
         }
 
-        .detail-room-image img {
+        .detail-room-frame img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .detail-feature {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-height: 92px;
-            padding: 14px 10px;
-            text-align: center;
-            color: var(--sawade-ink-soft);
-            font-size: 0.80rem;
-            font-weight: 600;
+        .detail-photo-tag {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            padding: 7px 14px;
+            background: rgba(11, 18, 15, 0.78);
+            border-left: 2px solid var(--sawade-gold-400);
+            color: var(--sawade-ivory-50);
+            font-size: 0.70rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
         }
 
-        .detail-feature i {
-            font-size: 1.3rem;
+        .detail-specs-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border: 1px solid var(--sawade-line-strong);
+            border-top: 0;
+            background: var(--sawade-ivory-50);
+        }
+
+        .detail-spec-item {
+            padding: 18px 16px;
+            border-right: 1px solid var(--sawade-line);
+        }
+
+        .detail-spec-item:last-child {
+            border-right: 0;
+        }
+
+        .detail-spec-label {
+            display: block;
+            font-size: 0.65rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--sawade-muted);
+            margin-bottom: 4px;
+        }
+
+        .detail-spec-val {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--sawade-forest-950);
         }
 
         .detail-overview-card {
-            padding: 24px 26px;
-            border: 1px solid var(--sawade-line);
-            border-radius: 20px;
-            background: #fff;
+            padding: 32px;
+            border: 1px solid var(--sawade-line-strong);
+            background: var(--sawade-ivory-50);
+        }
+
+        .detail-perk-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--sawade-line);
         }
 
         .detail-perk-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px 14px;
-            border-radius: 13px;
-            background: var(--sawade-ivory-100);
-            font-size: 0.85rem;
-            color: var(--sawade-ink);
+            font-size: 0.86rem;
+            color: var(--sawade-ink-soft);
         }
 
         .detail-perk-item i {
-            color: var(--sawade-forest-700);
-            font-size: 1rem;
+            color: var(--sawade-gold-600);
         }
 
         .detail-sticky-col {
             position: sticky;
-            top: 98px;
-        }
-
-        .detail-price {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-        }
-
-        .detail-price small {
-            color: var(--sawade-muted);
-            font-size: 0.92rem;
-            font-weight: 500;
+            top: 100px;
         }
 
         .detail-estimate-box {
-            padding: 16px 18px;
-            border-radius: 16px;
+            padding: 18px;
             background: var(--sawade-ivory-100);
             border: 1px solid var(--sawade-line);
         }
 
         .detail-estimate-total {
-            color: var(--sawade-gold-600);
-            font-size: 1.15rem;
+            font-family: var(--sawade-font-display);
+            color: var(--sawade-forest-950);
+            font-size: 1.65rem;
+            font-weight: 600;
             font-variant-numeric: tabular-nums;
+        }
+
+        .booked-dates-box {
+            padding: 14px 16px;
+            background: var(--sawade-ivory-100);
+            border: 1px solid var(--sawade-line-strong);
+            border-left: 3px solid var(--sawade-gold-500);
+        }
+
+        .booked-date-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #fff;
+            border: 1px solid var(--sawade-line-strong);
+            font-size: 0.76rem;
+            font-variant-numeric: tabular-nums;
+            color: var(--sawade-forest-950);
         }
 
         @@media (max-width: 991.98px) {
@@ -142,206 +168,209 @@
         }
 
         @@media (max-width: 575.98px) {
-            .detail-room-image {
-                min-height: 240px;
-                height: 66vw;
+            .detail-specs-strip {
+                grid-template-columns: 1fr;
+            }
+            .detail-spec-item {
+                border-right: 0;
+                border-bottom: 1px solid var(--sawade-line);
+            }
+            .detail-spec-item:last-child {
+                border-bottom: 0;
+            }
+            .detail-perk-row {
+                grid-template-columns: 1fr;
             }
             .detail-overview-card {
-                padding: 18px;
+                padding: 22px;
             }
         }
     </style>
 }
 
 <div class="container detail-shell">
-    <nav aria-label="breadcrumb" class="detail-breadcrumb mb-4">
-        <ol class="breadcrumb mb-0 small">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 small" style="letter-spacing: 0.04em;">
             <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">Trang chủ</a></li>
-            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="DanhSachPhong" class="text-decoration-none">Danh sách phòng</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="DanhSachPhong" class="text-decoration-none">Phòng nghỉ</a></li>
             <li class="breadcrumb-item active" aria-current="page">Phòng @Model.SoPhong</li>
         </ol>
     </nav>
 
-    <div class="detail-surface p-3 p-md-4 p-lg-5">
-        <div class="row g-4 g-xl-5 align-items-start">
-            <!-- CỘT TRÁI: HÌNH ẢNH & THÔNG TIN PHÒNG -->
-            <div class="col-lg-7">
-                <div class="detail-room-image shadow-sm mb-3">
-                    <img src="@localDetailImage"
-                         alt="Không gian phòng @Model.SoPhong"
-                         onerror="this.onerror=null;this.src='@fallbackImage';" />
+    <div class="row g-4 g-xl-5 align-items-start">
+        <!-- CỘT TRÁI: HÌNH ẢNH & THÔNG TIN PHÒNG -->
+        <div class="col-lg-7">
+            <div class="detail-room-frame">
+                <img src="@localDetailImage"
+                     alt="Không gian phòng @Model.SoPhong"
+                     onerror="this.onerror=null;this.src='@fallbackImage';" />
+                <div class="detail-photo-tag">PHÒNG @Model.SoPhong &middot; @HienThiPhong.TenLoai(Model.TenLoaiPhong)</div>
+            </div>
+
+            <div class="detail-specs-strip mb-4">
+                <div class="detail-spec-item">
+                    <span class="detail-spec-label">Hạng phòng</span>
+                    <span class="detail-spec-val">@HienThiPhong.TenLoai(Model.TenLoaiPhong)</span>
                 </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-4">
-                        <div class="detail-feature">
-                            <i class="bi bi-shield-check" aria-hidden="true"></i>
-                            <span>Đặt phòng an tâm</span>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="detail-feature">
-                            <i class="bi bi-stars" aria-hidden="true"></i>
-                            <span>Không gian chỉn chu</span>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="detail-feature">
-                            <i class="bi bi-headset" aria-hidden="true"></i>
-                            <span>Hỗ trợ tận tâm</span>
-                        </div>
-                    </div>
+                <div class="detail-spec-item">
+                    <span class="detail-spec-label">Sức chứa tiêu chuẩn</span>
+                    <span class="detail-spec-val">@(Model.SoNguoiToiDa.HasValue ? $"Tối đa {Model.SoNguoiToiDa} người" : "Tiêu chuẩn khách sạn")</span>
                 </div>
-
-                <div class="detail-overview-card">
-                    <div class="section-eyebrow mb-2">THÔNG TIN PHÒNG</div>
-                    <h2 class="h5 fw-bold mb-3" style="color: var(--sawade-forest-950);">Tổng quan không gian &amp; Quyền lợi đặt phòng</h2>
-                    <p class="text-muted mb-3">
-                        @(string.IsNullOrWhiteSpace(Model.MoTaLoaiPhong)
-                            ? "Không gian lưu trú thuận tiện, thiết kế ấm cúng, thông tin đặt phòng và đơn giá được đồng bộ trực tiếp từ hệ thống khách sạn."
-                            : Model.MoTaLoaiPhong)
-                    </p>
-
-                    @if (Model.SoNguoiToiDa.HasValue)
-                    {
-                        <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-4" style="background: var(--sawade-gold-100); color: var(--sawade-forest-950); font-size: 0.85rem;">
-                            <i class="bi bi-people-fill text-gold" aria-hidden="true"></i>
-                            <span>Sức chứa tiêu chuẩn: <strong>tối đa @Model.SoNguoiToiDa người</strong></span>
-                        </div>
-                    }
-
-                    <div class="row g-2">
-                        <div class="col-sm-6">
-                            <div class="detail-perk-item"><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Thông tin giá rõ ràng</span></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="detail-perk-item"><i class="bi bi-calendar2-check-fill" aria-hidden="true"></i><span>Kiểm tra lịch trống theo ngày</span></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="detail-perk-item"><i class="bi bi-receipt-cutoff" aria-hidden="true"></i><span>Nhận mã đơn ngay sau khi đặt</span></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="detail-perk-item"><i class="bi bi-person-check-fill" aria-hidden="true"></i><span>Tra cứu lịch sử đặt phòng 24/7</span></div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <span class="small text-muted">Cần thêm dịch vụ ăn uống, giặt ủi trong kỳ nghỉ?</span>
-                        <a asp-controller="Home" asp-action="DichVu" class="small fw-semibold text-decoration-none">
-                            <i class="bi bi-cup-hot me-1 text-gold" aria-hidden="true"></i>Khám phá dịch vụ khách sạn <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
-                        </a>
-                    </div>
+                <div class="detail-spec-item">
+                    <span class="detail-spec-label">Hiện trạng phòng</span>
+                    <span class="detail-spec-val">@statusText</span>
                 </div>
             </div>
 
-            <!-- CỘT PHẢI: GIÁ & BIỂU MẪU ĐẶT PHÒNG -->
-            <div class="col-lg-5 detail-sticky-col">
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                    <span class="detail-type-badge">
-                        <i class="bi bi-door-open me-1" aria-hidden="true"></i>@HienThiPhong.TenLoai(Model.TenLoaiPhong)
-                    </span>
-                    <span class="room-status @statusPillClass">
-                        <i class="bi @(isAvailable ? "bi-check-circle-fill" : "bi-info-circle-fill")" aria-hidden="true"></i>@statusText
-                    </span>
+            <div class="detail-overview-card">
+                <div class="section-eyebrow mb-2">OVERVIEW &amp; PRIVILEGES</div>
+                <h2 class="editorial-serif h3 mb-3">Tổng quan không gian lưu trú</h2>
+                <p class="luxe-lead mb-4">
+                    @(string.IsNullOrWhiteSpace(Model.MoTaLoaiPhong)
+                        ? "Không gian lưu trú được thiết kế ấm áp, chú trọng ánh sáng tự nhiên và sự riêng tư. Thông tin tình trạng phòng cùng biểu giá được đồng bộ trực tiếp từ hệ thống quản lý khách sạn."
+                        : Model.MoTaLoaiPhong)
+                </p>
+
+                <div class="detail-perk-row">
+                    <div class="detail-perk-item"><i class="bi bi-check2" aria-hidden="true"></i><span>Biểu giá niêm yết minh bạch</span></div>
+                    <div class="detail-perk-item"><i class="bi bi-check2" aria-hidden="true"></i><span>Xác minh lịch trống theo ngày</span></div>
+                    <div class="detail-perk-item"><i class="bi bi-check2" aria-hidden="true"></i><span>Cấp mã đơn ngay sau khi gửi</span></div>
+                    <div class="detail-perk-item"><i class="bi bi-check2" aria-hidden="true"></i><span>In phiếu xác nhận &amp; tra cứu 24/7</span></div>
                 </div>
 
-                <h1 class="detail-page-title display-6 mb-2">Phòng @Model.SoPhong</h1>
+                <div class="mt-4 pt-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span class="small text-muted">Cần thêm ẩm thực, giặt ủi trong thời gian lưu trú?</span>
+                    <a asp-controller="Home" asp-action="DichVu" class="small fw-semibold text-decoration-none" style="letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.72rem;">
+                        Xem danh mục dịch vụ <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                <div class="detail-price mb-4 pb-3 border-bottom">
+        <!-- CỘT PHẢI: GIÁ & BIỂU MẪU ĐẶT PHÒNG -->
+        <div class="col-lg-5 detail-sticky-col">
+            <div class="booking-panel">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <span class="detail-type-badge">@HienThiPhong.TenLoai(Model.TenLoaiPhong)</span>
+                    <span class="room-status @statusPillClass">@statusText</span>
+                </div>
+
+                <h1 class="detail-page-title mb-2">Phòng @Model.SoPhong</h1>
+
+                <div class="detail-price mb-4 pb-3 border-bottom d-flex align-items-baseline gap-2">
                     <span>@Model.GiaPhong.ToString("#,##0") đ</span>
-                    <small>/ đêm</small>
+                    <small class="text-muted">/ đêm</small>
                 </div>
 
                 @if (selectedGuests.HasValue && Model.SoNguoiToiDa.HasValue && selectedGuests.Value > Model.SoNguoiToiDa.Value)
                 {
-                    <div class="alert alert-warning rounded-4 small mb-3" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+                    <div class="alert alert-warning small mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
                         Phòng này không đủ sức chứa cho @selectedGuests người. Vui lòng chọn hạng phòng phù hợp hơn.
                     </div>
                 }
 
-                <div class="booking-panel">
-                    <h2 class="h5 fw-bold mb-1">
-                        <i class="bi bi-calendar2-heart me-2 text-gold" aria-hidden="true"></i>Đặt phòng của bạn
-                    </h2>
-                    <p class="text-muted small mb-4">Chọn thời gian lưu trú. Hệ thống sẽ kiểm tra chống trùng lịch và gửi yêu cầu đến lễ tân.</p>
-
-                    <form asp-controller="Home" asp-action="DatPhong" method="post" class="row g-3" id="bookingForm">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="PhongId" value="@Model.PhongId" />
-
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <div class="col-12">
-                                <div class="alert alert-light border rounded-4 small mb-0">
-                                    <i class="bi bi-person-badge me-1 text-gold" aria-hidden="true"></i>
-                                    Đặt phòng bằng tài khoản <strong>@User.Identity.Name</strong>
-                                    (@User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value).
-                                    <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="fw-semibold">Cập nhật hồ sơ</a> nếu thông tin chưa đúng.
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="col-12">
-                                <div class="alert alert-warning rounded-4 small mb-0">
-                                    <i class="bi bi-lock-fill me-1" aria-hidden="true"></i>
-                                    Bạn cần <a asp-controller="TaiKhoan" asp-action="DangNhap" class="fw-semibold">đăng nhập</a>
-                                    hoặc <a asp-controller="TaiKhoan" asp-action="DangKy" class="fw-semibold">đăng ký</a> để gửi yêu cầu đặt phòng.
-                                </div>
-                            </div>
-                        }
-
-                        <div class="col-md-6">
-                            <label class="form-label" for="bookingCheckIn">Thời gian nhận phòng</label>
-                            <input id="bookingCheckIn" type="datetime-local" class="form-control" name="NgayNhan" value="@initialCheckIn" required />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label" for="bookingCheckOut">Thời gian trả phòng</label>
-                            <input id="bookingCheckOut" type="datetime-local" class="form-control" name="NgayTra" value="@initialCheckOut" required />
-                        </div>
-
-                        <div class="col-12">
-                            <label for="bookingGuests" class="form-label">Số khách lưu trú</label>
-                            <select id="bookingGuests" name="SoKhach" class="form-select" required>
-                                @for (int guests = 1; guests <= (Model.SoNguoiToiDa.HasValue ? Math.Min(Model.SoNguoiToiDa.Value, 30) : 10); guests++)
-                                {
-                                    <option value="@guests" selected="@(selectedGuests == guests || (!selectedGuests.HasValue && guests == 1))">@guests người</option>
-                                }
-                            </select>
-                            <small class="text-muted d-block mt-1">Số khách được kiểm tra theo sức chứa hạng phòng. API hiện chưa lưu số khách trong đơn.</small>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="detail-estimate-box">
-                                <div class="small text-muted fw-semibold mb-2">Tạm tính chi phí phòng</div>
-                                <div class="d-flex justify-content-between small">
-                                    <span class="text-muted">Đơn giá mỗi đêm</span>
-                                    <strong class="tabular-nums">@Model.GiaPhong.ToString("N0") đ</strong>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center small mt-2 pt-2 border-top">
-                                    <span class="text-muted">Số đêm dự kiến</span>
-                                    <strong id="bookingNights">—</strong>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
-                                    <span class="fw-semibold">Tổng tạm tính</span>
-                                    <strong id="bookingEstimate" class="detail-estimate-total">—</strong>
-                                </div>
-                                <div class="small text-muted mt-2" style="font-size: 0.76rem;">
-                                    Tạm tính làm tròn lên theo ngày lưu trú, chưa bao gồm dịch vụ phát sinh.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12 pt-1">
-                            <button type="submit" class="btn btn-sawade-primary btn-lg w-100 rounded-pill py-3" disabled="@(User.Identity?.IsAuthenticated != true)">
-                                Gửi yêu cầu đặt phòng <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
-                            </button>
-                            <p class="small text-muted text-center mt-3 mb-0">Yêu cầu chỉ được xác nhận khi hệ thống xử lý thành công.</p>
-                        </div>
-                    </form>
+                <div class="mb-3">
+                    <div class="luxe-kicker mb-1">RESERVATION FOLIO</div>
+                    <p class="text-muted small mb-0">Chọn ngày lưu trú để hệ thống kiểm tra lịch trống và gửi yêu cầu tới lễ tân.</p>
                 </div>
+
+                <form asp-controller="Home" asp-action="DatPhong" method="post" class="row g-3" id="bookingForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="PhongId" value="@Model.PhongId" />
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="col-12">
+                            <div class="p-3 small" style="background: var(--sawade-ivory-100); border: 1px solid var(--sawade-line);">
+                                Đặt bằng tài khoản <strong>@User.Identity.Name</strong>
+                                (@User.FindFirst(System.Security.Claims.ClaimTypes.MobilePhone)?.Value).
+                                <a asp-controller="TaiKhoan" asp-action="HoSoCaNhan" class="fw-semibold ms-1">Hồ sơ</a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-warning small mb-0">
+                                <i class="bi bi-lock me-1" aria-hidden="true"></i>
+                                Bạn cần <a asp-controller="TaiKhoan" asp-action="DangNhap" class="fw-semibold">đăng nhập</a>
+                                hoặc <a asp-controller="TaiKhoan" asp-action="DangKy" class="fw-semibold">đăng ký</a> để gửi yêu cầu đặt phòng.
+                            </div>
+                        </div>
+                    }
+
+                    @if (bookedRanges.Any())
+                    {
+                        <div class="col-12">
+                            <div class="booked-dates-box small">
+                                <div class="fw-semibold mb-2" style="color: var(--sawade-forest-950);">
+                                    <i class="bi bi-calendar-x me-1 text-gold" aria-hidden="true"></i>Các khoảng ngày đã có lịch đặt trước:
+                                </div>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    @foreach (var range in bookedRanges)
+                                    {
+                                        <span class="booked-date-tag">@range</span>
+                                    }
+                                </div>
+                                <div class="text-muted" style="font-size: 0.75rem;">
+                                    Bạn vẫn đặt phòng này bình thường cho các khoảng ngày khác không trùng lịch trên.
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="bookingCheckIn">Ngày nhận phòng</label>
+                        <input id="bookingCheckIn" type="date" class="form-control" name="NgayNhan" value="@initialCheckIn" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="bookingCheckOut">Ngày trả phòng</label>
+                        <input id="bookingCheckOut" type="date" class="form-control" name="NgayTra" value="@initialCheckOut" min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
+                    </div>
+
+                    <div class="col-12">
+                        <label for="bookingGuests" class="form-label">Số khách lưu trú</label>
+                        <select id="bookingGuests" name="SoKhach" class="form-select" required>
+                            @for (int guests = 1; guests <= (Model.SoNguoiToiDa.HasValue ? Math.Min(Model.SoNguoiToiDa.Value, 30) : 10); guests++)
+                            {
+                                <option value="@guests" selected="@(selectedGuests == guests || (!selectedGuests.HasValue && guests == 1))">@guests người</option>
+                            }
+                        </select>
+                        <small class="text-muted d-block mt-1" style="font-size: 0.76rem;">Số khách được kiểm tra theo sức chứa tiêu chuẩn của hạng phòng.</small>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="detail-estimate-box">
+                            <div class="luxe-kicker mb-2">TẠM TÍNH CHI PHÍ</div>
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-muted">Đơn giá mỗi đêm</span>
+                                <strong class="tabular-nums">@Model.GiaPhong.ToString("N0") đ</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center small mt-2 pt-2 border-top">
+                                <span class="text-muted">Số đêm dự kiến</span>
+                                <strong id="bookingNights">—</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                <span class="fw-semibold small text-uppercase" style="letter-spacing: 0.08em;">Tổng tạm tính</span>
+                                <strong id="bookingEstimate" class="detail-estimate-total">—</strong>
+                            </div>
+                            <div class="small text-muted mt-2" style="font-size: 0.74rem;">
+                                Chưa bao gồm dịch vụ phát sinh trong thời gian lưu trú.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 pt-1">
+                        <button type="submit" class="btn btn-sawade-primary btn-lg w-100" disabled="@(User.Identity?.IsAuthenticated != true)">
+                            Gửi yêu cầu đặt phòng <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+                        </button>
+                        <p class="small text-muted text-center mt-3 mb-0" style="font-size: 0.76rem;">
+                            Yêu cầu sẽ được lễ tân xác nhận trực tiếp trên hệ thống.
+                        </p>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -364,33 +393,28 @@
                     estimateEl.textContent = '—';
                     return;
                 }
-                const start = new Date(checkIn.value);
-                const end = new Date(checkOut.value);
-                const total = end.getTime() - start.getTime();
-                if (!Number.isFinite(total) || total <= 0) {
+                const start = new Date(`${checkIn.value}T00:00:00`);
+                const end = new Date(`${checkOut.value}T00:00:00`);
+                const nights = Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+                if (!Number.isFinite(nights) || nights <= 0) {
                     nightsEl.textContent = 'Chưa hợp lệ';
                     estimateEl.textContent = '—';
                     return;
                 }
-                const nights = Math.ceil(total / (24 * 60 * 60 * 1000));
                 nightsEl.textContent = `${nights} đêm`;
                 estimateEl.textContent = (nights * nightlyPrice).toLocaleString('vi-VN') + ' đ';
             };
 
-            const getLocalIsoString = (date) => {
-                const tzOffset = date.getTimezoneOffset() * 60000;
-                return (new Date(date - tzOffset)).toISOString().slice(0, 16);
-            };
+            const formatDateYmd = (date) =>
+                `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-            const now = new Date();
-            checkIn.min = getLocalIsoString(now);
+            checkIn.min = formatDateYmd(new Date());
 
             checkIn.addEventListener('change', () => {
                 if (!checkIn.value) return;
-                const date = new Date(checkIn.value);
-                date.setHours(date.getHours() + 2);
-
-                const minCheckOut = getLocalIsoString(date);
+                const date = new Date(`${checkIn.value}T00:00:00`);
+                date.setDate(date.getDate() + 1);
+                const minCheckOut = formatDateYmd(date);
                 checkOut.min = minCheckOut;
 
                 if (checkOut.value && checkOut.value <= checkIn.value) {

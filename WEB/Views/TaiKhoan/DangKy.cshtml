@@ -9,17 +9,18 @@
         .auth-benefit-list {
             list-style: none;
             padding: 0;
-            margin: 18px 0 0;
-            display: grid;
-            gap: 8px;
+            margin: 22px 0 0;
+            border-top: 1px solid rgba(246, 242, 234, 0.22);
         }
 
         .auth-benefit-list li {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.88);
+            padding: 11px 0;
+            border-bottom: 1px solid rgba(246, 242, 234, 0.14);
+            font-size: 0.84rem;
+            color: rgba(252, 251, 248, 0.86);
         }
 
         .auth-benefit-list i {
@@ -27,105 +28,102 @@
         }
 
         .auth-toggle-pwd {
-            border-color: rgba(21, 49, 39, 0.14);
+            border-color: var(--sawade-line-strong);
             border-left: 0;
-            border-radius: 0 13px 13px 0 !important;
             background: #fff;
             color: var(--sawade-muted);
+            padding: 0 14px !important;
         }
 
         .auth-toggle-pwd:hover {
             background: var(--sawade-ivory-100);
             color: var(--sawade-forest-950);
         }
-
-        .auth-pwd-bare {
-            border-right: 0 !important;
-            border-radius: 13px 0 0 13px !important;
-        }
     </style>
 }
 
 <section class="auth-page">
     <div class="container auth-shell">
-        <div class="row g-4 align-items-stretch">
-            <div class="col-lg-5 d-none d-lg-block">
-                <div class="auth-visual">
-                    <div class="luxe-kicker mb-2" style="color: var(--sawade-gold-300);">SAWADE MEMBERSHIP</div>
-                    <h2 class="mb-3">Bắt đầu hành trình nghỉ dưỡng thuận tiện hơn.</h2>
-                    <p class="mb-0">Tạo tài khoản một lần để đặt phòng trực tuyến, theo dõi đơn hàng và quản lý thông tin cá nhân dễ dàng.</p>
-                    <ul class="auth-benefit-list">
-                        <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i>Đặt phòng trực tuyến 24/7 không cần chờ đợi</li>
-                        <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i>Chủ động tra cứu và quản lý đơn đặt phòng</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="col-lg-7">
-                <div class="auth-card">
-                    <div class="mb-4">
-                        <div class="luxe-kicker mb-2">CREATE ACCOUNT</div>
-                        <h1 class="luxe-title mb-2">Đăng ký thành viên SAWADE</h1>
-                        <p class="luxe-lead small mb-0">Điền thông tin bên dưới để khởi tạo tài khoản đặt phòng của bạn.</p>
+        <div class="auth-frame">
+            <div class="row g-0 align-items-stretch">
+                <div class="col-lg-5 d-none d-lg-block">
+                    <div class="auth-visual" style="background-image: url('@Url.Content("~/images/208.jpg")');">
+                        <div class="luxe-kicker mb-2" style="color: var(--sawade-gold-300);">CREATE MEMBERSHIP</div>
+                        <h2 class="mb-3">Bắt đầu hành trình nghỉ dưỡng thuận tiện hơn.</h2>
+                        <p class="mb-0">Khởi tạo tài khoản một lần để đặt phòng trực tuyến, tra cứu lịch sử và quản lý thông tin cá nhân dễ dàng.</p>
+                        <ul class="auth-benefit-list">
+                            <li><i class="bi bi-check2" aria-hidden="true"></i>Đặt phòng trực tuyến 24/7 đồng bộ lịch trống</li>
+                            <li><i class="bi bi-check2" aria-hidden="true"></i>Chủ động theo dõi và quản lý đơn đặt phòng</li>
+                        </ul>
                     </div>
+                </div>
 
-                    <form asp-controller="TaiKhoan" asp-action="DangKy" method="post" class="row g-3" data-sawade-busy="Đang tạo tài khoản...">
-                        <div class="col-12">
-                            <label class="form-label" asp-for="HoTen">Họ và tên <span class="text-danger">*</span></label>
-                            <input type="text" asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên đầy đủ" autocomplete="name" required />
-                            <span asp-validation-for="HoTen" class="text-danger small"></span>
+                <div class="col-lg-7">
+                    <div class="auth-card">
+                        <div class="mb-4 pb-2 border-bottom">
+                            <div class="luxe-kicker mb-2">NEW ACCOUNT</div>
+                            <h1 class="luxe-title h2 mb-2">Đăng ký thành viên SAWADE</h1>
+                            <p class="luxe-lead small mb-0">Điền thông tin bên dưới để khởi tạo tài khoản đặt phòng của bạn.</p>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label" asp-for="SoDienThoai">Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="tel" asp-for="SoDienThoai" class="form-control" placeholder="Ví dụ: 0912345678" autocomplete="tel" required />
-                            <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
-                        </div>
+                        <form asp-controller="TaiKhoan" asp-action="DangKy" method="post" class="row g-3" data-sawade-busy="Đang tạo tài khoản...">
+                            <div class="col-12">
+                                <label class="form-label" asp-for="HoTen">Họ và tên <span class="text-danger">*</span></label>
+                                <input type="text" asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên đầy đủ" autocomplete="name" required />
+                                <span asp-validation-for="HoTen" class="text-danger small"></span>
+                            </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label" asp-for="CCCD">CCCD / CMND <span class="text-danger">*</span></label>
-                            <input type="text" asp-for="CCCD" class="form-control" placeholder="Nhập số giấy tờ tùy thân" required />
-                            <span asp-validation-for="CCCD" class="text-danger small"></span>
-                        </div>
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="SoDienThoai">Số điện thoại <span class="text-danger">*</span></label>
+                                <input type="tel" asp-for="SoDienThoai" class="form-control" placeholder="Ví dụ: 0912345678" autocomplete="tel" required />
+                                <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                            </div>
 
-                        <div class="col-12">
-                            <label class="form-label" asp-for="Email">Email</label>
-                            <input type="email" asp-for="Email" class="form-control" placeholder="example@gmail.com" autocomplete="email" pattern="^[A-Za-z0-9._%+\-]+&#64;[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$" title="Email phải có tên miền đầy đủ, ví dụ: example@gmail.com" />
-                            <span asp-validation-for="Email" class="text-danger small"></span>
-                        </div>
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="CCCD">CCCD / CMND <span class="text-danger">*</span></label>
+                                <input type="text" asp-for="CCCD" class="form-control" placeholder="Nhập số giấy tờ tùy thân" required />
+                                <span asp-validation-for="CCCD" class="text-danger small"></span>
+                            </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label" asp-for="MatKhau">Mật khẩu <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="password" asp-for="MatKhau" id="regPassword" class="form-control auth-pwd-bare" placeholder="Tạo mật khẩu" autocomplete="new-password" required />
-                                <button type="button" class="btn auth-toggle-pwd" data-toggle-pwd="regPassword" aria-label="Hiện hoặc ẩn mật khẩu">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                            <div class="col-12">
+                                <label class="form-label" asp-for="Email">Email</label>
+                                <input type="email" asp-for="Email" class="form-control" placeholder="example@gmail.com" autocomplete="email" pattern="^[A-Za-z0-9._%+\-]+&#64;[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$" title="Email phải có tên miền đầy đủ, ví dụ: example@gmail.com" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="MatKhau">Mật khẩu <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" asp-for="MatKhau" id="regPassword" class="form-control border-end-0" placeholder="Tạo mật khẩu" autocomplete="new-password" required />
+                                    <button type="button" class="btn auth-toggle-pwd" data-toggle-pwd="regPassword" aria-label="Hiện hoặc ẩn mật khẩu">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="MatKhau" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" asp-for="XacNhanMatKhau">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" asp-for="XacNhanMatKhau" id="regConfirmPassword" class="form-control border-end-0" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required />
+                                    <button type="button" class="btn auth-toggle-pwd" data-toggle-pwd="regConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu xác nhận">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="XacNhanMatKhau" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-sawade-primary w-100 py-3 mb-3">
+                                    Hoàn tất đăng ký <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
                                 </button>
+                                <div class="text-center small text-muted">
+                                    Đã có tài khoản?
+                                    <a asp-controller="TaiKhoan" asp-action="DangNhap" class="auth-link text-decoration-none ms-1">Đăng nhập ngay</a>
+                                </div>
                             </div>
-                            <span asp-validation-for="MatKhau" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label" asp-for="XacNhanMatKhau">Xác nhận mật khẩu <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="password" asp-for="XacNhanMatKhau" id="regConfirmPassword" class="form-control auth-pwd-bare" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required />
-                                <button type="button" class="btn auth-toggle-pwd" data-toggle-pwd="regConfirmPassword" aria-label="Hiện hoặc ẩn mật khẩu xác nhận">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                            <span asp-validation-for="XacNhanMatKhau" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-12 mt-4">
-                            <button type="submit" class="btn btn-sawade-primary w-100 rounded-pill py-3 mb-3">
-                                Hoàn tất đăng ký <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
-                            </button>
-                            <div class="text-center small text-muted">
-                                Đã có tài khoản?
-                                <a asp-controller="TaiKhoan" asp-action="DangNhap" class="auth-link text-decoration-none ms-1">Đăng nhập ngay</a>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
