@@ -163,15 +163,28 @@ public class DatPhongController : ControllerBase
                     return BadRequest($"Số khách vượt quá sức chứa tối đa của phòng đã chọn ({sucChua} người).");
             }
 
-            var trungLich = await _context.ChiTietDatPhongs.AnyAsync(ct =>
-                ids.Contains(ct.PhongId) &&
-                ct.DatPhong.TrangThai != "DaHuy" &&
-                ct.DatPhong.TrangThai != "DaTraPhong" &&
-                ct.DatPhong.NgayNhan < ngayTra &&
-                ct.DatPhong.NgayTra > ngayNhan);
+            var lichTrung = await _context.ChiTietDatPhongs
+                            .Include(ct => ct.Phong)
+                            .Include(ct => ct.DatPhong)
+                            .Where(ct =>
+                                ids.Contains(ct.PhongId) &&
+                                ct.DatPhong.TrangThai != "DaHuy" &&
+                                ct.DatPhong.TrangThai != "DaTraPhong" &&
+                                ct.DatPhong.NgayNhan < ngayTra &&
+                                ct.DatPhong.NgayTra > ngayNhan)
+                            .Select(ct => new
+                            {
+                                ct.Phong.SoPhong,
+                                ct.DatPhong.NgayNhan,
+                                ct.DatPhong.NgayTra
+                            })
+                            .FirstOrDefaultAsync();
 
-            if (trungLich)
-                return Conflict("Phòng đã có đơn đặt trùng khoảng ngày được chọn.");
+            if (lichTrung != null)
+            {
+                return Conflict(
+                    $"Phòng {lichTrung.SoPhong} đã có lịch đặt từ {lichTrung.NgayNhan:dd/MM/yyyy} đến {lichTrung.NgayTra:dd/MM/yyyy}. Vui lòng chọn khoảng ngày khác.");
+            }
 
             var soNgay = (ngayTra - ngayNhan).Days;
             var don = new DatPhong
@@ -193,9 +206,6 @@ public class DatPhongController : ControllerBase
                     GiaPhong = phong.LoaiPhong.GiaPhong
                 });
 
-                // Trạng thái phòng chỉ là hiện trạng tổng quát; lịch trống vẫn phải kiểm tra theo ngày.
-                if (phong.TrangThai == "Trong")
-                    phong.TrangThai = "DaDat";
             }
 
             _context.DatPhongs.Add(don);
@@ -307,22 +317,17 @@ public class DatPhongController : ControllerBase
         if (mucTieu == "DaNhanPhong")
         {
             foreach (var ct in datPhong.ChiTietDatPhongs)
-                ct.Phong.TrangThai = "DangSuDung"; // Giá trị trong SQL script CK_Phong_TrangThai.
+                ct.Phong.TrangThai = "DangSuDung";
         }
         else if (mucTieu == "DaHuy")
         {
             foreach (var ct in datPhong.ChiTietDatPhongs)
             {
-                var phongId = ct.PhongId;
-                var coDonKhac = await _context.ChiTietDatPhongs.AnyAsync(x =>
-                    x.PhongId == phongId && x.DatPhongId != id &&
-                    (x.DatPhong.TrangThai == "ChoXacNhan" ||
-                     x.DatPhong.TrangThai == "DaDat" ||
-                     x.DatPhong.TrangThai == "DaNhanPhong"));
-                if (!coDonKhac && ct.Phong != null &&
-                    !new[] { "dangsudung", "dango", "đang có khách" }
-                        .Contains((ct.Phong.TrangThai ?? "").Trim().ToLowerInvariant()))
+                if (ct.Phong != null &&
+                    string.Equals(ct.Phong.TrangThai, "DaDat", StringComparison.OrdinalIgnoreCase))
+                {
                     ct.Phong.TrangThai = "Trong";
+                }
             }
         }
 
@@ -434,16 +439,11 @@ public class DatPhongController : ControllerBase
 
             foreach (var ct in datPhong.ChiTietDatPhongs)
             {
-                var coDonKhac = await _context.ChiTietDatPhongs.AnyAsync(x =>
-                    x.PhongId == ct.PhongId &&
-                    x.DatPhongId != id &&
-                    (x.DatPhong.TrangThai == "ChoXacNhan" ||
-                     x.DatPhong.TrangThai == "DaDat" ||
-                     x.DatPhong.TrangThai == "DaNhanPhong"));
-
-                if (!coDonKhac && ct.Phong != null &&
-                    !string.Equals(ct.Phong.TrangThai, "DangSuDung", StringComparison.Ordinal))
+                if (ct.Phong != null &&
+                    string.Equals(ct.Phong.TrangThai, "DaDat", StringComparison.OrdinalIgnoreCase))
+                {
                     ct.Phong.TrangThai = "Trong";
+                }
             }
 
             await _context.SaveChangesAsync();

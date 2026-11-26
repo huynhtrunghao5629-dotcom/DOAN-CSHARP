@@ -94,6 +94,28 @@ namespace QuanLyKhachSanAPI.Controllers
             return Ok(room);
         }
 
+        // GET: api/Phong/5/lich-dat
+        [HttpGet("{id:int}/lich-dat")]
+        public async Task<IActionResult> GetLichDatTheoPhong(int id)
+        {
+            var homNay = DateTime.Today;
+            var lichDat = await _context.ChiTietDatPhongs
+                .AsNoTracking()
+                .Where(ct => ct.PhongId == id &&
+                             ct.DatPhong.TrangThai != "DaHuy" &&
+                             ct.DatPhong.TrangThai != "DaTraPhong" &&
+                             ct.DatPhong.NgayTra > homNay)
+                .OrderBy(ct => ct.DatPhong.NgayNhan)
+                .Select(ct => new
+                {
+                    ct.DatPhong.NgayNhan,
+                    ct.DatPhong.NgayTra
+                })
+                .ToListAsync();
+
+            return Ok(lichDat);
+        }
+
         // GET: api/Phong/loai/1
         [HttpGet("loai/{loaiPhongId:int}")]
         public async Task<IActionResult> GetByLoai(int loaiPhongId)
@@ -132,11 +154,13 @@ namespace QuanLyKhachSanAPI.Controllers
 
             if (ngayNhan.HasValue && ngayTra.HasValue)
             {
-                // Fix lỗi DateOnly: Dùng DateTime.Today để so sánh với phần Date của ngayNhan
-                if (ngayNhan.Value.Date < DateTime.Today)
+                var ngayVao = ngayNhan.Value.Date;
+                var ngayRa = ngayTra.Value.Date;
+
+                if (ngayVao < DateTime.Today)
                     return BadRequest("Ngày nhận phòng không được ở trong quá khứ.");
 
-                if (ngayTra.Value <= ngayNhan.Value)
+                if (ngayRa <= ngayVao)
                     return BadRequest("Ngày trả phòng phải sau ngày nhận phòng.");
             }
 
@@ -158,8 +182,8 @@ namespace QuanLyKhachSanAPI.Controllers
 
             if (ngayNhan.HasValue && ngayTra.HasValue)
             {
-                var ngayVao = ngayNhan.Value;
-                var ngayRa = ngayTra.Value;
+                var ngayVao = ngayNhan.Value.Date;
+                var ngayRa = ngayTra.Value.Date;
 
                 var phongBiDat = await _context.ChiTietDatPhongs.AsNoTracking()
                     .Where(ct => ct.DatPhong.TrangThai != "DaHuy" &&
